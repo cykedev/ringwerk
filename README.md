@@ -203,11 +203,10 @@ src/
     ├── dateTime.ts        # UTC/Timezone-Helfer (getDisplayTimeZone, formatDateOnly)
     ├── auth-rate-limit/   # Login-Brute-Force-Schutz
     ├── leagues/           # Liga-Feature (actions, queries, types)
-    ├── matches/           # Paarungen + Ergebnisse
+    ├── leagueParticipants/# Einschreiben + Rückzug
+    ├── matchups/          # Spielplan-Generierung (Round-Robin, Circle-Method)
     ├── participants/      # Teilnehmerverwaltung
     ├── disciplines/       # Disziplinverwaltung
-    ├── playoffs/          # Playoff-Bracket
-    ├── meyton/            # PDF/URL-Import
     └── users/             # Nutzerverwaltung (Admin)
 prisma/
 ├── schema.prisma          # Datenbankschema (alle Modelle)

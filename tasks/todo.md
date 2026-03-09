@@ -8,6 +8,25 @@
 
 ---
 
+### [2026-03-09] Feature: Spielplan-Generierung
+
+- [x] prisma/schema.prisma – `roundIndex Int` zu `Matchup` hinzugefügt
+- [x] Migration: `20260309115812_add_matchup_round_index`
+- [x] src/lib/matchups/types.ts (MatchupListItem, ScheduleStatus)
+- [x] src/lib/matchups/generateSchedule.ts (Circle-Method, Hin- + Rückrunde, Freilos)
+- [x] src/lib/matchups/generateSchedule.test.ts (16 Tests, alle grün)
+- [x] src/lib/matchups/queries.ts (getMatchupsForLeague, getScheduleStatus)
+- [x] src/lib/matchups/actions.ts (generateLeagueSchedule – Auth, Validierung, Transaktion)
+- [x] src/components/app/matchups/GenerateScheduleButton.tsx (AlertDialog, useTransition)
+- [x] src/components/app/matchups/ScheduleView.tsx (Tabellenansicht, Deadline am Header)
+- [x] src/app/(app)/leagues/[id]/schedule/page.tsx
+- [x] Navigation: leagues/page.tsx + leagues/[id]/participants/page.tsx verlinkt
+- [x] /check grün (Lint, Format, 59 Tests, TSC)
+
+**Review:** Spielplan-Feature vollständig. Admin kann für jede aktive Liga mit ≥4 Teilnehmern einen Doppelrunden-Spielplan (Round Robin, Circle Method) generieren. Ungerade Teilnehmerzahl → Freilos. Rückrunde spiegelt Heimrecht. Regenerierung möglich solange keine abgeschlossenen Paarungen. Anzeige als zwei flache Tabellen (Hin-/Rückrunde) mit Spieltag-Spalte und Deadline am Abschnittsheader. Nächster Schritt: Ergebniserfassung.
+
+---
+
 ### [2026-03-09] Feature: Teilnehmer
 
 - [x] src/lib/participants/types.ts (ParticipantListItem, ParticipantDetail, ParticipantOption)

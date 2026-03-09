@@ -222,6 +222,8 @@ model Matchup {
   awayParticipantId String?
   awayParticipant   Participant? @relation("AwayParticipant", fields: [awayParticipantId], references: [id])
   round             Round
+  // Spieltag-Nummer innerhalb der Runde (1-basiert): z.B. Hinrunde Spieltag 1, 2, 3 ...
+  roundIndex        Int
   status            MatchStatus @default(PENDING)
   // Stichtag für diese Paarung (aus Liga-Stichtag übernommen, editierbar)
   dueDate           DateTime?

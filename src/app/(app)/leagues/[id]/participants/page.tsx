@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
-import { ArrowLeft, UserMinus } from "lucide-react"
+import { ArrowLeft, CalendarDays, UserMinus } from "lucide-react"
 import { getAuthSession } from "@/lib/auth-helpers"
 import { getLeagueById } from "@/lib/leagues/queries"
 import { getLeagueParticipants } from "@/lib/leagueParticipants/queries"
@@ -47,10 +47,20 @@ export default async function LeagueParticipantsPage({ params }: Props) {
             Ligen
           </Link>
         </Button>
-        <h1 className="text-2xl font-semibold">{league.name}</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {league.discipline.name} · Teilnehmerverwaltung
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold">{league.name}</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              {league.discipline.name} · Teilnehmerverwaltung
+            </p>
+          </div>
+          <Button asChild variant="outline" size="sm" className="shrink-0">
+            <Link href={`/leagues/${id}/schedule`}>
+              <CalendarDays className="mr-1 h-4 w-4" />
+              Spielplan
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Einschreiben */}
@@ -76,11 +86,6 @@ export default async function LeagueParticipantsPage({ params }: Props) {
                 <div key={lp.id} className="flex items-center justify-between px-4 py-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      {lp.startNumber !== null && (
-                        <span className="text-xs text-muted-foreground font-mono">
-                          #{lp.startNumber}
-                        </span>
-                      )}
                       <span className="text-sm font-medium">
                         {lp.participant.lastName}, {lp.participant.firstName}
                       </span>

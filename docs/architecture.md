@@ -19,11 +19,12 @@ Verbindlich gleichrangig mit `docs/technical.md`. Neue Dateien immer gemäss die
 /                               ← Dashboard (Übersicht aktiver Ligen)
 /leagues                        ← alle Ligen
 /leagues/new                    ← Liga anlegen (Admin)
-/leagues/[id]                   ← Liga-Detailseite: Tabelle + Spielplan
-/leagues/[id]/matches           ← vollständiger Spielplan
-/leagues/[id]/matches/[matchId] ← Paarung + Ergebnis erfassen
-/leagues/[id]/playoffs          ← Playoff-Bracket
-/leagues/[id]/playoffs/[matchId]← Playoff-Duell + Ergebnis
+/leagues/[id]                   ← Liga-Detailseite (geplant: Tabelle)
+/leagues/[id]/participants      ← Teilnehmer einschreiben/verwalten (Admin)
+/leagues/[id]/schedule          ← Spielplan generieren + anzeigen (Admin)
+/leagues/[id]/matches/[matchId] ← Paarung + Ergebnis erfassen (geplant)
+/leagues/[id]/playoffs          ← Playoff-Bracket (geplant)
+/leagues/[id]/playoffs/[matchId]← Playoff-Duell + Ergebnis (geplant)
 /participants                   ← Teilnehmerverwaltung
 /participants/new               ← Teilnehmer anlegen (Admin)
 /participants/[id]              ← Profil: alle Duelle, Ergebnisse, Statistik
@@ -56,14 +57,17 @@ src/
           page.tsx
         [id]/
           page.tsx
+          participants/
+            page.tsx
+          schedule/
+            page.tsx
           matches/
-            page.tsx
             [matchId]/
-              page.tsx
+              page.tsx        ← geplant
           playoffs/
-            page.tsx
+            page.tsx          ← geplant
             [matchId]/
-              page.tsx
+              page.tsx        ← geplant
       participants/
         page.tsx
         new/
@@ -94,10 +98,10 @@ src/
     ui/                       ← shadcn/ui (auto-generiert, nicht manuell editieren)
     app/
       leagues/                ← Liga-spezifische Komponenten
-      matches/                ← Paarungs-/Ergebnisformulare
+      leagueParticipants/     ← Einschreiben + Rückzug
+      matchups/               ← Spielplan-Generierung + Anzeige
       participants/
       disciplines/
-      playoffs/
       admin/
       shared/                 ← wiederverwendbare App-Komponenten
   lib/
@@ -114,13 +118,18 @@ src/
       queries.ts              ← Datenbankabfragen: Liga laden, Tabelle
       calculateTable.ts       ← Tabellenberechnung (Punkte, Direktvergleich, RT)
       types.ts
-    matches/
-      actions.ts              ← Ergebnis eintragen/korrigieren, Kampflos/Freilos
+    leagueParticipants/
+      actions.ts              ← Einschreiben, Rückzug, Rückzug rückgängig
       queries.ts
-      calculateRingteiler.ts  ← Ringteiler-Formel (testpflichtig)
+      types.ts
+    matchups/
+      actions.ts              ← Spielplan generieren (Round-Robin)
+      queries.ts              ← Paarungen laden, Schedule-Status
+      generateSchedule.ts     ← Circle-Method-Algorithmus (testpflichtig)
+      generateSchedule.test.ts
       types.ts
     participants/
-      actions.ts              ← Teilnehmer anlegen, Rückzug, Rückzug rückgängig
+      actions.ts              ← Teilnehmer anlegen/bearbeiten
       queries.ts
       types.ts
     disciplines/
@@ -128,15 +137,6 @@ src/
       queries.ts
       systemDisciplines.ts    ← LP, LG, LPA, LGA Seed-Daten
       types.ts
-    playoffs/
-      actions.ts              ← Playoff-Bracket erstellen, Duell-Ergebnisse
-      queries.ts
-      seeding.ts              ← Qualifikation + Paarungslogik (testpflichtig)
-      types.ts
-    meyton/
-      parsePdf.ts             ← PDF-Textextraktion + Serie-Parsing
-      parseUrl.ts             ← Meyton-URL abrufen und parsen
-      types.ts                ← MeytonImportResult
     users/
       actions.ts              ← Nutzer anlegen, bearbeiten, Passwort-Reset
       queries.ts
@@ -231,7 +231,7 @@ Jedes Feature-Modul (`lib/<feature>/`) folgt diesem Muster:
 | Datei           | Inhalt                                                |
 | --------------- | ----------------------------------------------------- |
 | `actions.ts`    | Server Actions (Auth → Validierung → DB)              |
-| `queries.ts`    | Reine DB-Lesefunktionen mit `userId`-Filter           |
+| `queries.ts`    | Reine DB-Lesefunktionen (kein userId-Filter)          |
 | `types.ts`      | Feature-spezifische TypeScript-Typen                  |
 | `calculate*.ts` | Reine Berechnungsfunktionen (keine DB, testpflichtig) |
 

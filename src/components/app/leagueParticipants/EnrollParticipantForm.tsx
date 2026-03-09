@@ -2,7 +2,6 @@
 
 import { useActionState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -46,7 +45,9 @@ export function EnrollParticipantForm({ availableParticipants, action }: Props) 
     <form action={formAction} className="space-y-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="flex-1 flex flex-col gap-1">
-          <Label htmlFor="participantId" className="sm:sr-only">Teilnehmer</Label>
+          <Label htmlFor="participantId" className="sm:sr-only">
+            Teilnehmer
+          </Label>
           <Select name="participantId" disabled={isPending}>
             <SelectTrigger id="participantId" className="w-full">
               <SelectValue placeholder="Teilnehmer wählen…" />
@@ -62,20 +63,6 @@ export function EnrollParticipantForm({ availableParticipants, action }: Props) 
           {fieldErrors?.participantId && (
             <p className="text-xs text-destructive">{fieldErrors.participantId[0]}</p>
           )}
-        </div>
-
-        <div className="flex flex-col gap-1 sm:w-24">
-          <Label htmlFor="startNumber" className="sm:sr-only">
-            Startnr. (opt.)
-          </Label>
-          <Input
-            id="startNumber"
-            name="startNumber"
-            type="number"
-            min={1}
-            placeholder="Startnr."
-            disabled={isPending}
-          />
         </div>
 
         <Button type="submit" disabled={isPending} className="sm:shrink-0">

@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { Plus, Archive, CheckCircle, Users } from "lucide-react"
+import { Plus, Archive, CalendarDays, CheckCircle, Users } from "lucide-react"
 import { getAuthSession } from "@/lib/auth-helpers"
 import { getLeaguesForManagement } from "@/lib/leagues/queries"
 import { LeagueActions } from "@/components/app/leagues/LeagueActions"
@@ -62,6 +62,13 @@ export default async function LeaguesPage() {
                       <Users className="h-3 w-3" />
                       {l._count.participants} Teilnehmer
                     </Link>
+                    <Link
+                      href={`/leagues/${l.id}/schedule`}
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      <CalendarDays className="h-3 w-3" />
+                      Spielplan
+                    </Link>
                   </div>
                   <div className="mt-0.5 text-xs text-muted-foreground">
                     Hinrunde bis {formatDate(l.firstLegDeadline, tz)} · Rückrunde bis{" "}
@@ -98,6 +105,13 @@ export default async function LeaguesPage() {
                       >
                         <Users className="h-3 w-3" />
                         {l._count.participants} Teilnehmer
+                      </Link>
+                      <Link
+                        href={`/leagues/${l.id}/schedule`}
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        <CalendarDays className="h-3 w-3" />
+                        Spielplan
                       </Link>
                     </div>
                   </div>
