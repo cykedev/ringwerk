@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs"
 import { db } from "@/lib/db"
+import { ensureSystemDisciplines } from "@/lib/disciplines/systemDisciplines"
 
 // Wird beim App-Start einmalig aufgerufen (aus root layout.tsx).
 // Legt den ersten Admin-Account an, wenn noch kein Admin in der Datenbank existiert.
@@ -15,9 +16,7 @@ export async function runStartup(): Promise<void> {
   if (hasRun) return
   hasRun = true
 
-  // TODO: Standarddisziplinen sicherstellen (LP, LG, LPA, LGA)
-  // → wird implementiert wenn das Disciplines-Feature gebaut wird
-  // await ensureSystemDisciplines(db)
+  await ensureSystemDisciplines(db)
 
   const adminEmail = process.env.SEED_ADMIN_EMAIL
   const adminPassword = process.env.SEED_ADMIN_PASSWORD

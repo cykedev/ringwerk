@@ -45,3 +45,20 @@
 - [x] Erste Migration: 20260309083153_init
 
 **Review:** Basis-Setup vollständig. Login, Auth-Guard, Admin-Seeding, Docker-Dev-Stack verifiziert. Nächster Schritt: erstes Feature implementieren (Disziplinen oder Teilnehmer).
+
+### [2026-03-09] Feature: Disziplinen
+
+- [x] src/lib/disciplines/types.ts (DisciplineUsage)
+- [x] src/lib/disciplines/queries.ts (getDisciplines, getDisciplinesForManagement, getDisciplineById)
+- [x] src/lib/disciplines/actions.ts (create, update, setArchived, delete)
+- [x] src/lib/disciplines/systemDisciplines.ts (ensureSystemDisciplines – LP, LG, LPA, LGA)
+- [x] src/lib/startup.ts – ensureSystemDisciplines eingebunden
+- [x] src/components/app/disciplines/DisciplineForm.tsx
+- [x] src/components/app/disciplines/DisciplineActions.tsx (Dropdown: bearbeiten, archivieren, löschen)
+- [x] src/components/ui/dropdown-menu.tsx (neues shadcn-Komponente)
+- [x] src/app/(app)/disciplines/page.tsx
+- [x] src/app/(app)/disciplines/new/page.tsx
+- [x] src/app/(app)/disciplines/[id]/edit/page.tsx
+- [x] /check grün (Lint, Format, Test, TSC)
+
+**Review:** Disziplinen-Feature vollständig. Systemdisziplinen werden beim ersten App-Start automatisch angelegt. Admin kann eigene Disziplinen anlegen, bearbeiten, archivieren und löschen. Nächster Schritt: Teilnehmer-Feature.

@@ -1,0 +1,32 @@
+import { notFound, redirect } from "next/navigation"
+import { getAuthSession } from "@/lib/auth-helpers"
+import { getDisciplineById } from "@/lib/disciplines/queries"
+import { updateDiscipline } from "@/lib/disciplines/actions"
+import { DisciplineForm } from "@/components/app/disciplines/DisciplineForm"
+import type { ActionResult } from "@/lib/types"
+
+interface Props {
+  params: Promise<{ id: string }>
+}
+
+export default async function EditDisciplinePage({ params }: Props) {
+  const { id } = await params
+
+  const [session, discipline] = await Promise.all([getAuthSession(), getDisciplineById(id)])
+
+  if (session?.user.role !== "ADMIN") redirect("/disciplines")
+  if (!discipline) notFound()
+
+  // updateDiscipline braucht die id gebunden — partiell applizieren
+  const action = async (prevState: ActionResult | null, formData: FormData) => {
+    "use server"
+    return updateDiscipline(id, prevState, formData)
+  }
+
+  return (
+    <div className="mx-auto max-w-lg px-4 py-8">
+      <h1 className="mb-6 text-2xl font-semibold">Disziplin bearbeiten</h1>
+      <DisciplineForm discipline={discipline} action={action} />
+    </div>
+  )
+}

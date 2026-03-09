@@ -1,0 +1,90 @@
+import Link from "next/link"
+import { Plus, Archive } from "lucide-react"
+import { getAuthSession } from "@/lib/auth-helpers"
+import { getDisciplinesForManagement } from "@/lib/disciplines/queries"
+import { DisciplineActions } from "@/components/app/disciplines/DisciplineActions"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+
+export default async function DisciplinesPage() {
+  const [session, disciplines] = await Promise.all([
+    getAuthSession(),
+    getDisciplinesForManagement(),
+  ])
+
+  const isAdmin = session?.user.role === "ADMIN"
+  const active = disciplines.filter((d) => !d.isArchived)
+  const archived = disciplines.filter((d) => d.isArchived)
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Disziplinen</h1>
+          <p className="text-sm text-muted-foreground mt-1">Wettbewerbsdisziplinen des Vereins</p>
+        </div>
+        {isAdmin && (
+          <Button asChild size="sm">
+            <Link href="/disciplines/new">
+              <Plus className="mr-1 h-4 w-4" />
+              Neue Disziplin
+            </Link>
+          </Button>
+        )}
+      </div>
+
+      {/* Aktive Disziplinen */}
+      <div className="rounded-lg border">
+        {active.length === 0 ? (
+          <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+            Keine Disziplinen vorhanden.
+          </p>
+        ) : (
+          <div className="divide-y">
+            {active.map((d) => (
+              <div key={d.id} className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <span className="text-sm font-medium">{d.name}</span>
+                    {d.isSystem && (
+                      <span className="ml-2 text-xs text-muted-foreground">(System)</span>
+                    )}
+                  </div>
+                  <Badge variant="secondary" className="text-xs">
+                    {d.scoringType === "WHOLE" ? "Ganzringe" : "Zehntelringe"}
+                  </Badge>
+                </div>
+                {isAdmin && <DisciplineActions discipline={d} />}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Archivierte Disziplinen */}
+      {isAdmin && archived.length > 0 && (
+        <div>
+          <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
+            <Archive className="h-4 w-4" />
+            Archiviert ({archived.length})
+          </div>
+          <div className="rounded-lg border opacity-60">
+            <div className="divide-y">
+              {archived.map((d) => (
+                <div key={d.id} className="flex items-center justify-between px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm line-through">{d.name}</span>
+                    <Badge variant="outline" className="text-xs">
+                      {d.scoringType === "WHOLE" ? "Ganzringe" : "Zehntelringe"}
+                    </Badge>
+                  </div>
+                  <DisciplineActions discipline={d} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
