@@ -99,6 +99,18 @@ Bei Implementierungen immer zuerst treffsicher als Vorlage konsultieren:
 
 ---
 
+## README.md – Pflicht
+
+`README.md` muss nach jeder relevanten Änderung aktualisiert werden:
+- Neues Feature fertiggestellt → Projektstruktur und ggf. Konfigurationstabelle anpassen
+- Neue Umgebungsvariable → in der Konfigurationstabelle eintragen
+- Setup-Schritte ändern sich → Abschnitt „Erste Inbetriebnahme" anpassen
+- Neues Slash Command / Workflow → unter „Qualitätschecks" ergänzen
+
+Faustregel: Wenn ein neuer Entwickler nach dem README die App nicht zum Laufen bringen kann, ist es nicht aktuell genug.
+
+---
+
 ## Feature-Implementierung
 
 Reihenfolge für jedes neue Feature (niemals überspringen):

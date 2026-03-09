@@ -1,0 +1,373 @@
+// Prisma 7: Client lokal generiert (nicht node_modules/@prisma/client)
+// Import im Code: import { ... } from "@/generated/prisma/client"
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+// Prisma 7: url nicht im Schema — Verbindung via @prisma/adapter-pg in src/lib/db.ts
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum ScoringType {
+  // Ganzringe: max 10/Schuss → max 100/Seite (10 Schuss)
+  WHOLE
+  // Zehntelringe: max 10.9/Schuss → max 109/Seite (10 Schuss)
+  DECIMAL
+}
+
+enum LeagueStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum ParticipantStatus {
+  ACTIVE
+  WITHDRAWN
+}
+
+enum MatchStatus {
+  PENDING    // Noch nicht ausgetragen
+  COMPLETED  // Ergebnis eingetragen
+  BYE        // Freilos — kein Gegner (awayParticipantId ist null)
+  WALKOVER   // Kampflos-Sieg — Gegner unangekündigt nicht erschienen
+}
+
+enum Round {
+  FIRST_LEG  // Hinrunde
+  SECOND_LEG // Rückrunde
+}
+
+enum PlayoffRound {
+  QUARTER_FINAL
+  SEMI_FINAL
+  FINAL
+}
+
+enum ImportSource {
+  MANUAL
+  URL
+  PDF
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// User
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id             String   @id @default(cuid())
+  name           String?
+  email          String   @unique
+  passwordHash   String
+  // sessionVersion steigt bei Passwortwechsel → invalidiert ältere JWT-Sessions
+  sessionVersion Int      @default(0)
+  role           UserRole @default(USER)
+  // Deaktiviert statt gelöscht — bestehende Audit-Einträge bleiben erhalten
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  createdLeagues             League[]
+  createdParticipants        Participant[]
+  recordedResults            MatchResult[]
+  recordedPlayoffDuelResults PlayoffDuelResult[]
+  auditLogs                  AuditLog[]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LoginRateLimitBucket (Brute-Force-Schutz)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model LoginRateLimitBucket {
+  // Schlüssel: "email:<normalized>" oder "ip:<normalized>"
+  key             String    @id
+  attempts        Int
+  windowStartedAt DateTime
+  blockedUntil    DateTime?
+  lastAttemptAt   DateTime
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([lastAttemptAt])
+  @@index([blockedUntil])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Discipline (Disziplin)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// DESIGN: Disziplinen sind vereinsweit sichtbar — kein userId-Filter nötig.
+// isSystem-Disziplinen (LP, LG, LPA, LGA) werden via startup.ts angelegt,
+// sind nicht editierbar/archivierbar durch reguläre Admins.
+model Discipline {
+  id          String      @id @default(cuid())
+  name        String
+  scoringType ScoringType
+  // MaxRinge/Seite wird aus scoringType abgeleitet: WHOLE→100, DECIMAL→109
+  // isSystem: true → von startup.ts angelegt
+  isSystem    Boolean     @default(false)
+  // Archiviert statt gelöscht — bestehende Ligaergebnisse bleiben lesbar
+  isArchived  Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  leagues     League[]
+
+  @@index([isArchived])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// League (Liga)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// DESIGN: Ligen sind vereinsweit sichtbar — kein userId-Filter nötig.
+// createdByUserId dient dem Audit, nicht der Isolation.
+model League {
+  id           String       @id @default(cuid())
+  name         String
+  disciplineId String
+  discipline   Discipline   @relation(fields: [disciplineId], references: [id])
+  status       LeagueStatus @default(ACTIVE)
+  // Stichtage optional — Orientierung für Spieler, nicht systemseitig erzwungen
+  firstLegDeadline  DateTime?
+  secondLegDeadline DateTime?
+  // Audit: wer hat die Liga angelegt
+  createdByUserId String
+  createdBy       User         @relation(fields: [createdByUserId], references: [id])
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  participants   LeagueParticipant[]
+  matchups       Matchup[]
+  playoffMatches PlayoffMatch[]
+
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Participant (Teilnehmer)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// DESIGN: Teilnehmer sind vereinsweit sichtbar — kein userId-Filter nötig.
+// Ein Teilnehmer kann in mehreren Ligen eingeschrieben sein (via LeagueParticipant).
+model Participant {
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String   @unique
+  // Audit: wer hat den Teilnehmer angelegt
+  createdByUserId String
+  createdBy       User     @relation(fields: [createdByUserId], references: [id])
+  // Deaktiviert statt gelöscht (falls Teilnehmer den Verein verlässt)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  leagues            LeagueParticipant[]
+  homeMatchups       Matchup[]           @relation("HomeParticipant")
+  awayMatchups       Matchup[]           @relation("AwayParticipant")
+  matchResults       MatchResult[]
+  playoffMatchesA    PlayoffMatch[]      @relation("ParticipantA")
+  playoffMatchesB    PlayoffMatch[]      @relation("ParticipantB")
+  playoffDuelResults PlayoffDuelResult[]
+
+  @@index([isActive])
+  @@index([lastName])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LeagueParticipant (Einschreibung Teilnehmer ↔ Liga)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model LeagueParticipant {
+  id            String            @id @default(cuid())
+  leagueId      String
+  league        League            @relation(fields: [leagueId], references: [id])
+  participantId String
+  participant   Participant       @relation(fields: [participantId], references: [id])
+  status        ParticipantStatus @default(ACTIVE)
+  // Startnummer innerhalb dieser Liga (optional, manuell vergeben)
+  startNumber   Int?
+  // Zeitpunkt des Rückzugs — für Audit und Nachvollziehbarkeit
+  withdrawnAt   DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@unique([leagueId, participantId])
+  @@index([leagueId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Matchup (Paarung — Gruppenphase)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Matchup {
+  id                String      @id @default(cuid())
+  leagueId          String
+  league            League      @relation(fields: [leagueId], references: [id])
+  homeParticipantId String
+  homeParticipant   Participant @relation("HomeParticipant", fields: [homeParticipantId], references: [id])
+  // Null bei BYE — kein Gegner vorhanden
+  awayParticipantId String?
+  awayParticipant   Participant? @relation("AwayParticipant", fields: [awayParticipantId], references: [id])
+  round             Round
+  status            MatchStatus @default(PENDING)
+  // Stichtag für diese Paarung (aus Liga-Stichtag übernommen, editierbar)
+  dueDate           DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  results           MatchResult[]
+
+  @@index([leagueId])
+  @@index([leagueId, homeParticipantId])
+  @@index([leagueId, awayParticipantId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MatchResult (Duell-Ergebnis — Gruppenphase)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Pro COMPLETED Matchup: 2 MatchResults (je einer pro Schütze).
+// Bei BYE/WALKOVER: 0 MatchResults (Punkte werden algorithmisch vergeben).
+model MatchResult {
+  id            String      @id @default(cuid())
+  matchupId     String
+  matchup       Matchup     @relation(fields: [matchupId], references: [id])
+  participantId String
+  participant   Participant @relation(fields: [participantId], references: [id])
+  // Einzelschüsse als JSON-Array von Strings (exakte Dezimaldarstellung)
+  // z.B. ["9", "10", "8", ...] (WHOLE) oder ["9.5", "10.1", "8.7", ...] (DECIMAL)
+  shots         Json?
+  // Seriensumme — Gesamtringe dieser Seite
+  totalRings    Decimal      @db.Decimal(5, 1)
+  // Bester Teiler der Serie (kleinster Wert = nächste Scheibenmitte); max 9999.9
+  teiler        Decimal      @db.Decimal(6, 1)
+  // Ringteiler = MaxRinge − totalRings + teiler (niedriger gewinnt)
+  // MaxRinge: 100 (WHOLE) oder 109 (DECIMAL), abgeleitet aus Disziplin
+  ringteiler    Decimal      @db.Decimal(7, 1)
+  importSource  ImportSource @default(MANUAL)
+  // Audit: wer hat das Ergebnis erfasst
+  recordedByUserId String
+  recordedBy       User    @relation(fields: [recordedByUserId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Genau ein Ergebnis pro Schütze pro Paarung
+  @@unique([matchupId, participantId])
+  @@index([matchupId])
+  @@index([participantId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PlayoffMatch (Playoff-Paarung, Best-of-Five)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Ob Playoffs gestartet wurden: db.playoffMatch.count({ where: { leagueId } }) > 0
+// Qualifikation: 4–7 TN → Top4 → HF; 8+ TN → Top8 → VF (1vs8, 2vs7, 3vs6, 4vs5)
+model PlayoffMatch {
+  id             String       @id @default(cuid())
+  leagueId       String
+  league         League       @relation(fields: [leagueId], references: [id])
+  round          PlayoffRound
+  participantAId String
+  participantA   Participant  @relation("ParticipantA", fields: [participantAId], references: [id])
+  participantBId String
+  participantB   Participant  @relation("ParticipantB", fields: [participantBId], references: [id])
+  // Siegzähler im Best-of-Five (Gewinner: wer zuerst 3 Siege hat)
+  winsA          Int          @default(0)
+  winsB          Int          @default(0)
+  // Gewinner ableitbar: winsA >= 3 → participantAId, winsB >= 3 → participantBId
+  status         MatchStatus  @default(PENDING)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  duels          PlayoffDuel[]
+
+  @@index([leagueId])
+  @@index([leagueId, round])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PlayoffDuel (einzelnes Duell innerhalb eines Best-of-Five)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// duelNumber 1–5 für reguläre Duelle.
+// Finale-Gleichstand (Sudden Death): weitere Duelle mit isSuddenDeath = true
+// (nur im PlayoffRound.FINAL gültig; Schuss für Schuss bis klares Ergebnis)
+model PlayoffDuel {
+  id             String       @id @default(cuid())
+  playoffMatchId String
+  playoffMatch   PlayoffMatch @relation(fields: [playoffMatchId], references: [id])
+  // Laufende Nummer innerhalb des PlayoffMatch (1, 2, 3, ...)
+  duelNumber     Int
+  // true nur bei Finale-Sudden-Death-Duellen (duelNumber > 5)
+  isSuddenDeath  Boolean      @default(false)
+  // Nur PENDING oder COMPLETED — kein BYE/WALKOVER auf Einzel-Duell-Ebene
+  isCompleted    Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  results        PlayoffDuelResult[]
+
+  @@unique([playoffMatchId, duelNumber])
+  @@index([playoffMatchId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PlayoffDuelResult (Ergebnis eines einzelnen Playoff-Duells)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model PlayoffDuelResult {
+  id            String      @id @default(cuid())
+  duelId        String
+  duel          PlayoffDuel @relation(fields: [duelId], references: [id])
+  participantId String
+  participant   Participant @relation(fields: [participantId], references: [id])
+  shots         Json?
+  totalRings    Decimal     @db.Decimal(5, 1)
+  teiler        Decimal     @db.Decimal(6, 1)
+  ringteiler    Decimal     @db.Decimal(7, 1)
+  importSource  ImportSource @default(MANUAL)
+  recordedByUserId String
+  recordedBy       User    @relation(fields: [recordedByUserId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([duelId, participantId])
+  @@index([duelId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AuditLog
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Pflicht-Ereignisse: PARTICIPANT_WITHDRAWN, WITHDRAWAL_REVOKED, RESULT_CORRECTED
+model AuditLog {
+  id         String   @id @default(cuid())
+  // Freitext-Enum-Wert: "PARTICIPANT_WITHDRAWN", "WITHDRAWAL_REVOKED", "RESULT_CORRECTED"
+  eventType  String
+  // z.B. "LEAGUE_PARTICIPANT", "MATCHUP", "MATCH_RESULT"
+  entityType String
+  entityId   String
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  // Details: z.B. { before: {...}, after: {...}, reason: "..." }
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+}
