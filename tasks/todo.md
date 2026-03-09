@@ -79,4 +79,19 @@
 - [x] src/components/app/shell/Navigation.tsx (Admin-Nav + Mobile-Nav erweitert)
 - [x] src/lib/disciplines/actions.test.ts (Unit-Tests für Disziplinen-Actions)
 
-**Review:** Nutzerverwaltung vollständig. Admin kann Nutzer anlegen, bearbeiten, (de)aktivieren und Passwort zurücksetzen. Letzter aktiver Admin und eigener Account sind gegen Deaktivierung geschützt. Passwortänderung invalidiert alle aktiven Sessions via sessionVersion. Jeder Nutzer kann sein eigenes Passwort unter /account ändern. Nächster Schritt: Teilnehmer-Feature.
+**Review:** Nutzerverwaltung vollständig. Admin kann Nutzer anlegen, bearbeiten, (de)aktivieren und Passwort zurücksetzen. Letzter aktiver Admin und eigener Account sind gegen Deaktivierung geschützt. Passwortänderung invalidiert alle aktiven Sessions via sessionVersion. Jeder Nutzer kann sein eigenes Passwort unter /account ändern. Nächster Schritt: Liga-Feature.
+
+### [2026-03-09] Feature: Ligen
+
+- [x] src/lib/leagues/types.ts (LeagueListItem, LeagueDetail)
+- [x] src/lib/leagues/queries.ts (getLeagues, getLeaguesForManagement, getLeagueById)
+- [x] src/lib/leagues/actions.ts (createLeague, updateLeague, setLeagueStatus, deleteLeague)
+- [x] src/lib/leagues/actions.test.ts (43 Tests, alle grün)
+- [x] src/components/app/leagues/LeagueForm.tsx
+- [x] src/components/app/leagues/LeagueActions.tsx (Dropdown: bearbeiten, abschliessen, wieder öffnen, archivieren, wiederherstellen, löschen)
+- [x] src/app/(app)/leagues/page.tsx
+- [x] src/app/(app)/leagues/new/page.tsx
+- [x] src/app/(app)/leagues/[id]/edit/page.tsx
+- [x] /check grün (Lint, Format, Test, TSC)
+
+**Review:** Liga-Feature vollständig. Admin kann Ligen anlegen, bearbeiten und löschen (nur ohne abhängige Daten). Statusübergänge bidirektional: ACTIVE ↔ COMPLETED ↔ ARCHIVED (direkt ACTIVE → ARCHIVED bleibt blockiert). Disziplin nach Erstellung unveränderlich. Stichtage optional. Nächster Schritt: Teilnehmer-Feature (inkl. Liga-Einschreibung).
