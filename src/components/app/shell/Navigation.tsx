@@ -28,10 +28,12 @@ import { cn } from "@/lib/utils"
 const navItems = [
   { href: "/", label: "Dashboard", icon: Target },
   { href: "/leagues", label: "Ligen", icon: Trophy },
-  { href: "/participants", label: "Teilnehmer", icon: Users },
 ]
 
-const adminNavItems = [{ href: "/disciplines", label: "Disziplinen", icon: Crosshair }]
+const adminNavItems = [
+  { href: "/participants", label: "Teilnehmer", icon: Users },
+  { href: "/disciplines", label: "Disziplinen", icon: Crosshair },
+]
 
 interface Props {
   role: string
@@ -75,18 +77,20 @@ export function Navigation({ role }: Props) {
 
         {/* Rechte Seite: Admin + Logout + Hamburger */}
         <div className="flex items-center gap-1">
-          <Link
-            href="/admin/users"
-            className={cn(
-              "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-              pathname.startsWith("/admin")
-                ? "bg-secondary text-foreground"
-                : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-            )}
-          >
-            <Settings className="h-4 w-4" />
-            <span className="hidden md:inline">Admin</span>
-          </Link>
+          {isAdmin && (
+            <Link
+              href="/admin/users"
+              className={cn(
+                "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+                pathname.startsWith("/admin")
+                  ? "bg-secondary text-foreground"
+                  : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+              )}
+            >
+              <Settings className="h-4 w-4" />
+              <span className="hidden md:inline">Admin</span>
+            </Link>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

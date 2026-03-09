@@ -9,6 +9,13 @@ export interface MatchupParticipant {
   withdrawn: boolean
 }
 
+export interface MatchResultSummary {
+  participantId: string
+  totalRings: number
+  teiler: number
+  ringteiler: number
+}
+
 export interface MatchupListItem {
   id: string
   round: Round
@@ -17,6 +24,7 @@ export interface MatchupListItem {
   dueDate: Date | null
   homeParticipant: MatchupParticipant
   awayParticipant: MatchupParticipant | null // null = BYE
+  results: MatchResultSummary[]
 }
 
 export interface ScheduleStatus {

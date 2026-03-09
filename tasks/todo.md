@@ -8,6 +8,29 @@
 
 ---
 
+### [2026-03-09] Feature: Ergebniserfassung + Tabelle
+
+- [x] src/lib/results/types.ts (ResultInput, SaveMatchResultInput, MatchResultSummary)
+- [x] src/lib/results/calculateResult.ts (calcRingteiler, determineOutcome, MAX_RINGS)
+- [x] src/lib/results/calculateResult.test.ts (14 Tests)
+- [x] src/lib/results/actions.ts (saveMatchResult – Auth, Upsert, AuditLog bei Korrektur)
+- [x] src/lib/standings/calculateStandings.ts (Tabellenberechnung: Punkte, direkter Vergleich, best RT)
+- [x] src/lib/standings/calculateStandings.test.ts (10 Tests)
+- [x] src/lib/standings/queries.ts (getStandingsForLeague)
+- [x] src/lib/matchups/types.ts – MatchResultSummary + results[] in MatchupListItem
+- [x] src/lib/matchups/queries.ts – results-Select hinzugefügt (Decimal → number)
+- [x] src/components/app/results/ResultEntryDialog.tsx (Dialog, useState, useTransition)
+- [x] src/components/app/matchups/ScheduleView.tsx – Ergebnisanzeige + Eintragen/Korrigieren-Button
+- [x] src/components/app/standings/StandingsTable.tsx
+- [x] src/app/(app)/leagues/[id]/standings/page.tsx
+- [x] src/app/(app)/leagues/[id]/schedule/page.tsx – isAdmin, Tabellen-Link
+- [x] src/app/(app)/leagues/page.tsx – Tabellen-Link in aktiver + abgeschlossener Liga-Zeile
+- [x] /check grün (Lint, Format, 83 Tests, TSC)
+
+**Review:** Ergebniserfassung vollständig. Admin kann Ergebnisse (Gesamtringe + Teiler) für jede PENDING-Paarung eintragen. Ringteiler wird automatisch berechnet. COMPLETED-Paarungen können korrigiert werden (AuditLog). Tabelle wird aus allen COMPLETED-Paarungen berechnet (Punkte → direkter Vergleich → bester RT). Zurückgezogene Teilnehmer am Ende, ihre Duelle nicht gewertet. Nächster Schritt: Playoff-Phase.
+
+---
+
 ### [2026-03-09] Feature: Spielplan-Generierung
 
 - [x] prisma/schema.prisma – `roundIndex Int` zu `Matchup` hinzugefügt

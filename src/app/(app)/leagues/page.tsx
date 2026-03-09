@@ -1,11 +1,12 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { Plus, Archive, CalendarDays, CheckCircle, Users } from "lucide-react"
+import { Plus, Archive, BarChart2, CalendarDays, CheckCircle, Users } from "lucide-react"
 import { getAuthSession } from "@/lib/auth-helpers"
 import { getLeaguesForManagement } from "@/lib/leagues/queries"
 import { LeagueActions } from "@/components/app/leagues/LeagueActions"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 import { getDisplayTimeZone, formatDateOnly } from "@/lib/dateTime"
 
 function formatDate(date: Date | null, tz: string): string {
@@ -13,10 +14,14 @@ function formatDate(date: Date | null, tz: string): string {
   return formatDateOnly(date, tz)
 }
 
+const NAV_LINK =
+  "flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+
 export default async function LeaguesPage() {
   const session = await getAuthSession()
-  if (session?.user.role !== "ADMIN") redirect("/")
+  if (!session) redirect("/login")
 
+  const isAdmin = session.user.role === "ADMIN"
   const tz = getDisplayTimeZone()
   const leagues = await getLeaguesForManagement()
 
@@ -25,127 +30,131 @@ export default async function LeaguesPage() {
   const archived = leagues.filter((l) => l.status === "ARCHIVED")
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
+    <div className="mx-auto max-w-3xl space-y-8 px-4 py-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Ligen</h1>
-          <p className="text-sm text-muted-foreground mt-1">Alle Wettbewerbe des Vereins</p>
+          <p className="mt-1 text-sm text-muted-foreground">Alle Wettbewerbe des Vereins</p>
         </div>
-        <Button asChild size="sm">
-          <Link href="/leagues/new">
-            <Plus className="mr-1 h-4 w-4" />
-            Neue Liga
-          </Link>
-        </Button>
+        {isAdmin && (
+          <Button asChild size="sm">
+            <Link href="/leagues/new">
+              <Plus className="mr-1 h-4 w-4" />
+              Neue Liga
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Aktive Ligen */}
-      <div className="rounded-lg border">
+      <div className="space-y-3">
         {active.length === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+          <p className="rounded-lg border px-4 py-8 text-center text-sm text-muted-foreground">
             Keine aktiven Ligen vorhanden.
           </p>
         ) : (
-          <div className="divide-y">
-            {active.map((l) => (
-              <div key={l.id} className="flex items-center justify-between px-4 py-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-medium">{l.name}</span>
+          active.map((l) => (
+            <Card key={l.id} className="transition-colors hover:bg-muted/20">
+              <CardContent className="flex items-center justify-between gap-4 py-5">
+                <div className="min-w-0 flex-1 space-y-2.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-base font-semibold">{l.name}</span>
                     <Badge variant="secondary" className="text-xs">
                       {l.discipline.name}
                     </Badge>
-                    <Link
-                      href={`/leagues/${l.id}/participants`}
-                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                    >
-                      <Users className="h-3 w-3" />
-                      {l._count.participants} Teilnehmer
-                    </Link>
-                    <Link
-                      href={`/leagues/${l.id}/schedule`}
-                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                    >
-                      <CalendarDays className="h-3 w-3" />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-4">
+                    {isAdmin && (
+                      <Link href={`/leagues/${l.id}/participants`} className={NAV_LINK}>
+                        <Users className="h-3.5 w-3.5" />
+                        {l._count.participants} Teilnehmer
+                      </Link>
+                    )}
+                    <Link href={`/leagues/${l.id}/schedule`} className={NAV_LINK}>
+                      <CalendarDays className="h-3.5 w-3.5" />
                       Spielplan
                     </Link>
+                    <Link href={`/leagues/${l.id}/standings`} className={NAV_LINK}>
+                      <BarChart2 className="h-3.5 w-3.5" />
+                      Tabelle
+                    </Link>
                   </div>
-                  <div className="mt-0.5 text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground/70">
                     Hinrunde bis {formatDate(l.firstLegDeadline, tz)} · Rückrunde bis{" "}
                     {formatDate(l.secondLegDeadline, tz)}
-                  </div>
+                  </p>
                 </div>
-                <LeagueActions league={l} />
-              </div>
-            ))}
-          </div>
+                {isAdmin && <LeagueActions league={l} />}
+              </CardContent>
+            </Card>
+          ))
         )}
       </div>
 
       {/* Abgeschlossene Ligen */}
       {completed.length > 0 && (
-        <div>
-          <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <CheckCircle className="h-4 w-4" />
             Abgeschlossen ({completed.length})
           </div>
-          <div className="rounded-lg border opacity-75">
-            <div className="divide-y">
-              {completed.map((l) => (
-                <div key={l.id} className="flex items-center justify-between px-4 py-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium">{l.name}</span>
+          <div className="space-y-2 opacity-70">
+            {completed.map((l) => (
+              <Card key={l.id} className="transition-colors hover:bg-muted/20">
+                <CardContent className="flex items-center justify-between gap-4 py-4">
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-semibold">{l.name}</span>
                       <Badge variant="secondary" className="text-xs">
                         {l.discipline.name}
                       </Badge>
-                      <Link
-                        href={`/leagues/${l.id}/participants`}
-                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        <Users className="h-3 w-3" />
-                        {l._count.participants} Teilnehmer
-                      </Link>
-                      <Link
-                        href={`/leagues/${l.id}/schedule`}
-                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        <CalendarDays className="h-3 w-3" />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-4">
+                      {isAdmin && (
+                        <Link href={`/leagues/${l.id}/participants`} className={NAV_LINK}>
+                          <Users className="h-3.5 w-3.5" />
+                          {l._count.participants} Teilnehmer
+                        </Link>
+                      )}
+                      <Link href={`/leagues/${l.id}/schedule`} className={NAV_LINK}>
+                        <CalendarDays className="h-3.5 w-3.5" />
                         Spielplan
+                      </Link>
+                      <Link href={`/leagues/${l.id}/standings`} className={NAV_LINK}>
+                        <BarChart2 className="h-3.5 w-3.5" />
+                        Tabelle
                       </Link>
                     </div>
                   </div>
-                  <LeagueActions league={l} />
-                </div>
-              ))}
-            </div>
+                  {isAdmin && <LeagueActions league={l} />}
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       )}
 
       {/* Archivierte Ligen */}
       {archived.length > 0 && (
-        <div>
-          <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Archive className="h-4 w-4" />
             Archiviert ({archived.length})
           </div>
-          <div className="rounded-lg border opacity-60">
-            <div className="divide-y">
-              {archived.map((l) => (
-                <div key={l.id} className="flex items-center justify-between px-4 py-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm line-through">{l.name}</span>
-                      <Badge variant="outline" className="text-xs">
-                        {l.discipline.name}
-                      </Badge>
-                    </div>
+          <div className="space-y-2 opacity-50">
+            {archived.map((l) => (
+              <Card key={l.id}>
+                <CardContent className="flex items-center justify-between gap-4 py-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm line-through">{l.name}</span>
+                    <Badge variant="outline" className="text-xs">
+                      {l.discipline.name}
+                    </Badge>
                   </div>
-                  <LeagueActions league={l} />
-                </div>
-              ))}
-            </div>
+                  {isAdmin && <LeagueActions league={l} />}
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       )}

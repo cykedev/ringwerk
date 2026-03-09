@@ -41,6 +41,14 @@ export async function getMatchupsForLeague(leagueId: string): Promise<MatchupLis
       dueDate: true,
       homeParticipant: { select: participantSelect(leagueId) },
       awayParticipant: { select: participantSelect(leagueId) },
+      results: {
+        select: {
+          participantId: true,
+          totalRings: true,
+          teiler: true,
+          ringteiler: true,
+        },
+      },
     },
     orderBy: [{ round: "asc" }, { roundIndex: "asc" }, { homeParticipant: { lastName: "asc" } }],
   })
@@ -53,6 +61,13 @@ export async function getMatchupsForLeague(leagueId: string): Promise<MatchupLis
     dueDate: row.dueDate,
     homeParticipant: mapParticipant(row.homeParticipant),
     awayParticipant: row.awayParticipant ? mapParticipant(row.awayParticipant) : null,
+    // Decimal-Felder in number umwandeln (Prisma 7)
+    results: row.results.map((r) => ({
+      participantId: r.participantId,
+      totalRings: r.totalRings.toNumber(),
+      teiler: r.teiler.toNumber(),
+      ringteiler: r.ringteiler.toNumber(),
+    })),
   }))
 }
 

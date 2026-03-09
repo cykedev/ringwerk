@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
-import { ArrowLeft, Users } from "lucide-react"
+import { ArrowLeft, BarChart2, Users } from "lucide-react"
 import { getAuthSession } from "@/lib/auth-helpers"
 import { getLeagueById } from "@/lib/leagues/queries"
 import { getMatchupsForLeague, getScheduleStatus } from "@/lib/matchups/queries"
@@ -22,8 +22,10 @@ export default async function LeagueSchedulePage({ params }: Props) {
     getScheduleStatus(id),
   ])
 
-  if (session?.user.role !== "ADMIN") redirect("/")
+  if (!session) redirect("/login")
   if (!league) notFound()
+
+  const isAdmin = session.user.role === "ADMIN"
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
@@ -43,13 +45,21 @@ export default async function LeagueSchedulePage({ params }: Props) {
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            {isAdmin && (
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/leagues/${id}/participants`}>
+                  <Users className="mr-1 h-4 w-4" />
+                  Teilnehmer
+                </Link>
+              </Button>
+            )}
             <Button asChild variant="outline" size="sm">
-              <Link href={`/leagues/${id}/participants`}>
-                <Users className="mr-1 h-4 w-4" />
-                Teilnehmer
+              <Link href={`/leagues/${id}/standings`}>
+                <BarChart2 className="mr-1 h-4 w-4" />
+                Tabelle
               </Link>
             </Button>
-            {league.status === "ACTIVE" && !scheduleStatus.hasCompletedMatchups && (
+            {isAdmin && league.status === "ACTIVE" && !scheduleStatus.hasCompletedMatchups && (
               <GenerateScheduleButton leagueId={id} hasSchedule={scheduleStatus.hasSchedule} />
             )}
           </div>
@@ -57,7 +67,7 @@ export default async function LeagueSchedulePage({ params }: Props) {
       </div>
 
       {/* Hinweis bei abgeschlossenen Paarungen */}
-      {scheduleStatus.hasCompletedMatchups && league.status === "ACTIVE" && (
+      {isAdmin && scheduleStatus.hasCompletedMatchups && league.status === "ACTIVE" && (
         <p className="text-sm text-muted-foreground">
           Der Spielplan kann nicht mehr neu generiert werden, da bereits{" "}
           {scheduleStatus.totalMatchups} Paarung(en) abgeschlossen sind.
@@ -69,6 +79,8 @@ export default async function LeagueSchedulePage({ params }: Props) {
         matchups={matchups}
         firstLegDeadline={league.firstLegDeadline}
         secondLegDeadline={league.secondLegDeadline}
+        leagueId={id}
+        isAdmin={isAdmin}
       />
     </div>
   )
