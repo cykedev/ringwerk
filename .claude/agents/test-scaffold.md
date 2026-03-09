@@ -23,6 +23,7 @@ Der Prompt enthält den Pfad zur Zieldatei (z.B. `src/lib/results/calculateResul
 ## Analyse
 
 Identifiziere aus der Zieldatei:
+
 - Alle exportierten Funktionen mit ihren Signaturen
 - Welche Eingaben führen zu welchen Ausgaben?
 - Welche Verzweigungen/Bedingungen gibt es?
@@ -33,6 +34,7 @@ Identifiziere aus der Zieldatei:
 ### Für `calculate*.ts` (Pure Functions):
 
 Immer abdecken:
+
 - **Happy Path**: Normalfall mit realistischen Werten
 - **Grenzwerte**: Minimum (1 TN, 0 Ringe), Maximum (100 Ringe, MaxTeiler)
 - **Gleichstand**: Gleiche Ringe, gleicher Ringteiler → Unentschieden
@@ -46,6 +48,7 @@ Immer abdecken:
 ### Für `actions.ts` (Server Actions mit DB):
 
 Für jede Action:
+
 - **Auth-Fehler**: kein Session-Mock → `success: false`
 - **Rollen-Fehler**: USER statt ADMIN → `success: false`
 - **Validierungsfehler**: invalide FormData (fehlende Pflichtfelder, falsche Typen)
@@ -57,6 +60,7 @@ Für jede Action:
 Zieldatei: `<original-dateiname>.test.ts` im selben Verzeichnis.
 
 Format:
+
 ```typescript
 import { describe, it, expect } from 'vitest'
 import { <funktionsname> } from './<dateiname>'

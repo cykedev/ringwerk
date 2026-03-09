@@ -14,6 +14,7 @@ Wenn ein Feature-Name als Argument übergeben wurde (z.B. `playoffs`): Prüfe nu
 Ohne Argument: Prüfe alle Dateien die auf `/actions.ts` enden in `src/lib/**/`.
 
 Finde die relevanten Dateien:
+
 ```
 src/lib/**/actions.ts
 ```
@@ -25,25 +26,31 @@ Lese die Datei vollständig. Prüfe jeden exportierten `async function`-Block au
 ### ✅ Pflichtmuster (Auth → Rolle → Validierung → DB)
 
 **1. Auth-Guard** (muss erste Operation sein):
+
 ```typescript
 const session = await getAuthSession()
-if (!session) return { success: false, error: '...' }
+if (!session) return { success: false, error: "..." }
 ```
+
 Fehler: Auth-Guard fehlt oder steht nicht an erster Stelle.
 
 **2. Rollen-Guard** (muss vor Validierung stehen):
+
 ```typescript
-if (session.user.role !== 'ADMIN') return { success: false, error: '...' }
+if (session.user.role !== "ADMIN") return { success: false, error: "..." }
 ```
+
 Fehler: Rollen-Check fehlt oder steht nach Validierung/DB.
 
 **3. Zod-Validierung** (muss vor DB-Zugriff stehen):
+
 - Schema definiert mit `z.object({...})`
 - `.safeParse()` verwendet (nicht `.parse()`)
 - Fehler korrekt zurückgegeben: `parsed.error.issues[0].message`
 - Optionale Felder: `z.string().nullable().optional()` (nicht nur `.optional()`)
 
 **4. DB-Zugriff** (nur nach allen Guards):
+
 - Import via `import { db } from '@/lib/db'`
 - Kein direkter Prisma-Import in Komponenten
 

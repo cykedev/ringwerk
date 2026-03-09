@@ -28,27 +28,32 @@ Lese die Referenzimplementierung: `/Users/christian/repos/treffsicher/prisma/sch
 ## Prüfungen
 
 ### Naming-Konventionen
+
 - Model-Namen: PascalCase singular (✅ `League`, ❌ `leagues`, ❌ `LeagueModel`)
 - Feld-Namen: camelCase (✅ `leagueId`, ❌ `league_id`)
 - Enum-Namen: PascalCase, Werte SCREAMING_SNAKE_CASE (✅ `LeagueStatus.ACTIVE`, ❌ `LeagueStatus.active`)
 - Relation-Felder: Name des referenzierten Models in camelCase als Feldname (`league League @relation(...)` → Feld heisst `league`)
 
 ### Relationale Integrität
+
 - Jedes Fremdschlüssel-Feld (`*Id`) hat einen `@relation`-Block
 - `onDelete`-Verhalten definiert (besonders bei Cascade-Löschungen)
 - Beide Seiten der Relation vorhanden (1:n → Array auf der n-Seite)
 
 ### Indizes
+
 - Häufig abgefragte Fremdschlüssel haben `@@index([fieldId])`
 - Unique-Constraints für natürliche Keys gesetzt (z.B. `@@unique([leagueId, participantId])`)
 
 ### Migrationssicherheit
+
 - Spalten entfernt? → ⚠️ DESTRUKTIV – Datenverlust möglich
 - Spalten umbenannt? → ⚠️ Prisma interpretiert als Drop + Add – SQL prüfen
 - NOT NULL ohne Default auf bestehender Tabelle? → ❌ Migration wird auf befüllter DB fehlschlagen
 - Enum-Wert entfernt? → ❌ Bricht bestehende Datensätze
 
 ### Projektspezifische Regeln
+
 - Kein Hard-Delete-Pattern bei Entitäten mit Abhängigkeiten → `archivedAt DateTime?` oder `status`-Enum
 - AuditLog-Einträge für sensible Mutations dokumentiert?
 - Kein `userId`-Filter-Feld auf vereinsweiten Daten (Ligen, Teilnehmer, Disziplinen)

@@ -146,23 +146,23 @@ Reihenfolge für jedes neue Feature (niemals überspringen):
 
 ### Agents (`.claude/agents/`) — isolierter Kontext, parallel einsetzbar
 
-| Agent | Wann einsetzen |
-| --- | --- |
-| `plan-change` | **Pflicht** vor jeder Änderung an einem bestehenden Feature |
-| `feature-scaffold` | Neues Feature beginnen – generiert alle Layer-Skelette |
-| `action-audit` | Nach neuen Actions oder als Qualitätscheck (Auth-Pattern) |
-| `schema-guard` | **Pflicht** vor jeder Prisma-Migration |
-| `test-scaffold` | Neue `calculate*.ts` oder `actions.ts` braucht Tests |
-| `prettier-fix` | Nach jeder neuen/geänderten Datei, vor `check` |
-| `docs-sync` | Nach Feature-Abschluss – README + docs/ aktuell halten |
+| Agent              | Wann einsetzen                                              |
+| ------------------ | ----------------------------------------------------------- |
+| `plan-change`      | **Pflicht** vor jeder Änderung an einem bestehenden Feature |
+| `feature-scaffold` | Neues Feature beginnen – generiert alle Layer-Skelette      |
+| `action-audit`     | Nach neuen Actions oder als Qualitätscheck (Auth-Pattern)   |
+| `schema-guard`     | **Pflicht** vor jeder Prisma-Migration                      |
+| `test-scaffold`    | Neue `calculate*.ts` oder `actions.ts` braucht Tests        |
+| `prettier-fix`     | Nach jeder neuen/geänderten Datei, vor `check`              |
+| `docs-sync`        | Nach Feature-Abschluss – README + docs/ aktuell halten      |
 
 ### Commands (`.claude/commands/`) — laufen im Hauptkontext
 
-| Command | Wann einsetzen |
-| --- | --- |
-| `check` | Vor jedem Commit – alle 4 Gates: Lint, Format, Test, TSC |
-| `test` | Schneller Feedback-Loop während Entwicklung |
-| `migrate <name>` | Nach Schema-Änderung in `prisma/schema.prisma` |
-| `commit-msg` | Commit-Message aus Diff generieren |
-| `seed` | Nach `db-reset` – Admin + Systemdisziplinen anlegen |
-| `db-reset` | Dev-DB vollständig zurücksetzen |
+| Command          | Wann einsetzen                                           |
+| ---------------- | -------------------------------------------------------- |
+| `check`          | Vor jedem Commit – alle 4 Gates: Lint, Format, Test, TSC |
+| `test`           | Schneller Feedback-Loop während Entwicklung              |
+| `migrate <name>` | Nach Schema-Änderung in `prisma/schema.prisma`           |
+| `commit-msg`     | Commit-Message aus Diff generieren                       |
+| `seed`           | Nach `db-reset` – Admin + Systemdisziplinen anlegen      |
+| `db-reset`       | Dev-DB vollständig zurücksetzen                          |

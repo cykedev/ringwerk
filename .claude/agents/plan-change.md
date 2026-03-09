@@ -14,11 +14,13 @@ Du bist ein Change-Planner für die 1-gegen-1 Liga-App. Deine einzige Aufgabe: e
 Das Argument hat die Form: `<feature-name> <Beschreibung der Änderung>`
 
 Beispiele:
+
 - `matchups "Deadline soll pro Spieltag gespeichert werden, nicht mehr pro Liga"`
 - `standings "Tiebreaker-Reihenfolge ändern: Ringteiler vor direktem Vergleich"`
 - `leagues "Ligen sollen eine optionale Beschreibung erhalten"`
 
 Extrahiere:
+
 - `feature`: kebab-case Feature-Name (erstes Token)
 - `changeDescription`: Rest des Arguments
 
@@ -40,6 +42,7 @@ src/app/(app)/**/<feature>*/layout.tsx
 ```
 
 Zusätzlich:
+
 - `prisma/schema.prisma` – vollständig lesen
 - `docs/data-model.md` – relevante Entitäten und Fachregeln
 - `docs/code-conventions.md` – Konventionen für die Planung
@@ -53,11 +56,13 @@ Zusätzlich:
 Beantworte: Muss `prisma/schema.prisma` geändert werden?
 
 Signale für JA:
+
 - Neue Felder, geänderte Typen, neue Relationen
 - Neue Enums oder Enum-Werte
 - Constraints ändern sich (nullable → required oder umgekehrt)
 
 **Wenn JA**: Ist die Migration destruktiv?
+
 - Feld entfernt / umbenannt → ⚠️ DESTRUKTIV
 - NOT NULL ohne Default auf existierender Tabelle → ❌ BLOCKIEREND
 - Enum-Wert entfernt → ❌ BLOCKIEREND
@@ -103,6 +108,7 @@ Sind neue Tests nötig (neue Berechnungslogik, neue Edge Cases)?
 Kernregel: **Nur berühren, was sich ändern muss.**
 
 Erstelle zwei Listen:
+
 - **Muss geändert werden**: begründet mit konkreter Änderung
 - **Bleibt unverändert**: explizit bestätigt, damit klar ist was übersprungen werden kann
 
@@ -164,4 +170,5 @@ Bevor du den Plan ausgibst, prüfe selbst:
 Nach dem Plan: ein Satz Risikoeinschätzung.
 
 Beispiel:
+
 > „Mittleres Risiko: Schema-Migration erforderlich, aber nicht destruktiv. Ripple-Effekt auf `ScheduleView.tsx` beachten. Empfehlung: zuerst Schema + Migration verifizieren, dann Typen und UI."

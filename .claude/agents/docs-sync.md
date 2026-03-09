@@ -18,6 +18,7 @@ Du bist ein Dokumentations-Sync-Agent für die 1-gegen-1 Liga-App. Deine Aufgabe
 - `.env.example` – alle definierten Umgebungsvariablen
 
 Zusätzlich: Scanne die aktuelle Projektstruktur:
+
 ```bash
 find /Users/christian/repos/1gegen1/src -type d | sort
 find /Users/christian/repos/1gegen1/.claude -type f | sort
@@ -28,17 +29,21 @@ find /Users/christian/repos/1gegen1/.claude -type f | sort
 ### README.md
 
 **Projektstruktur:**
+
 - Entspricht die beschriebene Verzeichnisstruktur der tatsächlichen?
 - Neue Verzeichnisse in `src/lib/`, `src/components/app/`, `src/app/(app)/` dokumentiert?
 
 **Konfigurationstabelle (Umgebungsvariablen):**
+
 - Alle Variablen aus `.env.example` in der Tabelle vorhanden?
 - Keine veralteten Variablen in README die nicht mehr in `.env.example` sind?
 
 **Slash Commands / Agents:**
+
 - Alle Dateien in `.claude/commands/` und `.claude/agents/` gelistet?
 
 **Setup-Schritte:**
+
 - Spiegeln die beschriebenen Schritte die aktuelle docker-compose.dev.yml wider?
 
 ### docs/features.md
@@ -55,6 +60,7 @@ Ausnahme: Wenn strukturelle Entscheidungen unklar sind (z.B. neue Architektur-Be
 ## Output
 
 Kompakte Liste der vorgenommenen Änderungen:
+
 ```
 ✅ README.md – Projektstruktur: src/lib/playoffs/ ergänzt
 ✅ README.md – Konfiguration: DISPLAY_TIME_ZONE bereits vorhanden
