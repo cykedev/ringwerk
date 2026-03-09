@@ -1,12 +1,16 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { BarChart2, CalendarDays } from "lucide-react"
+import { BarChart2, CalendarDays, Trophy } from "lucide-react"
 import { getAuthSession } from "@/lib/auth-helpers"
 import { getLeaguesForManagement } from "@/lib/leagues/queries"
 import { getStandingsForLeague } from "@/lib/standings/queries"
+import { getPlayoffBracket } from "@/lib/playoffs/queries"
 import { StandingsTable } from "@/components/app/standings/StandingsTable"
+import { PlayoffBracket } from "@/components/app/playoffs/PlayoffBracket"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+
+// ─── DashboardPage ───────────────────────────────────────────────────────────
 
 export default async function DashboardPage() {
   const session = await getAuthSession()
@@ -15,10 +19,11 @@ export default async function DashboardPage() {
   const leagues = await getLeaguesForManagement()
   const active = leagues.filter((l) => l.status === "ACTIVE")
 
-  const standingsPerLeague = await Promise.all(
+  const dataPerLeague = await Promise.all(
     active.map(async (l) => ({
       league: l,
       standings: await getStandingsForLeague(l.id),
+      bracket: await getPlayoffBracket(l.id),
     }))
   )
 
@@ -29,13 +34,13 @@ export default async function DashboardPage() {
         <p className="mt-1 text-sm text-muted-foreground">Aktive Ligen auf einen Blick</p>
       </div>
 
-      {standingsPerLeague.length === 0 ? (
+      {dataPerLeague.length === 0 ? (
         <p className="rounded-lg border px-4 py-8 text-center text-sm text-muted-foreground">
           Keine aktiven Ligen vorhanden.
         </p>
       ) : (
         <div className="space-y-10">
-          {standingsPerLeague.map(({ league, standings }) => (
+          {dataPerLeague.map(({ league, standings, bracket }) => (
             <div key={league.id} className="space-y-3">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex flex-wrap items-center gap-2">
@@ -59,7 +64,28 @@ export default async function DashboardPage() {
                   </Button>
                 </div>
               </div>
+
               <StandingsTable rows={standings} />
+
+              {(bracket.quarterFinals.length > 0 || bracket.semiFinals.length > 0) && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 text-sm font-semibold">
+                    <Trophy className="h-4 w-4 text-muted-foreground" />
+                    Playoffs
+                  </div>
+                  <PlayoffBracket bracket={bracket} isAdmin={false} compact={true} />
+                  <div className="flex justify-end">
+                    <Button
+                      asChild
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto px-1 py-0 text-xs text-muted-foreground"
+                    >
+                      <Link href={`/leagues/${league.id}/playoffs`}>Details →</Link>
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

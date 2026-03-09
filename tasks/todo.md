@@ -8,6 +8,25 @@
 
 ---
 
+### [2026-03-09] Feature: Playoff-Phase
+
+- [x] src/lib/playoffs/types.ts (PlayoffDuelItem, PlayoffMatchItem, PlayoffBracketData, SavePlayoffDuelResultInput)
+- [x] src/lib/playoffs/calculatePlayoffs.ts (determinePlayoffDuelWinner, isPlayoffMatchComplete, createFirstRoundMatchups, createNextRoundMatchups)
+- [x] src/lib/playoffs/calculatePlayoffs.test.ts (22 Tests)
+- [x] src/lib/playoffs/queries.ts (getPlayoffBracket)
+- [x] src/lib/playoffs/actions.ts (startPlayoffs, savePlayoffDuelResult, addPlayoffDuel)
+- [x] src/components/app/playoffs/StartPlayoffsButton.tsx
+- [x] src/components/app/playoffs/PlayoffDuelResultDialog.tsx
+- [x] src/components/app/playoffs/PlayoffMatchCard.tsx
+- [x] src/components/app/playoffs/PlayoffBracket.tsx
+- [x] src/app/(app)/leagues/[id]/playoffs/page.tsx
+- [x] leagues/page.tsx + schedule/page.tsx – Playoffs-Link
+- [x] /check grün (Lint, Format, 105 Tests, TSC)
+
+**Review:** Playoff-Phase vollständig. Admin kann Playoffs starten (sobald keine PENDING-Paarungen mehr und ≥4 aktive TN). Bracket-Seeding: 4–7 TN → HF (1v4, 2v3), 8+ TN → VF (1v8, 2v7, 3v6, 4v5). VF/HF Best-of-Five: Einzelduelle werden manuell angelegt und eingetragen; Nächste Runde entsteht automatisch nach Abschluss aller Matches. Finale: 1 Duell, Gleichstand (identischer RT) → automatisches Sudden-Death-Duell. Alle Links (Ligen-Übersicht, Spielplan) verweisen auf Playoffs-Seite.
+
+---
+
 ### [2026-03-09] Feature: Ergebniserfassung + Tabelle
 
 - [x] src/lib/results/types.ts (ResultInput, SaveMatchResultInput, MatchResultSummary)

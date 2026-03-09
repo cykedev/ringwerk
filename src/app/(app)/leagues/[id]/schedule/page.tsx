@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
-import { ArrowLeft, BarChart2, Users } from "lucide-react"
+import { ArrowLeft, BarChart2, Trophy, Users } from "lucide-react"
 import { getAuthSession } from "@/lib/auth-helpers"
 import { getLeagueById } from "@/lib/leagues/queries"
 import { getMatchupsForLeague, getScheduleStatus } from "@/lib/matchups/queries"
@@ -57,6 +57,12 @@ export default async function LeagueSchedulePage({ params }: Props) {
               <Link href={`/leagues/${id}/standings`}>
                 <BarChart2 className="mr-1 h-4 w-4" />
                 Tabelle
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/leagues/${id}/playoffs`}>
+                <Trophy className="mr-1 h-4 w-4" />
+                Playoffs
               </Link>
             </Button>
             {isAdmin && league.status === "ACTIVE" && !scheduleStatus.hasCompletedMatchups && (

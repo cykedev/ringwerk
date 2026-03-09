@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { Plus, Archive, BarChart2, CalendarDays, CheckCircle, Users } from "lucide-react"
+import { Plus, Archive, BarChart2, CalendarDays, CheckCircle, Trophy, Users } from "lucide-react"
 import { getAuthSession } from "@/lib/auth-helpers"
 import { getLeaguesForManagement } from "@/lib/leagues/queries"
 import { LeagueActions } from "@/components/app/leagues/LeagueActions"
@@ -78,6 +78,10 @@ export default async function LeaguesPage() {
                       <BarChart2 className="h-3.5 w-3.5" />
                       Tabelle
                     </Link>
+                    <Link href={`/leagues/${l.id}/playoffs`} className={NAV_LINK}>
+                      <Trophy className="h-3.5 w-3.5" />
+                      Playoffs
+                    </Link>
                   </div>
                   <p className="text-xs text-muted-foreground/70">
                     Hinrunde bis {formatDate(l.firstLegDeadline, tz)} · Rückrunde bis{" "}
@@ -123,6 +127,10 @@ export default async function LeaguesPage() {
                       <Link href={`/leagues/${l.id}/standings`} className={NAV_LINK}>
                         <BarChart2 className="h-3.5 w-3.5" />
                         Tabelle
+                      </Link>
+                      <Link href={`/leagues/${l.id}/playoffs`} className={NAV_LINK}>
+                        <Trophy className="h-3.5 w-3.5" />
+                        Playoffs
                       </Link>
                     </div>
                   </div>

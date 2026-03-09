@@ -338,9 +338,11 @@ model PlayoffDuelResult {
   participantId String
   participant   Participant @relation(fields: [participantId], references: [id])
   shots         Json?
-  totalRings    Decimal     @db.Decimal(5, 1)
-  teiler        Decimal     @db.Decimal(6, 1)
-  ringteiler    Decimal     @db.Decimal(7, 1)
+  totalRings    Decimal      @db.Decimal(5, 1)
+  // Finale: Einzelschüsse ohne Teiler → nullable
+  teiler        Decimal?     @db.Decimal(6, 1)
+  // Finale: kein Ringteiler berechnet → nullable
+  ringteiler    Decimal?     @db.Decimal(7, 1)
   importSource  ImportSource @default(MANUAL)
   recordedByUserId String
   recordedBy       User    @relation(fields: [recordedByUserId], references: [id])
