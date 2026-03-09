@@ -1,12 +1,14 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
-import { ArrowLeft, BarChart2, Trophy, Users } from "lucide-react"
+import { ArrowLeft, Trophy, Users } from "lucide-react"
 import { getAuthSession } from "@/lib/auth-helpers"
 import { getLeagueById } from "@/lib/leagues/queries"
 import { getMatchupsForLeague, getScheduleStatus } from "@/lib/matchups/queries"
 import { hasPlayoffsStarted } from "@/lib/playoffs/queries"
+import { getStandingsForLeague } from "@/lib/standings/queries"
 import { GenerateScheduleButton } from "@/components/app/matchups/GenerateScheduleButton"
 import { ScheduleView } from "@/components/app/matchups/ScheduleView"
+import { StandingsTable } from "@/components/app/standings/StandingsTable"
 import { Button } from "@/components/ui/button"
 
 interface Props {
@@ -16,13 +18,16 @@ interface Props {
 export default async function LeagueSchedulePage({ params }: Props) {
   const { id } = await params
 
-  const [session, league, matchups, scheduleStatus, playoffsStarted] = await Promise.all([
-    getAuthSession(),
-    getLeagueById(id),
-    getMatchupsForLeague(id),
-    getScheduleStatus(id),
-    hasPlayoffsStarted(id),
-  ])
+  const [session, league, matchups, scheduleStatus, playoffsStarted, standings] = await Promise.all(
+    [
+      getAuthSession(),
+      getLeagueById(id),
+      getMatchupsForLeague(id),
+      getScheduleStatus(id),
+      hasPlayoffsStarted(id),
+      getStandingsForLeague(id),
+    ]
+  )
 
   if (!session) redirect("/login")
   if (!league) notFound()
@@ -43,7 +48,7 @@ export default async function LeagueSchedulePage({ params }: Props) {
           <div>
             <h1 className="text-2xl font-semibold">{league.name}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              {league.discipline.name} · Spielplan
+              {league.discipline.name} · Spielplan & Tabelle
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -55,12 +60,6 @@ export default async function LeagueSchedulePage({ params }: Props) {
                 </Link>
               </Button>
             )}
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/leagues/${id}/standings`}>
-                <BarChart2 className="mr-1 h-4 w-4" />
-                Tabelle
-              </Link>
-            </Button>
             <Button asChild variant="outline" size="sm">
               <Link href={`/leagues/${id}/playoffs`}>
                 <Trophy className="mr-1 h-4 w-4" />
@@ -91,6 +90,14 @@ export default async function LeagueSchedulePage({ params }: Props) {
         isAdmin={isAdmin}
         playoffsStarted={playoffsStarted}
       />
+
+      {/* Tabelle */}
+      {standings.length > 0 && (
+        <div className="space-y-3 pt-2">
+          <h2 className="text-base font-semibold">Tabelle</h2>
+          <StandingsTable rows={standings} />
+        </div>
+      )}
     </div>
   )
 }

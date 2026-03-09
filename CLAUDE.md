@@ -20,6 +20,33 @@ Vereinsinterne Liga-Verwaltungs-App für 1-gegen-1 Schützenwettkämpfe.
 
 ---
 
+## Agents & Commands
+
+### Agents (`.claude/agents/`) — isolierter Kontext, parallel einsetzbar
+
+| Agent              | Wann einsetzen                                                                       |
+| ------------------ | ------------------------------------------------------------------------------------ |
+| `plan-change`      | ⛔ **Pflicht** vor jeder Änderung an einem bestehenden Feature – auf Bericht warten  |
+| `schema-guard`     | ⛔ **Pflicht** vor jeder Prisma-Migration – auf Bericht warten, dann erst `/migrate` |
+| `feature-scaffold` | Neues Feature beginnen – alle Layer-Skelette generieren (Schritte 3–8)               |
+| `action-audit`     | Nach neuen Actions oder als Qualitätscheck (Auth-Pattern)                            |
+| `test-scaffold`    | Nach neuer `calculate*.ts` oder `actions.ts` – Tests generieren                      |
+| `prettier-fix`     | Nach jeder Dateiänderung starten – vor `/check`                                      |
+| `docs-sync`        | Nach Feature-Abschluss starten – README + docs/ aktuell halten                       |
+
+### Commands (`.claude/commands/`) — laufen im Hauptkontext
+
+| Command          | Wann einsetzen                                           |
+| ---------------- | -------------------------------------------------------- |
+| `check`          | Vor jedem Commit – alle 4 Gates: Lint, Format, Test, TSC |
+| `test`           | Schneller Feedback-Loop während Entwicklung              |
+| `migrate <name>` | Nach Schema-Änderung in `prisma/schema.prisma`           |
+| `commit-msg`     | Commit-Message aus Diff generieren                       |
+| `seed`           | Nach `db-reset` – Admin + Systemdisziplinen anlegen      |
+| `db-reset`       | Dev-DB vollständig zurücksetzen                          |
+
+---
+
 ## Workflow
 
 ### 1. Plan zuerst
@@ -28,14 +55,14 @@ Vereinsinterne Liga-Verwaltungs-App für 1-gegen-1 Schützenwettkämpfe.
 - Plan nach `tasks/todo.md` schreiben mit abhakbaren Items, vor Implementierung kurz bestätigen lassen
 - Bei unerwartetem Verhalten: sofort stoppen, neu planen – nicht weiter drücken
 - Planmodus auch für Verifikation nutzen, nicht nur für Entwicklung
-- **Änderung an bestehendem Feature?** → immer zuerst `plan-change`-Agent einsetzen
+- **Änderung an bestehendem Feature?** → ⛔ STOPP: `plan-change`-Agent starten, auf Bericht warten, dann erst implementieren
 
 ### 2. Subagenten einsetzen
 
 - Exploration, Recherche und parallele Analyse an Subagenten auslagern
 - Hauptkontext sauber halten – ein Thema pro Subagent
 - Bei komplexen Problemen: mehr Compute via Subagenten
-- **Verfügbare Agents:** siehe Tabelle am Ende – proaktiv einsetzen, nicht nur auf Anfrage
+- **Verfügbare Agents:** Tabelle direkt oben – proaktiv einsetzen, nicht nur auf Anfrage
 
 ### 3. Selbst-Verbesserung
 
@@ -117,7 +144,7 @@ Bei Implementierungen immer zuerst treffsicher als Vorlage konsultieren:
 - Neuer Agent → in der Agents-Tabelle in CLAUDE.md und README ergänzen
 
 Faustregel: Wenn ein neuer Entwickler nach dem README die App nicht zum Laufen bringen kann, ist es nicht aktuell genug.
-→ Nach Feature-Abschluss: `docs-sync`-Agent einsetzen.
+→ Nach Feature-Abschluss: `docs-sync`-Agent starten.
 
 ---
 
@@ -125,44 +152,18 @@ Faustregel: Wenn ein neuer Entwickler nach dem README die App nicht zum Laufen b
 
 Reihenfolge für jedes neue Feature (niemals überspringen):
 
-1. **Schema** → `prisma/schema.prisma` ergänzen (model + enum) — vorher `schema-guard`-Agent
-2. **Migration** → `migrate`-Command ausführen
+1. **Schema** → `prisma/schema.prisma` ergänzen (model + enum)
+   ⛔ STOPP: `schema-guard`-Agent starten – auf Bericht warten – dann erst weiter
+2. **Migration** → `/migrate`-Command ausführen
 3. **Types** → `src/lib/<feature>/types.ts`
 4. **Queries** → `src/lib/<feature>/queries.ts` (nur Lesen, keine Mutationen)
 5. **Actions** → `src/lib/<feature>/actions.ts` (Auth → Rolle → Validierung → DB)
-6. **Berechnung** → `src/lib/<feature>/calculate*.ts` + Tests — `test-scaffold`-Agent einsetzen
+6. **Berechnung** → `src/lib/<feature>/calculate*.ts` – `test-scaffold`-Agent starten
 7. **Komponenten** → `src/components/app/<feature>/`
 8. **Page** → `src/app/(app)/<route>/page.tsx` (dünner Orchestrator)
-9. **Format** → `prettier-fix`-Agent einsetzen
-10. **Verifikation** → `check`-Command (Lint + Format + Test + TSC)
-11. **Docs** → `docs-sync`-Agent einsetzen
+9. **Format** → `prettier-fix`-Agent starten – auf Abschluss warten
+10. **Verifikation** → `/check`-Command (Lint + Format + Test + TSC) – alle Gates grün
+11. **Docs** → `docs-sync`-Agent starten
 
-**Neues Feature beginnen?** → `feature-scaffold`-Agent für Schritte 3–8.
-**Bestehendes Feature ändern?** → `plan-change`-Agent **vor** Schritt 1.
-
----
-
-## Agents & Commands
-
-### Agents (`.claude/agents/`) — isolierter Kontext, parallel einsetzbar
-
-| Agent              | Wann einsetzen                                              |
-| ------------------ | ----------------------------------------------------------- |
-| `plan-change`      | **Pflicht** vor jeder Änderung an einem bestehenden Feature |
-| `feature-scaffold` | Neues Feature beginnen – generiert alle Layer-Skelette      |
-| `action-audit`     | Nach neuen Actions oder als Qualitätscheck (Auth-Pattern)   |
-| `schema-guard`     | **Pflicht** vor jeder Prisma-Migration                      |
-| `test-scaffold`    | Neue `calculate*.ts` oder `actions.ts` braucht Tests        |
-| `prettier-fix`     | Nach jeder neuen/geänderten Datei, vor `check`              |
-| `docs-sync`        | Nach Feature-Abschluss – README + docs/ aktuell halten      |
-
-### Commands (`.claude/commands/`) — laufen im Hauptkontext
-
-| Command          | Wann einsetzen                                           |
-| ---------------- | -------------------------------------------------------- |
-| `check`          | Vor jedem Commit – alle 4 Gates: Lint, Format, Test, TSC |
-| `test`           | Schneller Feedback-Loop während Entwicklung              |
-| `migrate <name>` | Nach Schema-Änderung in `prisma/schema.prisma`           |
-| `commit-msg`     | Commit-Message aus Diff generieren                       |
-| `seed`           | Nach `db-reset` – Admin + Systemdisziplinen anlegen      |
-| `db-reset`       | Dev-DB vollständig zurücksetzen                          |
+**Neues Feature beginnen?** → ⛔ `feature-scaffold`-Agent für Schritte 3–8 starten.
+**Bestehendes Feature ändern?** → ⛔ STOPP: `plan-change`-Agent **vor** Schritt 1 starten, auf Bericht warten.

@@ -182,13 +182,13 @@ Halbfinale: bester verbleibender Gruppenplatz vs. schlechtester usw.
 
 Alle Disziplinen am selben Finalabend, separat gewertet.
 
-| Regel            | Wert                                                                  |
-| ---------------- | --------------------------------------------------------------------- |
-| Einrichtungszeit | 3 Minuten                                                             |
-| Probeschuss      | Keiner                                                                |
-| Ansage           | Jeder Schuss einzeln                                                  |
-| Zeit pro Schuss  | 75 Sekunden                                                           |
-| Wertung          | Nur Gesamtringe (kein Teiler im Finale); höchste Ringzahl gewinnt     |
+| Regel            | Wert                                                                      |
+| ---------------- | ------------------------------------------------------------------------- |
+| Einrichtungszeit | 3 Minuten                                                                 |
+| Probeschuss      | Keiner                                                                    |
+| Ansage           | Jeder Schuss einzeln                                                      |
+| Zeit pro Schuss  | 75 Sekunden                                                               |
+| Wertung          | Nur Gesamtringe (kein Teiler im Finale); höchste Ringzahl gewinnt         |
 | Gleichstand      | Automatisches Sudden-Death-Duell (weiteres 10-Schuss-Duell) bis Entscheid |
 
 - Finale-Modus separat im System abbilden

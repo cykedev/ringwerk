@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
-import { ArrowLeft, CalendarDays, BarChart2, Trophy } from "lucide-react"
+import { ArrowLeft, CalendarDays, Trophy, Users } from "lucide-react"
 import { getAuthSession } from "@/lib/auth-helpers"
 import { getLeagueById } from "@/lib/leagues/queries"
 import { getPlayoffBracket } from "@/lib/playoffs/queries"
@@ -75,16 +75,18 @@ export default async function LeaguePlayoffsPage({ params }: Props) {
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/leagues/${id}/standings`}>
-                <BarChart2 className="mr-1 h-4 w-4" />
-                Tabelle
-              </Link>
-            </Button>
+            {isAdmin && (
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/leagues/${id}/participants`}>
+                  <Users className="mr-1 h-4 w-4" />
+                  Teilnehmer
+                </Link>
+              </Button>
+            )}
             <Button asChild variant="outline" size="sm">
               <Link href={`/leagues/${id}/schedule`}>
                 <CalendarDays className="mr-1 h-4 w-4" />
-                Spielplan
+                Spielplan & Tabelle
               </Link>
             </Button>
           </div>

@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { BarChart2, CalendarDays, Trophy } from "lucide-react"
+import { Trophy } from "lucide-react"
 import { getAuthSession } from "@/lib/auth-helpers"
 import { getLeaguesForManagement } from "@/lib/leagues/queries"
 import { getStandingsForLeague } from "@/lib/standings/queries"
@@ -40,54 +40,47 @@ export default async function DashboardPage() {
         </p>
       ) : (
         <div className="space-y-10">
-          {dataPerLeague.map(({ league, standings, bracket }) => (
-            <div key={league.id} className="space-y-3">
-              <div className="flex items-center justify-between gap-4">
+          {dataPerLeague.map(({ league, standings, bracket }) => {
+            const playoffsStarted =
+              bracket.quarterFinals.length + bracket.semiFinals.length > 0 || bracket.final !== null
+
+            return (
+              <div key={league.id} className="space-y-3">
+                {/* Liga-Titel */}
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-lg font-semibold">{league.name}</h2>
                   <Badge variant="secondary" className="text-xs">
                     {league.discipline.name}
                   </Badge>
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  <Button asChild variant="ghost" size="sm">
-                    <Link href={`/leagues/${league.id}/schedule`}>
-                      <CalendarDays className="mr-1 h-4 w-4" />
-                      Spielplan
-                    </Link>
-                  </Button>
-                  <Button asChild variant="ghost" size="sm">
-                    <Link href={`/leagues/${league.id}/standings`}>
-                      <BarChart2 className="mr-1 h-4 w-4" />
-                      Tabelle
-                    </Link>
-                  </Button>
-                </div>
+
+                {/* Inhalt: Playoffs → nur Bracket; davor → Tabelle */}
+                {playoffsStarted ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5 text-sm font-semibold">
+                      <Trophy className="h-4 w-4 text-muted-foreground" />
+                      Playoffs
+                    </div>
+                    <PlayoffBracket bracket={bracket} isAdmin={false} compact={true} />
+                    <div className="flex justify-end">
+                      <Button asChild variant="outline" size="sm">
+                        <Link href={`/leagues/${league.id}/playoffs`}>Details →</Link>
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <StandingsTable rows={standings} />
+                    <div className="flex justify-end">
+                      <Button asChild variant="outline" size="sm">
+                        <Link href={`/leagues/${league.id}/schedule`}>Details →</Link>
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
-
-              <StandingsTable rows={standings} />
-
-              {(bracket.quarterFinals.length > 0 || bracket.semiFinals.length > 0) && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-1.5 text-sm font-semibold">
-                    <Trophy className="h-4 w-4 text-muted-foreground" />
-                    Playoffs
-                  </div>
-                  <PlayoffBracket bracket={bracket} isAdmin={false} compact={true} />
-                  <div className="flex justify-end">
-                    <Button
-                      asChild
-                      variant="ghost"
-                      size="sm"
-                      className="h-auto px-1 py-0 text-xs text-muted-foreground"
-                    >
-                      <Link href={`/leagues/${league.id}/playoffs`}>Details →</Link>
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

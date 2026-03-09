@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
-import { ArrowLeft, CalendarDays, UserMinus } from "lucide-react"
+import { ArrowLeft, CalendarDays, Trophy, UserMinus } from "lucide-react"
 import { getAuthSession } from "@/lib/auth-helpers"
 import { getLeagueById } from "@/lib/leagues/queries"
 import { getLeagueParticipants } from "@/lib/leagueParticipants/queries"
@@ -56,12 +56,20 @@ export default async function LeagueParticipantsPage({ params }: Props) {
               {league.discipline.name} · Teilnehmerverwaltung
             </p>
           </div>
-          <Button asChild variant="outline" size="sm" className="shrink-0">
-            <Link href={`/leagues/${id}/schedule`}>
-              <CalendarDays className="mr-1 h-4 w-4" />
-              Spielplan
-            </Link>
-          </Button>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/leagues/${id}/schedule`}>
+                <CalendarDays className="mr-1 h-4 w-4" />
+                Spielplan & Tabelle
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/leagues/${id}/playoffs`}>
+                <Trophy className="mr-1 h-4 w-4" />
+                Playoffs
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
 

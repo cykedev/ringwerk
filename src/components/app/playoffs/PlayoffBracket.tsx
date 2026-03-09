@@ -33,9 +33,9 @@ function BracketSlot({ match }: { match?: PlayoffMatchItem }) {
     return (
       <div
         style={{ height: SLOT_H, width: SLOT_W }}
-        className="flex items-center justify-center rounded-lg border border-dashed border-border/40 text-[10px] text-muted-foreground/60"
+        className="flex items-center justify-center rounded-lg border border-dashed text-xs text-muted-foreground/50"
       >
-        ausstehend
+        Ausstehend
       </div>
     )
   }

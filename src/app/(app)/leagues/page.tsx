@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { Plus, Archive, BarChart2, CalendarDays, CheckCircle, Trophy, Users } from "lucide-react"
+import { Plus, Archive, CalendarDays, CheckCircle, Trophy, Users } from "lucide-react"
 import { getAuthSession } from "@/lib/auth-helpers"
 import { getLeaguesForManagement } from "@/lib/leagues/queries"
 import { LeagueActions } from "@/components/app/leagues/LeagueActions"
@@ -72,11 +72,7 @@ export default async function LeaguesPage() {
                     )}
                     <Link href={`/leagues/${l.id}/schedule`} className={NAV_LINK}>
                       <CalendarDays className="h-3.5 w-3.5" />
-                      Spielplan
-                    </Link>
-                    <Link href={`/leagues/${l.id}/standings`} className={NAV_LINK}>
-                      <BarChart2 className="h-3.5 w-3.5" />
-                      Tabelle
+                      Spielplan & Tabelle
                     </Link>
                     <Link href={`/leagues/${l.id}/playoffs`} className={NAV_LINK}>
                       <Trophy className="h-3.5 w-3.5" />
@@ -122,11 +118,7 @@ export default async function LeaguesPage() {
                       )}
                       <Link href={`/leagues/${l.id}/schedule`} className={NAV_LINK}>
                         <CalendarDays className="h-3.5 w-3.5" />
-                        Spielplan
-                      </Link>
-                      <Link href={`/leagues/${l.id}/standings`} className={NAV_LINK}>
-                        <BarChart2 className="h-3.5 w-3.5" />
-                        Tabelle
+                        Spielplan & Tabelle
                       </Link>
                       <Link href={`/leagues/${l.id}/playoffs`} className={NAV_LINK}>
                         <Trophy className="h-3.5 w-3.5" />

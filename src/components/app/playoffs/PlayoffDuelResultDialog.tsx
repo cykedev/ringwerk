@@ -128,9 +128,8 @@ export function PlayoffDuelResultDialog({
     <Dialog open={open} onOpenChange={handleOpen}>
       <DialogTrigger asChild>
         {isCorrection ? (
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs">
-            <Pencil className="mr-1 h-3 w-3" />
-            Korrigieren
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+            <Pencil className="h-3 w-3" />
           </Button>
         ) : (
           <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
