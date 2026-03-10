@@ -217,7 +217,7 @@ Alle Disziplinen am selben Finalabend, separat gewertet.
 - Verlaufsanzeige: Punkteentwicklung je Teilnehmer (Liniendiagramm)
 - Paarungsplan: kalender- oder listenbasiert, offen/abgeschlossen
 - Profil-Seite je Teilnehmer: alle Duelle, Ergebnisse, Statistiken
-- Export: Ligatabelle als druckoptimiertes PDF (für Aushang)
+- Export: Spielplan + Tabelle als druckoptimiertes PDF (`src/lib/pdf/SchedulePdf.tsx`); Playoffs-PDF separat (`PlayoffsPdf.tsx`)
 
 ---
 

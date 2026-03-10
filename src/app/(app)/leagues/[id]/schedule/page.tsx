@@ -9,6 +9,7 @@ import { getStandingsForLeague } from "@/lib/standings/queries"
 import { GenerateScheduleButton } from "@/components/app/matchups/GenerateScheduleButton"
 import { ScheduleView } from "@/components/app/matchups/ScheduleView"
 import { StandingsTable } from "@/components/app/standings/StandingsTable"
+import { PdfDownloadButton } from "@/components/app/shared/PdfDownloadButton"
 import { Button } from "@/components/ui/button"
 
 interface Props {
@@ -66,6 +67,9 @@ export default async function LeagueSchedulePage({ params }: Props) {
                 Playoffs
               </Link>
             </Button>
+            {scheduleStatus.hasSchedule && (
+              <PdfDownloadButton href={`/api/leagues/${id}/pdf/schedule`} />
+            )}
             {isAdmin && league.status === "ACTIVE" && !scheduleStatus.hasCompletedMatchups && (
               <GenerateScheduleButton leagueId={id} hasSchedule={scheduleStatus.hasSchedule} />
             )}

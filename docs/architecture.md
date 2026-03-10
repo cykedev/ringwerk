@@ -141,6 +141,10 @@ src/
       actions.ts              ← Nutzer anlegen, bearbeiten, Passwort-Reset
       queries.ts
       types.ts
+    pdf/
+      styles.ts               ← Gemeinsames StyleSheet + Farbkonstanten (react-pdf)
+      SchedulePdf.tsx         ← PDF: Spielplan (Hin-/Rückrunde) + Tabelle
+      PlayoffsPdf.tsx         ← PDF: Playoff-Bracket-Ausdruck
   types/
     next-auth.d.ts            ← NextAuth Module Augmentation
   generated/
