@@ -55,7 +55,11 @@ Ausnahme: Ligen-Karten (`LeagueActions`) mit vielen status-abhängigen Optionen 
 ```tsx
 <AlertDialog>
   <AlertDialogTrigger asChild>
-    <Button variant="ghost" size="icon" className="h-10 w-10 text-destructive/70 hover:text-destructive">
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-10 w-10 text-destructive/70 hover:text-destructive"
+    >
       <Trash2 className="h-4 w-4" />
     </Button>
   </AlertDialogTrigger>
@@ -151,11 +155,11 @@ Opacity-Werte: `opacity-60` (inaktiv/deaktiviert), `opacity-70` (zurückgezogen)
 
 **Immer** zwei Sektionen wenn ein Status existiert — nie nur einen Badge in der gleichen Liste:
 
-| Sektion | Klassen | Textdarstellung |
-|---|---|---|
-| Aktiv | `rounded-lg border bg-card` | normal |
+| Sektion             | Klassen                                | Textdarstellung                      |
+| ------------------- | -------------------------------------- | ------------------------------------ |
+| Aktiv               | `rounded-lg border bg-card`            | normal                               |
 | Inaktiv/Deaktiviert | `rounded-lg border bg-card opacity-60` | `line-through text-muted-foreground` |
-| Zurückgezogen | `rounded-lg border bg-card opacity-70` | `line-through text-muted-foreground` |
+| Zurückgezogen       | `rounded-lg border bg-card opacity-70` | `line-through text-muted-foreground` |
 
 **Referenz:** `src/app/(app)/participants/page.tsx` (Teilnehmer), `src/app/(app)/admin/users/page.tsx` (Nutzer)
 
@@ -186,15 +190,15 @@ className={`px-2 py-3 sm:px-4 ${homeOutcome === "WIN" && !isVoid ? "bg-emerald-5
 
 ## Farbpalette (Bedeutungsträger)
 
-| Farbe | Token / Klasse | Bedeutung |
-|---|---|---|
-| Grün | `bg-emerald-500/10`, `text-emerald-400` | Sieg, abgeschlossen |
-| Gelb | `ring-yellow-400`, `bg-yellow-400/15` | Platz 1 |
-| Grau/Silber | `ring-slate-400`, `bg-slate-400/15` | Platz 2 |
-| Orange | `ring-orange-500`, `bg-orange-500/15` | Platz 3 |
-| Amber | `text-amber-400` | Unentschieden |
+| Farbe       | Token / Klasse                               | Bedeutung                   |
+| ----------- | -------------------------------------------- | --------------------------- |
+| Grün        | `bg-emerald-500/10`, `text-emerald-400`      | Sieg, abgeschlossen         |
+| Gelb        | `ring-yellow-400`, `bg-yellow-400/15`        | Platz 1                     |
+| Grau/Silber | `ring-slate-400`, `bg-slate-400/15`          | Platz 2                     |
+| Orange      | `ring-orange-500`, `bg-orange-500/15`        | Platz 3                     |
+| Amber       | `text-amber-400`                             | Unentschieden               |
 | Destructive | `text-destructive/70 hover:text-destructive` | Löschen, gefährliche Aktion |
-| Muted | `bg-muted/40` (thead), `bg-muted/20` (hover) | Neutrale Hintergründe |
+| Muted       | `bg-muted/40` (thead), `bg-muted/20` (hover) | Neutrale Hintergründe       |
 
 ---
 
@@ -218,7 +222,10 @@ Page-Header-Pattern:
     <p className="mt-1 text-sm text-muted-foreground">Beschreibung</p>
   </div>
   <Button asChild size="sm" className="self-start">
-    <Link href="/..."><Plus className="mr-1 h-4 w-4" />Neu</Link>
+    <Link href="/...">
+      <Plus className="mr-1 h-4 w-4" />
+      Neu
+    </Link>
   </Button>
 </div>
 ```

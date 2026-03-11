@@ -253,16 +253,16 @@ Gilt für alle Datenobjekte mit abhängigen Daten:
 - Alle sicherheitsrelevanten und verwaltungsrelevanten Aktionen werden automatisch protokolliert
 - Protokollierte Ereignisse (8 Typen):
 
-| Ereignis                   | Auslöser                                                     |
-| -------------------------- | ------------------------------------------------------------ |
-| `PARTICIPANT_WITHDRAWN`    | Rückzug eines Teilnehmers                                    |
-| `WITHDRAWAL_REVOKED`       | Rückzug rückgängig gemacht                                   |
-| `RESULT_ENTERED`           | Gruppenphase-Ergebnis erstmalig eingetragen                  |
-| `RESULT_CORRECTED`         | Gruppenphase-Ergebnis nachträglich korrigiert                |
-| `PLAYOFFS_STARTED`         | Playoff-Phase gestartet                                      |
-| `PLAYOFF_RESULT_ENTERED`   | Playoff-Duell-Ergebnis eingetragen                           |
-| `PLAYOFF_RESULT_CORRECTED` | Playoff-Duell-Ergebnis korrigiert                            |
-| `PLAYOFF_DUEL_DELETED`     | Playoff-Duell gelöscht                                       |
+| Ereignis                   | Auslöser                                      |
+| -------------------------- | --------------------------------------------- |
+| `PARTICIPANT_WITHDRAWN`    | Rückzug eines Teilnehmers                     |
+| `WITHDRAWAL_REVOKED`       | Rückzug rückgängig gemacht                    |
+| `RESULT_ENTERED`           | Gruppenphase-Ergebnis erstmalig eingetragen   |
+| `RESULT_CORRECTED`         | Gruppenphase-Ergebnis nachträglich korrigiert |
+| `PLAYOFFS_STARTED`         | Playoff-Phase gestartet                       |
+| `PLAYOFF_RESULT_ENTERED`   | Playoff-Duell-Ergebnis eingetragen            |
+| `PLAYOFF_RESULT_CORRECTED` | Playoff-Duell-Ergebnis korrigiert             |
+| `PLAYOFF_DUEL_DELETED`     | Playoff-Duell gelöscht                        |
 
 - Jeder Eintrag enthält: Ereignistyp, Liga-Referenz (`leagueId`), betroffene Entität, auslösender User, Zeitstempel, strukturierte Details (JSON)
 - Teilnehmer-Namen werden zum Schreibzeitpunkt im Details-JSON gespeichert (`homeName`/`awayName` für Gruppenphase, `nameA`/`nameB` für Playoffs)
