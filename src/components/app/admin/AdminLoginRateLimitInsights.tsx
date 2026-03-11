@@ -5,12 +5,9 @@ interface Props {
   insights: AdminLoginRateLimitInsights
 }
 
-function formatDate(date: Date | null): string {
+function formatTime(date: Date | null): string {
   if (!date) return "—"
   return new Intl.DateTimeFormat("de-CH", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
@@ -41,8 +38,8 @@ function BucketTable({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-[880px] w-full text-sm">
+    <div>
+      <table className="w-full text-sm">
         <thead>
           <tr className="border-b text-left text-muted-foreground">
             <th className="pb-2 pr-4 font-medium">Typ</th>
@@ -67,13 +64,13 @@ function BucketTable({
               <td className="py-2 pr-4">
                 <span className="tabular-nums">{formatCount(bucket.attempts)}</span>
               </td>
-              <td className="py-2 pr-4 text-muted-foreground">
-                {formatDate(bucket.windowStartedAt)}
+              <td className="py-2 pr-4 tabular-nums text-muted-foreground">
+                {formatTime(bucket.windowStartedAt)}
               </td>
-              <td className="py-2 pr-4 text-muted-foreground">
-                {formatDate(bucket.lastAttemptAt)}
+              <td className="py-2 pr-4 tabular-nums text-muted-foreground">
+                {formatTime(bucket.lastAttemptAt)}
               </td>
-              <td className="py-2 text-muted-foreground">{formatDate(bucket.blockedUntil)}</td>
+              <td className="py-2 tabular-nums text-muted-foreground">{formatTime(bucket.blockedUntil)}</td>
             </tr>
           ))}
         </tbody>

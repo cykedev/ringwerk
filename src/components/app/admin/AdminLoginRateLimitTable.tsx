@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import { LockOpen } from "lucide-react"
 import type { AdminLoginRateLimitBucket } from "@/lib/admin/types"
 import { clearLoginRateLimitBucket } from "@/lib/admin/actions"
 import {
@@ -22,12 +23,9 @@ interface Props {
   buckets: AdminLoginRateLimitBucket[]
 }
 
-function formatDate(date: Date | null): string {
+function formatTime(date: Date | null): string {
   if (!date) return "—"
   return new Intl.DateTimeFormat("de-CH", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
@@ -76,51 +74,62 @@ export function AdminLoginRateLimitTable({ buckets }: Props) {
       <div className="space-y-2 md:hidden">
         {buckets.map((bucket) => (
           <Card key={bucket.key}>
-            <CardContent className="space-y-3 py-4">
-              <div className="space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline" className={getTypeBadgeClass(bucket.type)}>
-                    {bucket.type}
-                  </Badge>
-                  <p className="text-xs text-muted-foreground">
-                    Fehlversuche: {formatCount(bucket.attempts)}
-                  </p>
+            <CardContent className="py-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className={getTypeBadgeClass(bucket.type)}>
+                      {bucket.type}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {formatCount(bucket.attempts)} Versuche
+                    </span>
+                  </div>
+                  <p className="break-all text-sm">{bucket.identifier}</p>
                 </div>
-                <p className="break-all text-sm">{bucket.identifier}</p>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 shrink-0 text-destructive/70 hover:text-destructive"
+                  disabled={pending}
+                  onClick={() => setClearCandidate(bucket)}
+                  title="Entsperren"
+                >
+                  <LockOpen className="h-4 w-4" />
+                </Button>
               </div>
-
-              <div className="space-y-1 text-xs text-muted-foreground">
-                <p>Fenster seit: {formatDate(bucket.windowStartedAt)}</p>
-                <p>Letzter Versuch: {formatDate(bucket.lastAttemptAt)}</p>
-                <p>Blockiert bis: {formatDate(bucket.blockedUntil)}</p>
+              <div className="mt-2 grid grid-cols-3 gap-1 text-xs text-muted-foreground">
+                <div>
+                  <p className="font-medium">Seit</p>
+                  <p className="tabular-nums">{formatTime(bucket.windowStartedAt)}</p>
+                </div>
+                <div>
+                  <p className="font-medium">Letzter</p>
+                  <p className="tabular-nums">{formatTime(bucket.lastAttemptAt)}</p>
+                </div>
+                <div>
+                  <p className="font-medium">Bis</p>
+                  <p className="tabular-nums">{formatTime(bucket.blockedUntil)}</p>
+                </div>
               </div>
-
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={pending}
-                onClick={() => setClearCandidate(bucket)}
-              >
-                Entsperren
-              </Button>
             </CardContent>
           </Card>
         ))}
       </div>
 
       {/* Desktop: Tabelle */}
-      <div className="hidden overflow-x-auto md:block">
-        <table className="min-w-[860px] w-full text-sm">
+      <div className="hidden md:block">
+        <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left text-muted-foreground">
               <th className="pb-2 pr-4 font-medium">Typ</th>
               <th className="pb-2 pr-4 font-medium">Identifikator</th>
-              <th className="pb-2 pr-4 font-medium">Fehlversuche</th>
-              <th className="pb-2 pr-4 font-medium">Fenster seit</th>
-              <th className="pb-2 pr-4 font-medium">Letzter Versuch</th>
-              <th className="pb-2 pr-4 font-medium">Blockiert bis</th>
-              <th className="pb-2 font-medium">Aktion</th>
+              <th className="pb-2 pr-4 font-medium">Versuche</th>
+              <th className="pb-2 pr-4 font-medium">Seit</th>
+              <th className="pb-2 pr-4 font-medium">Letzter</th>
+              <th className="pb-2 pr-4 font-medium">Bis</th>
+              <th className="pb-2 font-medium"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/50">
@@ -131,30 +140,32 @@ export function AdminLoginRateLimitTable({ buckets }: Props) {
                     {bucket.type}
                   </Badge>
                 </td>
-                <td className="max-w-[300px] py-2 pr-4">
+                <td className="max-w-[260px] py-2 pr-4">
                   <p className="break-all">{bucket.identifier}</p>
                 </td>
                 <td className="py-2 pr-4">
                   <span className="tabular-nums">{formatCount(bucket.attempts)}</span>
                 </td>
-                <td className="py-2 pr-4 text-muted-foreground">
-                  {formatDate(bucket.windowStartedAt)}
+                <td className="py-2 pr-4 tabular-nums text-muted-foreground">
+                  {formatTime(bucket.windowStartedAt)}
                 </td>
-                <td className="py-2 pr-4 text-muted-foreground">
-                  {formatDate(bucket.lastAttemptAt)}
+                <td className="py-2 pr-4 tabular-nums text-muted-foreground">
+                  {formatTime(bucket.lastAttemptAt)}
                 </td>
-                <td className="py-2 pr-4 text-muted-foreground">
-                  {formatDate(bucket.blockedUntil)}
+                <td className="py-2 pr-4 tabular-nums text-muted-foreground">
+                  {formatTime(bucket.blockedUntil)}
                 </td>
                 <td className="py-2">
                   <Button
                     type="button"
-                    size="sm"
-                    variant="outline"
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 text-destructive/70 hover:text-destructive"
                     disabled={pending}
                     onClick={() => setClearCandidate(bucket)}
+                    title="Entsperren"
                   >
-                    Entsperren
+                    <LockOpen className="h-4 w-4" />
                   </Button>
                 </td>
               </tr>
