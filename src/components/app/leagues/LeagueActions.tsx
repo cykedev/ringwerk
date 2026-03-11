@@ -9,6 +9,7 @@ import {
   Archive,
   ArchiveRestore,
   RotateCcw,
+  ScrollText,
   Trash2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -60,11 +61,19 @@ export function LeagueActions({ league }: Props) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => router.push(`/leagues/${league.id}/audit-log`)}>
+          <ScrollText className="mr-2 h-4 w-4" />
+          Protokoll
+        </DropdownMenuItem>
+
         {league.status !== "ARCHIVED" && (
-          <DropdownMenuItem onClick={() => router.push(`/leagues/${league.id}/edit`)}>
-            <Pencil className="mr-2 h-4 w-4" />
-            Bearbeiten
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => router.push(`/leagues/${league.id}/edit`)}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Bearbeiten
+            </DropdownMenuItem>
+          </>
         )}
 
         {league.status === "ACTIVE" && (

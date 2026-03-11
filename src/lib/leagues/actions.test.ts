@@ -410,7 +410,7 @@ describe("forceDeleteLeague", () => {
     })
     expect(mockTx.matchup.deleteMany).toHaveBeenCalledWith({ where: { leagueId: "l1" } })
     expect(mockTx.auditLog.deleteMany).toHaveBeenCalledWith({
-      where: { entityId: { in: ["lp1", "lp2", "mu1", "mu2", "mr1"] } },
+      where: { leagueId: "l1" },
     })
     expect(mockTx.leagueParticipant.deleteMany).toHaveBeenCalledWith({
       where: { leagueId: "l1" },

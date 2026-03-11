@@ -155,6 +155,7 @@ model League {
   participants   LeagueParticipant[]
   matchups       Matchup[]
   playoffMatches PlayoffMatch[]
+  auditLogs      AuditLog[]
 
   @@index([status])
 }

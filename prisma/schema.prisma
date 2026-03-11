@@ -151,6 +151,7 @@ model League {
   participants   LeagueParticipant[]
   matchups       Matchup[]
   playoffMatches PlayoffMatch[]
+  auditLogs      AuditLog[]
 
   @@index([status])
 }
@@ -367,11 +368,15 @@ model AuditLog {
   entityId   String
   userId     String
   user       User     @relation(fields: [userId], references: [id])
+  // Optional: Liga-Bezug für einfache Filterung
+  leagueId   String?
+  league     League?  @relation(fields: [leagueId], references: [id])
   // Details: z.B. { before: {...}, after: {...}, reason: "..." }
   details    Json?
   createdAt  DateTime @default(now())
 
   @@index([entityType, entityId])
   @@index([userId])
+  @@index([leagueId])
   @@index([createdAt])
 }

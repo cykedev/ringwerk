@@ -156,9 +156,9 @@ export async function withdrawParticipant(
         entityType: "LEAGUE_PARTICIPANT",
         entityId: leagueParticipantId,
         userId: session.user.id,
+        leagueId: lp.leagueId,
         details: {
           participantId: lp.participantId,
-          leagueId: lp.leagueId,
           name: `${lp.participant.firstName} ${lp.participant.lastName}`,
           reason: parsed.data.reason ?? null,
           withdrawnAt: now.toISOString(),
@@ -211,9 +211,9 @@ export async function revokeWithdrawal(leagueParticipantId: string): Promise<Act
         entityType: "LEAGUE_PARTICIPANT",
         entityId: leagueParticipantId,
         userId: session.user.id,
+        leagueId: lp.leagueId,
         details: {
           participantId: lp.participantId,
-          leagueId: lp.leagueId,
           name: `${lp.participant.firstName} ${lp.participant.lastName}`,
         },
       },

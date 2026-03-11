@@ -64,6 +64,17 @@ export async function startPlayoffs(leagueId: string): Promise<ActionResult> {
         participantBId: m.participantBId,
       })),
     })
+
+    await db.auditLog.create({
+      data: {
+        eventType: "PLAYOFFS_STARTED",
+        entityType: "LEAGUE",
+        entityId: leagueId,
+        userId: session.user.id,
+        leagueId,
+        details: { participantCount: activeStandings.length },
+      },
+    })
   } catch (error) {
     console.error("Fehler beim Starten der Playoffs:", error)
     return { error: "Playoffs konnten nicht gestartet werden." }
@@ -111,7 +122,9 @@ export async function savePlayoffDuelResult(
           status: true,
           leagueId: true,
           participantAId: true,
+          participantA: { select: { firstName: true, lastName: true } },
           participantBId: true,
+          participantB: { select: { firstName: true, lastName: true } },
           league: { select: { discipline: { select: { scoringType: true } } } },
         },
       },
@@ -270,6 +283,28 @@ export async function savePlayoffDuelResult(
     return { error: "Ergebnis konnte nicht gespeichert werden." }
   }
 
+  await db.auditLog.create({
+    data: {
+      eventType: isCorrection ? "PLAYOFF_RESULT_CORRECTED" : "PLAYOFF_RESULT_ENTERED",
+      entityType: "PLAYOFF_DUEL",
+      entityId: input.duelId,
+      userId: session.user.id,
+      leagueId: match.leagueId,
+      details: {
+        duelId: input.duelId,
+        matchId: match.id,
+        round: match.round,
+        duelNumber: duel.duelNumber,
+        nameA: `${match.participantA.firstName} ${match.participantA.lastName}`,
+        nameB: `${match.participantB.firstName} ${match.participantB.lastName}`,
+        totalRingsA: input.totalRingsA,
+        teilerA: isFinal ? null : (input.teilerA ?? null),
+        totalRingsB: input.totalRingsB,
+        teilerB: isFinal ? null : (input.teilerB ?? null),
+      },
+    },
+  })
+
   // Nach der Transaktion: Folge-Aktionen
   if (outcome === "DRAW" && !isCorrection) {
     if (isFinal) {
@@ -313,7 +348,9 @@ export async function deleteLastPlayoffDuel(duelId: string): Promise<ActionResul
           winsB: true,
           leagueId: true,
           participantAId: true,
+          participantA: { select: { firstName: true, lastName: true } },
           participantBId: true,
+          participantB: { select: { firstName: true, lastName: true } },
         },
       },
       results: {
@@ -425,6 +462,32 @@ export async function deleteLastPlayoffDuel(duelId: string): Promise<ActionResul
         await tx.playoffMatch.delete({ where: { id: m.id } })
       }
     }
+  })
+
+  const deletedResultA = duel.results.find((r) => r.participantId === match.participantAId)
+  const deletedResultB = duel.results.find((r) => r.participantId === match.participantBId)
+
+  await db.auditLog.create({
+    data: {
+      eventType: "PLAYOFF_DUEL_DELETED",
+      entityType: "PLAYOFF_DUEL",
+      entityId: duel.id,
+      userId: session.user.id,
+      leagueId: match.leagueId,
+      details: {
+        duelId: duel.id,
+        matchId: match.id,
+        round: match.round,
+        duelNumber: duel.duelNumber,
+        nameA: `${match.participantA.firstName} ${match.participantA.lastName}`,
+        nameB: `${match.participantB.firstName} ${match.participantB.lastName}`,
+        wasCompleted: duel.isCompleted,
+        totalRingsA: deletedResultA?.totalRings.toNumber() ?? null,
+        teilerA: deletedResultA?.teiler?.toNumber() ?? null,
+        totalRingsB: deletedResultB?.totalRings.toNumber() ?? null,
+        teilerB: deletedResultB?.teiler?.toNumber() ?? null,
+      },
+    },
   })
 
   revalidatePath(`/leagues/${match.leagueId}/playoffs`)

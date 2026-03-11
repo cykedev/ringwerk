@@ -24,8 +24,11 @@ export async function saveMatchResult(
     select: {
       id: true,
       status: true,
+      round: true,
       homeParticipantId: true,
+      homeParticipant: { select: { firstName: true, lastName: true } },
       awayParticipantId: true,
+      awayParticipant: { select: { firstName: true, lastName: true } },
       leagueId: true,
       league: { select: { discipline: { select: { scoringType: true } } } },
       results: { select: { id: true } },
@@ -106,17 +109,24 @@ export async function saveMatchResult(
       })
     })
 
-    if (isCorrection) {
-      await db.auditLog.create({
-        data: {
-          eventType: "RESULT_CORRECTED",
-          entityType: "MATCHUP",
-          entityId: matchupId,
-          userId: session.user.id,
-          details: { matchupId },
+    await db.auditLog.create({
+      data: {
+        eventType: isCorrection ? "RESULT_CORRECTED" : "RESULT_ENTERED",
+        entityType: "MATCHUP",
+        entityId: matchupId,
+        userId: session.user.id,
+        leagueId: matchup.leagueId,
+        details: {
+          round: matchup.round,
+          homeName: `${matchup.homeParticipant.firstName} ${matchup.homeParticipant.lastName}`,
+          homeTotalRings: data.homeResult.totalRings,
+          homeTeiler: data.homeResult.teiler,
+          awayName: `${matchup.awayParticipant!.firstName} ${matchup.awayParticipant!.lastName}`,
+          awayTotalRings: data.awayResult.totalRings,
+          awayTeiler: data.awayResult.teiler,
         },
-      })
-    }
+      },
+    })
   } catch (error) {
     console.error("Fehler beim Speichern des Ergebnisses:", error)
     return { error: "Ergebnis konnte nicht gespeichert werden." }

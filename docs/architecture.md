@@ -23,6 +23,7 @@ Verbindlich gleichrangig mit `docs/technical.md`. Neue Dateien immer gemäss die
 /leagues/[id]/schedule          ← Spielplan + Tabelle (unified, Admin)
 /leagues/[id]/standings         ← Ligatabelle (Tabellenberechnung)
 /leagues/[id]/playoffs          ← Playoff-Bracket (Admin)
+/leagues/[id]/audit-log         ← Liga-Protokoll (nur Admin)
 /participants                   ← Teilnehmerverwaltung
 /participants/new               ← Teilnehmer anlegen (Admin)
 /participants/[id]              ← Profil: alle Duelle, Ergebnisse, Statistik
@@ -32,6 +33,7 @@ Verbindlich gleichrangig mit `docs/technical.md`. Neue Dateien immer gemäss die
 /admin/users                    ← Nutzerverwaltung (nur Admin)
 /admin/users/new                ← Nutzer anlegen (nur Admin)
 /admin/users/[id]/edit          ← Nutzer bearbeiten (nur Admin)
+/admin/audit-log                ← Globales Protokoll (nur Admin)
 /account                        ← Passwort ändern (eingeloggt)
 /api/auth/[...nextauth]         ← NextAuth-Handler
 /api/leagues/[id]/pdf/schedule  ← PDF-Export: Spielplan + Tabelle
@@ -66,6 +68,8 @@ src/
             page.tsx
           playoffs/
             page.tsx
+          audit-log/
+            page.tsx
       participants/
         page.tsx
         new/
@@ -89,6 +93,8 @@ src/
           [id]/
             edit/
               page.tsx
+        audit-log/
+          page.tsx
       account/
         page.tsx
     api/
@@ -111,6 +117,7 @@ src/
       results/                ← Ergebniserfassung (Dialog)
       standings/              ← Tabellenberechnung + Anzeige
       playoffs/               ← Playoff-Bracket + Duell-Karten
+      auditLog/               ← Protokoll-Liste (AuditLogList)
       participants/
       disciplines/
       account/
@@ -169,6 +176,9 @@ src/
       actions.ts              ← Nutzer anlegen, bearbeiten, Passwort-Reset
       queries.ts
       types.ts
+    auditLog/
+      queries.ts              ← getAuditLogsByLeague(), getAuditLogs() (globale Abfrage)
+      types.ts                ← AuditEventType, AUDIT_EVENT_LABELS, formatAuditDetails()
     pdf/
       styles.ts               ← Gemeinsames StyleSheet + Farbkonstanten (react-pdf)
       SchedulePdf.tsx         ← PDF: Spielplan (Hin-/Rückrunde) + Tabelle

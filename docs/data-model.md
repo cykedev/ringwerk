@@ -48,8 +48,16 @@
 
 ### Audit-Log
 
-- Ereignistyp, betroffene Entität, verursachender User, Zeitstempel, Details
-- Mindestens: Rückzug, Rückgängig-Rückzug, Ergebnis-Korrektur
+- Pflichtfelder: Ereignistyp, betroffene Entität (`entityId`), auslösender User, Zeitstempel, Details (JSON)
+- Optionale Liga-Referenz: `leagueId` (FK auf `League`); gesetzt für alle liga-spezifischen Ereignisse
+- 8 protokollierte Ereignistypen:
+  - `PARTICIPANT_WITHDRAWN`, `WITHDRAWAL_REVOKED` — Teilnehmer-Rückzug
+  - `RESULT_ENTERED`, `RESULT_CORRECTED` — Gruppenphase-Ergebnisse
+  - `PLAYOFFS_STARTED`, `PLAYOFF_RESULT_ENTERED`, `PLAYOFF_RESULT_CORRECTED`, `PLAYOFF_DUEL_DELETED` — Playoff-Phase
+- Details-JSON enthält Kontext zum Schreibzeitpunkt:
+  - Gruppenphase: `homeName`, `awayName`, Runde, Ringteiler-Werte
+  - Playoffs: `nameA`, `nameB`, Match-Runde, Duell-Nummer
+- Beim Force-Delete einer Liga: alle zugehörigen AuditLog-Einträge werden via `leagueId` gelöscht (kein `onDelete: Cascade` im Schema — manuelle Transaktion)
 
 ---
 

@@ -193,27 +193,12 @@ export async function forceDeleteLeague(
 
   try {
     await db.$transaction(async (tx) => {
-      // 1. IDs sammeln für AuditLog-Bereinigung
-      const leagueParticipants = await tx.leagueParticipant.findMany({
-        where: { leagueId },
-        select: { id: true },
-      })
-      const lpIds = leagueParticipants.map((lp) => lp.id)
-
+      // 1. IDs sammeln für Bottom-up-Löschung
       const matchups = await tx.matchup.findMany({
         where: { leagueId },
         select: { id: true },
       })
       const matchupIds = matchups.map((m) => m.id)
-
-      const matchResults =
-        matchupIds.length > 0
-          ? await tx.matchResult.findMany({
-              where: { matchupId: { in: matchupIds } },
-              select: { id: true },
-            })
-          : []
-      const matchResultIds = matchResults.map((r) => r.id)
 
       const playoffMatches = await tx.playoffMatch.findMany({
         where: { leagueId },
@@ -252,12 +237,7 @@ export async function forceDeleteLeague(
       await tx.matchup.deleteMany({ where: { leagueId } })
 
       // AuditLog-Einträge bereinigen
-      const allEntityIds = [...lpIds, ...matchupIds, ...matchResultIds]
-      if (allEntityIds.length > 0) {
-        await tx.auditLog.deleteMany({
-          where: { entityId: { in: allEntityIds } },
-        })
-      }
+      await tx.auditLog.deleteMany({ where: { leagueId } })
 
       await tx.leagueParticipant.deleteMany({ where: { leagueId } })
       await tx.league.delete({ where: { id: leagueId } })

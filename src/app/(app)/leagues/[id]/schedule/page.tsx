@@ -54,23 +54,21 @@ export default async function LeagueSchedulePage({ params }: Props) {
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {isAdmin && (
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="icon" className="h-9 w-9">
                 <Link href={`/leagues/${id}/participants`} title="Teilnehmer">
-                  <Users className="h-4 w-4 md:mr-1" />
-                  <span className="hidden md:inline">Teilnehmer</span>
+                  <Users className="h-4 w-4" />
                 </Link>
               </Button>
             )}
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="outline" size="icon" className="h-9 w-9">
               <Link href={`/leagues/${id}/playoffs`} title="Playoffs">
-                <Trophy className="h-4 w-4 md:mr-1" />
-                <span className="hidden md:inline">Playoffs</span>
+                <Trophy className="h-4 w-4" />
               </Link>
             </Button>
             {scheduleStatus.hasSchedule && (
               <PdfDownloadButton href={`/api/leagues/${id}/pdf/schedule`} />
             )}
-            {isAdmin && league.status === "ACTIVE" && !scheduleStatus.hasCompletedMatchups && (
+            {isAdmin && league.status === "ACTIVE" && !scheduleStatus.hasSchedule && (
               <GenerateScheduleButton leagueId={id} hasSchedule={scheduleStatus.hasSchedule} />
             )}
           </div>

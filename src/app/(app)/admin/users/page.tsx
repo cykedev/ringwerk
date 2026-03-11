@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Plus } from "lucide-react"
+import { Plus, ScrollText } from "lucide-react"
 import { getUsers } from "@/lib/users/queries"
 import { getAdminLoginRateLimitInsights } from "@/lib/admin/actions"
 import { Button } from "@/components/ui/button"
@@ -25,12 +25,20 @@ export default async function AdminUsersPage() {
           <h1 className="text-2xl font-semibold">Nutzerverwaltung</h1>
           <p className="mt-1 text-sm text-muted-foreground">App-Zugänge verwalten</p>
         </div>
-        <Button asChild size="sm" className="self-start">
-          <Link href="/admin/users/new">
-            <Plus className="mr-1 h-4 w-4" />
-            Neuer Nutzer
-          </Link>
-        </Button>
+        <div className="flex gap-2 self-start">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin/audit-log">
+              <ScrollText className="mr-1 h-4 w-4" />
+              Protokoll
+            </Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link href="/admin/users/new">
+              <Plus className="mr-1 h-4 w-4" />
+              Neuer Nutzer
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-lg border bg-card">

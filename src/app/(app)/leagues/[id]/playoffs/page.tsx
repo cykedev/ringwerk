@@ -77,17 +77,15 @@ export default async function LeaguePlayoffsPage({ params }: Props) {
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {isAdmin && (
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="icon" className="h-9 w-9">
                 <Link href={`/leagues/${id}/participants`} title="Teilnehmer">
-                  <Users className="h-4 w-4 md:mr-1" />
-                  <span className="hidden md:inline">Teilnehmer</span>
+                  <Users className="h-4 w-4" />
                 </Link>
               </Button>
             )}
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="outline" size="icon" className="h-9 w-9">
               <Link href={`/leagues/${id}/schedule`} title="Spielplan & Tabelle">
-                <CalendarDays className="h-4 w-4 md:mr-1" />
-                <span className="hidden md:inline">Spielplan & Tabelle</span>
+                <CalendarDays className="h-4 w-4" />
               </Link>
             </Button>
             {playoffsStarted && <PdfDownloadButton href={`/api/leagues/${id}/pdf/playoffs`} />}

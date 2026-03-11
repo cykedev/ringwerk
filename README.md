@@ -1,6 +1,6 @@
 # 1-gegen-1 Liga
 
-Vereinsinterne Liga-App für 1-gegen-1 Schützenwettkämpfe. Ligaverwaltung, Spielplanerstellung, Ergebniserfassung, Tabellenberechnung und Playoffs in einer Web-App.
+Vereinsinterne Liga-App für 1-gegen-1 Schützenwettkämpfe. Ligaverwaltung, Spielplanerstellung, Ergebniserfassung, Tabellenberechnung, Playoffs und Audit-Log in einer Web-App.
 
 ---
 
@@ -203,6 +203,7 @@ src/
 │       ├── results/       # Ergebniserfassung (Dialog)
 │       ├── standings/     # Tabellenanzeige
 │       ├── playoffs/      # Playoff-Bracket + Duell-Karten
+│       ├── auditLog/      # Protokoll-Liste (Liga + global)
 │       ├── participants/  # Teilnehmerverwaltung
 │       ├── disciplines/   # Disziplinverwaltung
 │       ├── account/       # Passwort-Änderung
@@ -226,6 +227,7 @@ src/
     ├── participants/      # Teilnehmerverwaltung
     ├── disciplines/       # Disziplinverwaltung
     ├── users/             # Nutzerverwaltung (Admin)
+    ├── auditLog/          # Protokoll-Abfragen + Ereignistypen
     └── pdf/               # PDF-Export (Spielplan, Playoff-Bracket; react-pdf)
 prisma/
 ├── schema.prisma          # Datenbankschema (alle Modelle)
