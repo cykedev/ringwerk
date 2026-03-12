@@ -32,7 +32,7 @@ export default async function DisciplinesPage() {
       </div>
 
       {/* Aktive Disziplinen */}
-      <div className="rounded-lg border">
+      <div className="rounded-lg border bg-card">
         {active.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm text-muted-foreground">
             Keine Disziplinen vorhanden.
@@ -66,7 +66,7 @@ export default async function DisciplinesPage() {
             <Archive className="h-4 w-4" />
             Archiviert ({archived.length})
           </div>
-          <div className="rounded-lg border opacity-60">
+          <div className="rounded-lg border bg-card opacity-60">
             <div className="divide-y">
               {archived.map((d) => (
                 <div key={d.id} className="flex items-center justify-between px-4 py-3">

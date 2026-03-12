@@ -29,13 +29,13 @@
   "agents": {
     "impact-analyzer": { "model": "opus", "enabled": true },
     "code-compliance": { "model": "opus", "enabled": true },
-    "codebase-scout":  { "model": "opus", "enabled": true },
+    "codebase-scout": { "model": "opus", "enabled": true },
     "schema-analyzer": { "model": "opus", "enabled": true },
     "feature-builder": { "model": "sonnet", "enabled": true },
-    "test-writer":     { "model": "sonnet", "enabled": true },
-    "action-audit":    { "model": "haiku",  "enabled": true },
-    "docs-sync":       { "model": "haiku",  "enabled": true },
-    "lessons-check":   { "model": "haiku",  "enabled": true }
+    "test-writer": { "model": "sonnet", "enabled": true },
+    "action-audit": { "model": "haiku", "enabled": true },
+    "docs-sync": { "model": "haiku", "enabled": true },
+    "lessons-check": { "model": "haiku", "enabled": true }
   },
 
   "quality": {

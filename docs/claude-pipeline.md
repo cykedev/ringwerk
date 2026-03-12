@@ -87,15 +87,15 @@ This is the **single source of truth** for all project-specific configuration.
     "errorRecovery": { "maxRetries": 3 }
   },
   "agents": {
-    "impact-analyzer": { "model": "opus",   "enabled": true },
-    "code-compliance": { "model": "opus",   "enabled": true },
-    "codebase-scout":  { "model": "opus",   "enabled": true },
-    "schema-analyzer": { "model": "opus",   "enabled": true },
+    "impact-analyzer": { "model": "opus", "enabled": true },
+    "code-compliance": { "model": "opus", "enabled": true },
+    "codebase-scout": { "model": "opus", "enabled": true },
+    "schema-analyzer": { "model": "opus", "enabled": true },
     "feature-builder": { "model": "sonnet", "enabled": true },
-    "test-writer":     { "model": "sonnet", "enabled": true },
-    "action-audit":    { "model": "haiku",  "enabled": true },
-    "docs-sync":       { "model": "haiku",  "enabled": true },
-    "lessons-check":   { "model": "haiku",  "enabled": true }
+    "test-writer": { "model": "sonnet", "enabled": true },
+    "action-audit": { "model": "haiku", "enabled": true },
+    "docs-sync": { "model": "haiku", "enabled": true },
+    "lessons-check": { "model": "haiku", "enabled": true }
   },
   "quality": {
     "runner": "npm run",
@@ -420,9 +420,9 @@ Both are populated during PLAN and kept in sync during EXECUTE.
 
 When `onboarding.enabled` is true, each new session starts with a status message. The format is controlled by `onboarding.style`:
 
-| Style | Content |
-| --------- | ------- |
-| `brief` | One-line status only — "X open tasks" or "All clear" |
+| Style      | Content                                                                                 |
+| ---------- | --------------------------------------------------------------------------------------- |
+| `brief`    | One-line status only — "X open tasks" or "All clear"                                    |
 | `detailed` | Status + pipeline overview (classify → analyze → plan → implement) + available commands |
 
 Configure in `pipeline.json`:

@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { MoreHorizontal, Pencil, Archive, ArchiveRestore, Trash2 } from "lucide-react"
+import { Pencil, Archive, ArchiveRestore, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   AlertDialog,
@@ -13,14 +13,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { toast } from "sonner"
 import { setDisciplineArchived, deleteDiscipline } from "@/lib/disciplines/actions"
 import type { Discipline } from "@/generated/prisma/client"
@@ -32,7 +26,6 @@ interface Props {
 export function DisciplineActions({ discipline }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [deleteOpen, setDeleteOpen] = useState(false)
 
   function handleArchive(archive: boolean) {
     startTransition(async () => {
@@ -49,49 +42,60 @@ export function DisciplineActions({ discipline }: Props) {
       if ("error" in result) {
         toast.error(typeof result.error === "string" ? result.error : "Fehler beim Löschen.")
       }
-      setDeleteOpen(false)
     })
   }
 
   return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" disabled={isPending}>
-            <MoreHorizontal className="h-4 w-4" />
-            <span className="sr-only">Aktionen</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {!discipline.isArchived && (
-            <DropdownMenuItem onClick={() => router.push(`/disciplines/${discipline.id}/edit`)}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Bearbeiten
-            </DropdownMenuItem>
-          )}
-          {!discipline.isArchived ? (
-            <DropdownMenuItem onClick={() => handleArchive(true)}>
-              <Archive className="mr-2 h-4 w-4" />
-              Archivieren
-            </DropdownMenuItem>
-          ) : (
-            <DropdownMenuItem onClick={() => handleArchive(false)}>
-              <ArchiveRestore className="mr-2 h-4 w-4" />
-              Wiederherstellen
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => setDeleteOpen(true)}
-            className="text-destructive focus:text-destructive"
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Löschen
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+    <div className="flex items-center gap-1">
+      {!discipline.isArchived && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-10 w-10"
+          title="Bearbeiten"
+          onClick={() => router.push(`/disciplines/${discipline.id}/edit`)}
+          disabled={isPending}
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+      )}
 
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+      {!discipline.isArchived ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-10 w-10"
+          title="Archivieren"
+          onClick={() => handleArchive(true)}
+          disabled={isPending}
+        >
+          <Archive className="h-4 w-4" />
+        </Button>
+      ) : (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-10 w-10"
+          title="Wiederherstellen"
+          onClick={() => handleArchive(false)}
+          disabled={isPending}
+        >
+          <ArchiveRestore className="h-4 w-4" />
+        </Button>
+      )}
+
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 text-destructive hover:text-destructive"
+            title="Löschen"
+            disabled={isPending}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Disziplin löschen?</AlertDialogTitle>
@@ -110,6 +114,6 @@ export function DisciplineActions({ discipline }: Props) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   )
 }
