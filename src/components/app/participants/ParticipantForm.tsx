@@ -9,7 +9,7 @@ import type { ParticipantDetail } from "@/lib/participants/types"
 import type { ActionResult } from "@/lib/types"
 
 interface Props {
-  participant?: Pick<ParticipantDetail, "firstName" | "lastName" | "email">
+  participant?: Pick<ParticipantDetail, "firstName" | "lastName" | "contact">
   action: (prevState: ActionResult | null, formData: FormData) => Promise<ActionResult>
   onSuccess?: () => void
 }
@@ -61,16 +61,18 @@ export function ParticipantForm({ participant, action, onSuccess }: Props) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="email">E-Mail</Label>
+        <Label htmlFor="contact">E-Mail / Telefon</Label>
         <Input
-          id="email"
-          name="email"
-          type="email"
-          defaultValue={participant?.email ?? ""}
-          placeholder="max.muster@example.com"
+          id="contact"
+          name="contact"
+          type="text"
+          defaultValue={participant?.contact ?? ""}
+          placeholder="z.B. max@example.com oder +49 151 12345678"
           disabled={isPending}
         />
-        {fieldErrors?.email && <p className="text-sm text-destructive">{fieldErrors.email[0]}</p>}
+        {fieldErrors?.contact && (
+          <p className="text-sm text-destructive">{fieldErrors.contact[0]}</p>
+        )}
       </div>
 
       {generalError && <p className="text-sm text-destructive">{generalError}</p>}

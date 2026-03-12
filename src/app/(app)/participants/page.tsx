@@ -50,13 +50,13 @@ export default async function ParticipantsPage() {
                       </Badge>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">{p.email}</p>
+                  <p className="text-xs text-muted-foreground">{p.contact}</p>
                 </div>
                 <ParticipantRowActions
                   participantId={p.id}
                   firstName={p.firstName}
                   lastName={p.lastName}
-                  email={p.email}
+                  contact={p.contact}
                   isActive={p.isActive}
                 />
               </div>
@@ -76,13 +76,13 @@ export default async function ParticipantsPage() {
                     <span className="text-sm line-through text-muted-foreground">
                       {p.lastName}, {p.firstName}
                     </span>
-                    <p className="text-xs text-muted-foreground">{p.email}</p>
+                    <p className="text-xs text-muted-foreground">{p.contact}</p>
                   </div>
                   <ParticipantRowActions
                     participantId={p.id}
                     firstName={p.firstName}
                     lastName={p.lastName}
-                    email={p.email}
+                    contact={p.contact}
                     isActive={p.isActive}
                   />
                 </div>

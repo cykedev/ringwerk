@@ -65,7 +65,7 @@ Identischer Ringteiler wird in dieser Reihenfolge aufgelöst:
 
 ## Teilnehmerverwaltung
 
-- Felder: Name, Vorname, E-Mail
+- Felder: Name, Vorname, Kontaktmöglichkeit (E-Mail oder Telefon)
 - Mindest-Teilnehmerzahl: 4 pro Disziplin/Liga
 - Startnummer pro Saison und Liga; Teilnahme in mehreren Ligen möglich
 
@@ -225,7 +225,7 @@ Alle Disziplinen am selben Finalabend, separat gewertet.
 
 - Konten ausschliesslich durch Admins erstellt (kein Self-Signup)
 - Rollen: Administrator (Vollzugriff) | Benutzer (eingeschränkt)
-- Admin kann: Nutzer anlegen, bearbeiten (Name, E-Mail, Rolle, Status), Passwörter zurücksetzen
+- Admin kann: Nutzer anlegen, bearbeiten (Name, E-Mail für Benutzer, Rolle, Status), Passwörter zurücksetzen
 - Eigenes Passwort ändern: nur eingeloggt + aktuelles Passwort erforderlich
 - Passwort vergessen: nur Admin-Reset, kein automatischer E-Mail-Flow
 - Alle Liga-, Teilnehmer- und Disziplindaten sind vereinsweit sichtbar (keine per-User-Isolation); Zugangskontrolle erfolgt via Rolle (ADMIN / USER), nicht via userId-Filter

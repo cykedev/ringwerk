@@ -98,7 +98,7 @@ export default async function LeagueParticipantsPage({ params }: Props) {
                         {lp.participant.lastName}, {lp.participant.firstName}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground">{lp.participant.email}</p>
+                    <p className="text-xs text-muted-foreground">{lp.participant.contact}</p>
                   </div>
                   <LeagueParticipantActions entry={lp} playoffsStarted={playoffsStarted} />
                 </div>
@@ -128,7 +128,7 @@ export default async function LeagueParticipantsPage({ params }: Props) {
                         Zurückgezogen
                       </Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground">{lp.participant.email}</p>
+                    <p className="text-xs text-muted-foreground">{lp.participant.contact}</p>
                   </div>
                   <LeagueParticipantActions entry={lp} playoffsStarted={playoffsStarted} />
                 </div>

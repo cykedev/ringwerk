@@ -166,7 +166,7 @@ model Participant {
   id        String   @id @default(cuid())
   firstName String
   lastName  String
-  email     String   @unique
+  contact   String   @unique
   // Audit: wer hat den Teilnehmer angelegt
   createdByUserId String
   createdBy       User     @relation(fields: [createdByUserId], references: [id])

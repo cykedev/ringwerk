@@ -23,7 +23,7 @@
 
 ### Teilnehmer
 
-- Name, Vorname, E-Mail (Pflicht)
+- Name, Vorname, Kontaktmöglichkeit (E-Mail oder Telefon, Pflicht)
 - Startnummer pro Saison/Liga
 - Kann in mehreren Ligen eingeschrieben sein
 - Status: aktiv | zurückgezogen

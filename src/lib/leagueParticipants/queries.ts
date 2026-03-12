@@ -14,7 +14,7 @@ export async function getLeagueParticipants(
       startNumber: true,
       withdrawnAt: true,
       participant: {
-        select: { id: true, firstName: true, lastName: true, email: true },
+        select: { id: true, firstName: true, lastName: true, contact: true },
       },
     },
     orderBy: [{ status: "asc" }, { participant: { lastName: "asc" } }],

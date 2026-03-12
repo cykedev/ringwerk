@@ -9,7 +9,7 @@ import type { ActionResult } from "@/lib/types"
 const ParticipantSchema = z.object({
   firstName: z.string().min(1, "Vorname ist erforderlich").max(100, "Vorname zu lang"),
   lastName: z.string().min(1, "Nachname ist erforderlich").max(100, "Nachname zu lang"),
-  email: z.string().email("Ungültige E-Mail-Adresse").max(255, "E-Mail zu lang"),
+  contact: z.string().min(1, "Kontakt ist erforderlich").max(255, "Kontakt zu lang"),
 })
 
 function revalidateParticipantPaths(): void {
@@ -32,20 +32,20 @@ export async function createParticipant(
   const parsed = ParticipantSchema.safeParse({
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
-    email: formData.get("email"),
+    contact: formData.get("contact"),
   })
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
 
-  const email = parsed.data.email.toLowerCase().trim()
+  const contact = parsed.data.contact.trim()
 
-  const existing = await db.participant.findUnique({ where: { email }, select: { id: true } })
-  if (existing) return { error: "Diese E-Mail-Adresse wird bereits verwendet." }
+  const existing = await db.participant.findUnique({ where: { contact }, select: { id: true } })
+  if (existing) return { error: "Diese Kontaktangabe wird bereits verwendet." }
 
   await db.participant.create({
     data: {
       firstName: parsed.data.firstName.trim(),
       lastName: parsed.data.lastName.trim(),
-      email,
+      contact,
       createdByUserId: session.user.id,
     },
   })
@@ -73,24 +73,24 @@ export async function updateParticipant(
   const parsed = ParticipantSchema.safeParse({
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
-    email: formData.get("email"),
+    contact: formData.get("contact"),
   })
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
 
-  const email = parsed.data.email.toLowerCase().trim()
+  const contact = parsed.data.contact.trim()
 
-  const emailConflict = await db.participant.findFirst({
-    where: { email, NOT: { id } },
+  const contactConflict = await db.participant.findFirst({
+    where: { contact, NOT: { id } },
     select: { id: true },
   })
-  if (emailConflict) return { error: "Diese E-Mail-Adresse wird bereits verwendet." }
+  if (contactConflict) return { error: "Diese Kontaktangabe wird bereits verwendet." }
 
   await db.participant.update({
     where: { id },
     data: {
       firstName: parsed.data.firstName.trim(),
       lastName: parsed.data.lastName.trim(),
-      email,
+      contact,
     },
   })
 

@@ -23,7 +23,7 @@ interface Props {
   participantId: string
   firstName: string
   lastName: string
-  email: string
+  contact: string
   isActive: boolean
 }
 
@@ -31,7 +31,7 @@ export function ParticipantRowActions({
   participantId,
   firstName,
   lastName,
-  email,
+  contact,
   isActive,
 }: Props) {
   const [editOpen, setEditOpen] = useState(false)
@@ -66,7 +66,7 @@ export function ParticipantRowActions({
             <DialogTitle>Teilnehmer bearbeiten</DialogTitle>
           </DialogHeader>
           <ParticipantForm
-            participant={{ firstName, lastName, email }}
+            participant={{ firstName, lastName, contact }}
             action={action}
             onSuccess={() => setEditOpen(false)}
           />
