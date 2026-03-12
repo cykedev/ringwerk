@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/ui-compliance.sh"
+            "command": "bash .claude/hooks/code-compliance.sh"
           }
         ]
       },
@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/ui-compliance.sh"
+            "command": "bash .claude/hooks/code-compliance.sh"
           }
         ]
       },

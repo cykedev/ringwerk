@@ -1,17 +1,28 @@
 #!/bin/bash
-# PreToolUse Hook: Schema-Gate (nicht-blockierend)
-# Warnt wenn 'prisma migrate' ohne vorherige Schema-Analyse ausgefuehrt wird.
-# Exit 0 = erlauben (Warnungen in stdout).
+# PreToolUse Hook: Schema Gate (non-blocking)
+# Warns if schema migration is run without prior schema analysis.
+# Reads config from .claude/pipeline.json.
+# Exit 0 = allow (warnings in stdout).
 
+PIPELINE=".claude/pipeline.json"
 INPUT=$(cat)
 
-# Nur bei prisma migrate Befehlen
-if ! echo "$INPUT" | grep -q 'prisma migrate'; then
+# Read migrate command pattern from pipeline.json
+if [ -f "$PIPELINE" ] && command -v jq &>/dev/null; then
+  MIGRATE_CMD=$(jq -r '.schema.migrateCommand // "prisma migrate"' "$PIPELINE" 2>/dev/null)
+  MARKER_FILE=$(jq -r '.schema.markerFile // ".claude/.schema-analyzed"' "$PIPELINE" 2>/dev/null)
+else
+  MIGRATE_CMD="prisma migrate"
+  MARKER_FILE=".claude/.schema-analyzed"
+fi
+
+# Only trigger on migration commands
+if ! echo "$INPUT" | grep -q "$MIGRATE_CMD"; then
   exit 0
 fi
 
-if [ ! -f ".claude/.schema-analyzed" ]; then
-  echo "Schema-Gate-Warnung: Der schema-analyzer Agent wurde noch nicht ausgefuehrt. Empfehlung: Zuerst den schema-analyzer Agenten starten, um Migrations-Risiken zu pruefen."
+if [ ! -f "$MARKER_FILE" ]; then
+  echo "Schema Gate Warning: The schema-analyzer agent has not been run yet. Run the schema-analyzer agent first to check for migration risks."
 fi
 
 exit 0

@@ -1,148 +1,142 @@
-# 1-gegen-1 Liga-App
+# Claude Pipeline Framework
 
-Vereinsinterne Liga-Verwaltungs-App für 1-gegen-1 Schützenwettkämpfe.
+Configuration: `.claude/pipeline.json`
+Project context: read `docs.projectBrief` from pipeline.json
+**User language: use `project.language` from pipeline.json for ALL communication with the user** (status messages, questions, plans, explanations). Code, commit messages, and agent prompts stay in English.
 
-## Session-Start
+## Session Start
 
-1. `tasks/todo.md` — offene Aufgaben?
-2. `tasks/lessons.md` — letzte 5 Einträge lesen
-3. `docs/open-issues.md` — neue Fragen?
+1. Read `.claude/pipeline.json` — understand project config (especially `project.language`)
+2. Read the project brief doc (`docs.projectBrief` path in pipeline.json)
+3. `tasks/todo.md` — open tasks?
+4. `tasks/lessons.md` — last 5 entries
+5. Brief onboarding message **in the configured language** to user (if `onboarding.enabled` in pipeline.json):
+   - Status: "X open tasks" or "All clear"
+   - "Your request will be classified, analyzed, planned (with your approval), then implemented."
+   - List available `/commands`
 
 ---
 
 ## Pipeline
 
-Jeder Request durchläuft **4 Stages**. Kein Stage überspringen.
+Every request passes through **4 stages**. Never skip a stage.
 
 ### Stage 1: CLASSIFY
 
-Jeden Request **zuerst** klassifizieren — vor jeder anderen Aktion:
+Classify every request **before** any other action:
 
-| Klasse         | Beschreibung                          | Nächster Schritt                                                     |
-| -------------- | ------------------------------------- | -------------------------------------------------------------------- |
-| `NEW_PLANNED`  | Feature aus `features.md` / `todo.md` | ANALYZE: `codebase-scout` + `ui-compliance` + ggf. `schema-analyzer` |
-| `NEW_UNKNOWN`  | Neue Anforderung, nicht in Specs      | Rückfrage → Scope klären → dann wie `NEW_PLANNED`                    |
-| `MODIFICATION` | Änderung an bestehendem Feature       | ANALYZE: `impact-analyzer` + `codebase-scout` + `ui-compliance`      |
-| `BUGFIX`       | Fehler im bestehenden Code            | ANALYZE: `codebase-scout` + ggf. `impact-analyzer`                   |
-| `MAINTENANCE`  | Docs, Refactoring, Tooling, Config    | Direkt PLAN (vereinfacht, ohne Agenten)                              |
+| Class          | Description                   | Next step                              |
+| -------------- | ----------------------------- | -------------------------------------- |
+| `NEW_PLANNED`  | Known feature from specs/todo | ANALYZE per pipeline.json config       |
+| `NEW_UNKNOWN`  | New requirement, not in specs | Clarify scope -> then like NEW_PLANNED |
+| `MODIFICATION` | Change to existing feature    | ANALYZE per pipeline.json config       |
+| `BUGFIX`       | Bug in existing code          | ANALYZE per pipeline.json config       |
+| `MAINTENANCE`  | Docs, refactoring, tooling    | Direct to PLAN (simplified, no agents) |
 
-Bei Unklarheit: **Immer nachfragen, nie annehmen.**
+Additionally, estimate **SIZE**: TRIVIAL / SMALL / MEDIUM / LARGE.
+Apply sizing rules from `pipeline.sizing` in pipeline.json:
 
-### Stage 2: ANALYZE (Agenten parallel)
+- **TRIVIAL**: skip ANALYZE, inline plan
+- **SMALL**: reduced ANALYZE (only agents listed in sizing config)
+- **MEDIUM**: full pipeline
+- **LARGE**: full pipeline + explicit review step
 
-Passende Agenten **gleichzeitig** starten und auf Reports warten:
+When in doubt: **Always ask, never assume.**
 
-| Agent             | Wann (Pflicht)                      | Modell |
-| ----------------- | ----------------------------------- | ------ |
-| `impact-analyzer` | `MODIFICATION`, kritischer `BUGFIX` | opus   |
-| `ui-compliance`   | Jede UI-Änderung                    | opus   |
-| `codebase-scout`  | Immer (ausser `MAINTENANCE`)        | opus   |
-| `schema-analyzer` | Bei DB-/Schema-Änderungen           | opus   |
+### Stage 2: ANALYZE (agents in parallel)
+
+Read `pipeline.classification.<class>.analyze` for the agent list.
+Suffix `?` means conditional (only if relevant, e.g., `schema-analyzer?` = only on DB changes).
+Launch agents **in parallel**, using the model from `pipeline.agents.<name>.model`.
 
 ### Stage 3: PLAN
 
-1. Agenten-Reports konsolidieren
-2. Hinterfragen: „Ist das der beste Weg? Gibt es eine elegantere Lösung?"
-3. Bei Unklarheiten: Rückfragen stellen
-4. Plan in `tasks/todo.md` mit Checkboxen schreiben
-5. **Manuelle Freigabe abwarten — kein Code ohne OK**
+1. Consolidate agent reports
+2. Challenge: "Is this the best approach? Is there a more elegant solution?"
+3. Ask clarifying questions if anything is ambiguous
+4. Write plan to `tasks/todo.md` with checkboxes (persistent record)
+5. Populate **TodoWrite tool** with the same items (live progress tracking)
+6. **Wait for manual approval — no code without OK**
 
 ### Stage 4: EXECUTE
 
-**Eine zusammenhängende Phase — alle Schritte abarbeiten, erst dann ist die Aufgabe fertig.**
+**One continuous phase — all steps must complete before the task is done.**
 
-**Implementieren:**
+**Implement:**
 
-- `feature-builder`-Agent (model: sonnet) für Code
-- `test-writer`-Agent (model: sonnet) für Tests
-- Layer-Reihenfolge einhalten (siehe unten)
+- `feature-builder` agent for code
+- `test-writer` agent for tests
+- Follow layer order from `pipeline.layers`
+- Update TodoWrite status in real-time (in_progress -> completed)
 
-**Qualität sichern:**
+**Quality:**
 
-- Prettier ausführen
-- `/check` — alle 4 Gates grün (Lint, Format, Test, TSC)
-- `action-audit`-Agent auf geänderte Actions
-- Bei UI-Änderung: Preview prüfen (Mobile + Desktop)
+- Run formatter (`pipeline.quality.formatter`)
+- `/check` — all gates green
+- `action-audit` agent on changed actions
+- On UI changes: preview (mobile + desktop)
+- **On failure:** fix and retry (max retries from `pipeline.errorRecovery.maxRetries`), then escalate to user
 
-**Abschliessen (Pflicht — nicht optional):**
+**Finalize (mandatory — not optional):**
 
-- `docs-sync`-Agent (model: haiku) — README, features.md, Docs
-- `lessons-check`-Agent (model: haiku) — neue Lessons?
-- `/commit-msg` für Commit-Message
+- `docs-sync` agent — sync docs with code
+- `lessons-check` agent — update learning log
+- `/commit-msg` for commit message
+- Update TodoWrite: all tasks completed
 
-**Die Aufgabe ist NICHT fertig, solange "Abschliessen" nicht durchgelaufen ist.**
+**The task is NOT done until "Finalize" has completed.**
 
 ---
 
-## Agents — immer mit dem angegebenen Modell aufrufen!
+## Agents
 
-| Agent             | Stage   | model:     | Zweck                                                     |
-| ----------------- | ------- | ---------- | --------------------------------------------------------- |
-| `impact-analyzer` | ANALYZE | **opus**   | Ripple-Analyse, Migrations-Risiko, betroffene Dateien     |
-| `ui-compliance`   | ANALYZE | **opus**   | shadcn/ui-Pflicht, Touch-Targets, Dark-Mode, Responsive   |
-| `codebase-scout`  | ANALYZE | **opus**   | Referenzen finden, Patterns empfehlen, Eleganz prüfen     |
-| `schema-analyzer` | ANALYZE | **opus**   | Schema-Konventionen, Migrationssicherheit, Business-Logic |
-| `feature-builder` | EXECUTE | **sonnet** | Code nach Plan implementieren                             |
-| `test-writer`     | EXECUTE | **sonnet** | Domain-aware Tests generieren                             |
-| `action-audit`    | EXECUTE | **haiku**  | Auth-Pattern-Audit auf Actions                            |
-| `docs-sync`       | EXECUTE | **haiku**  | Docs mit Code synchronisieren                             |
-| `lessons-check`   | EXECUTE | **haiku**  | Lernlog aktualisieren                                     |
+Read model assignments from `pipeline.agents` in pipeline.json. Always specify the model parameter when calling an agent.
+
+| Agent             | Stage   | Purpose                                          |
+| ----------------- | ------- | ------------------------------------------------ |
+| `impact-analyzer` | ANALYZE | Ripple analysis, migration risk, affected files  |
+| `code-compliance` | ANALYZE | Code/UI pattern compliance check                 |
+| `codebase-scout`  | ANALYZE | Find references, recommend patterns, check reuse |
+| `schema-analyzer` | ANALYZE | Schema conventions, migration safety             |
+| `feature-builder` | EXECUTE | Implement code per approved plan                 |
+| `test-writer`     | EXECUTE | Generate domain-aware tests                      |
+| `action-audit`    | EXECUTE | Auth/action pattern audit                        |
+| `docs-sync`       | EXECUTE | Sync documentation with code                     |
+| `lessons-check`   | EXECUTE | Update learning log                              |
 
 ## Commands
 
-| Command           | Wann                                                |
-| ----------------- | --------------------------------------------------- |
-| `/check`          | Vor jedem Commit — Lint, Format, Test, TSC          |
-| `/test`           | Schneller Feedback-Loop                             |
-| `/migrate <name>` | Nach Schema-Änderung (erst nach `schema-analyzer`!) |
-| `/commit-msg`     | Commit-Message aus Diff                             |
-| `/seed`           | Nach `/db-reset`                                    |
-| `/db-reset`       | Dev-DB zurücksetzen                                 |
+| Command           | When                                         |
+| ----------------- | -------------------------------------------- |
+| `/check`          | Before every commit — all quality gates      |
+| `/test`           | Quick feedback loop — tests only             |
+| `/migrate <name>` | After schema change (after schema-analyzer!) |
+| `/commit-msg`     | Generate commit message from diff            |
+| `/seed`           | After `/db-reset`                            |
+| `/db-reset`       | Reset dev database                           |
 
-## Hooks (automatisch, zero-context)
+## Hooks (automatic, zero-context)
 
-| Hook               | Event                  | Enforcement                                                           |
-| ------------------ | ---------------------- | --------------------------------------------------------------------- |
-| `ui-compliance.sh` | PreToolUse: Edit/Write | Warnt bei nativen Elementen, fehlendem bg-card, kleinen Touch-Targets |
-| `schema-gate.sh`   | PreToolUse: Bash       | Warnt wenn `prisma migrate` ohne `schema-analyzer`                    |
-| `completeness.sh`  | Stop                   | Warnt bei offenen todo.md Items, unformatierten Dateien               |
+| Hook                 | Event                  | Enforcement                                               |
+| -------------------- | ---------------------- | --------------------------------------------------------- |
+| `code-compliance.sh` | PreToolUse: Edit/Write | Warns on rule violations from pipeline.json compliance    |
+| `schema-gate.sh`     | PreToolUse: Bash       | Warns if schema migration without schema-analyzer         |
+| `completeness.sh`    | Stop                   | Warns on open todos, missing markers, uncommitted changes |
 
 ---
 
-## Kernregeln
+## Documentation (load on-demand, not in main context)
 
-1. **Server Actions** statt API Routes für Formularaktionen
-2. **Kein `any`** — TypeScript strict
-3. **Kein userId-Filter** auf Vereinsdaten — Auth via Rolle (ADMIN/USER)
-4. **Archivieren statt Löschen** bei Daten mit Abhängigkeiten (Ausnahme: Admin Force-Delete)
-5. **shadcn/ui** für alle UI-Elemente — keine nativen Browser-Dialoge
+Read doc paths from `pipeline.docs` in pipeline.json. Load only when needed:
 
-## Feature-Reihenfolge
-
-Schema → Migration → Types → Queries → Actions → Calculate → Components → Page → Prettier → `/check` → Docs
-
-## Referenzimplementierung
-
-**Lokal:** `/Users/christian/repos/treffsicher` (bevorzugt)
-
-| Datei                     | Referenz für                       |
-| ------------------------- | ---------------------------------- |
-| `src/lib/auth.ts`         | NextAuth authOptions               |
-| `src/lib/db.ts`           | Prisma Client Singleton (Prisma 7) |
-| `src/lib/auth-helpers.ts` | getAuthSession()                   |
-| `src/proxy.ts`            | Edge-Auth (Next.js 16)             |
-| `src/lib/disciplines/`    | Feature-Modul-Muster               |
-| `prisma/schema.prisma`    | Prisma 7 Schema-Konventionen       |
-
-## Dokumentation (on-demand laden, nicht im Hauptkontext)
-
-| Dokument                      | Laden wenn...                       |
-| ----------------------------- | ----------------------------------- |
-| `docs/features.md`            | Feature-Scope klären, CLASSIFY      |
-| `docs/architecture.md`        | Routen, Verzeichnisstruktur         |
-| `docs/technical.md`           | Tech Stack, Prisma 7, Deployment    |
-| `docs/data-model.md`          | Berechnungslogik, Entitäten         |
-| `docs/code-conventions.md`    | Code schreiben (IMPLEMENT)          |
-| `docs/ui-patterns.md`         | UI bauen (IMPLEMENT)                |
-| `docs/claude-architecture.md` | Pipeline-Architektur, Request-Guide |
-| `tasks/lessons.md`            | Session-Start, FINALIZE             |
+| Doc key           | Load when...                         |
+| ----------------- | ------------------------------------ |
+| `features`        | Clarify feature scope, CLASSIFY      |
+| `architecture`    | Routes, directory structure          |
+| `techStack`       | Stack details, deployment            |
+| `domainModel`     | Business logic, formulas, entities   |
+| `codeConventions` | Writing code (EXECUTE)               |
+| `uiPatterns`      | Building UI (EXECUTE)                |
+| `referenceFiles`  | Finding patterns, templates          |
+| `pipelineGuide`   | Pipeline architecture, customization |
+| `projectBrief`    | Project context, core rules          |

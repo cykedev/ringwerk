@@ -1,18 +1,12 @@
-Erstelle eine neue Prisma-Migration für eine Schemaänderung.
+Create a new schema migration.
 
-Verwende den ersten Argument-Token als Migrationsname (kebab-case, englisch, beschreibend — z.B. `add-league-participants` oder `add-playoff-matches`). Falls kein Name angegeben wurde, frage danach bevor du fortfährst.
+1. Read `.claude/pipeline.json` to get `quality.runner` and `schema.migrateDevCommand`
+2. Use the first argument token as migration name (kebab-case, English, descriptive). If no name was given, ask before proceeding.
+3. Run: `<runner> <migrateDevCommand> --name <name>`
 
-Führe dann aus:
+After running:
 
-```
-docker compose -f docker-compose.dev.yml run --rm app npx prisma migrate dev --name <name>
-```
-
-Danach:
-
-- Bestätige dass die Migration-Datei in `prisma/migrations/` angelegt wurde
-- Weise darauf hin, dass die Migrationsdatei eingecheckt werden muss
-- Prüfe ob der generierte Prisma-Client (`src/generated/prisma/`) aktualisiert wurde
-- Erinnerung: keine destruktiven Migrationen ohne Kommentar in der SQL-Datei
-
-Wichtig: Diese Datei ist einzuchecken — `.env` und `uploads/` niemals.
+- Confirm the migration file was created in the migrations directory
+- Remind that the migration file must be committed
+- Check that the generated client was updated
+- Reminder: no destructive migrations without a comment in the SQL file

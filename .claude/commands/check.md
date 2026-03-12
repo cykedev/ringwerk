@@ -1,12 +1,7 @@
-Führe alle vier Pre-Commit-Qualitätsgates im Docker-Container aus und berichte das Ergebnis.
+Run all quality gates and report the result.
 
-Die Checks müssen in dieser Reihenfolge laufen:
+1. Read `.claude/pipeline.json` to get `quality.runner` and `quality.gates`
+2. For each gate in the configured order, run: `<runner> <gate.command>`
+3. Run ALL gates even if one fails
 
-1. `docker compose -f docker-compose.dev.yml run --rm app npm run lint`
-2. `docker compose -f docker-compose.dev.yml run --rm app npm run format:check`
-3. `docker compose -f docker-compose.dev.yml run --rm app npm run test`
-4. `docker compose -f docker-compose.dev.yml run --rm app npx tsc --noEmit`
-
-Führe alle vier Befehle aus, auch wenn einer fehlschlägt.
-
-Berichte anschliessend kompakt: welche Gates grün sind, welche rot sind, und falls rot: die relevanten Fehlermeldungen. Schlage konkrete Fixes vor, sofern die Ursache eindeutig ist.
+Report concisely: which gates are green, which are red, and if red: the relevant error messages. Suggest concrete fixes if the cause is clear.

@@ -1,11 +1,10 @@
-Führe nur die Vitest-Tests aus (ohne Lint, Format-Check oder TSC).
+Run only the test suite (no lint, format check, or type check).
 
-```
-docker compose -f docker-compose.dev.yml run --rm app npx vitest run
-```
+1. Read `.claude/pipeline.json` to get `quality.runner` and `quality.testOnly`
+2. Run: `<runner> <testOnly>`
 
-Danach bestätigen:
+Report:
 
-- Wie viele Tests bestehen / schlagen fehl?
-- Falls Fehler: vollständige Fehlermeldung mit Dateiname und Zeile ausgeben
-- Keine Code-Änderungen vorschlagen, bis die Fehlerursache klar ist
+- How many tests pass / fail?
+- If failures: full error message with file name and line
+- Do not suggest code changes until the root cause is clear

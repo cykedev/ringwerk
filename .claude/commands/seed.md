@@ -1,19 +1,9 @@
-Führe den Datenbank-Seed manuell aus (nur nach `/db-reset` nötig).
+Run the database seed manually (only needed after `/db-reset`).
 
-Im Normalbetrieb läuft der Seed automatisch beim ersten App-Start via `src/lib/startup.ts`
-(aufgerufen aus `src/app/layout.tsx`). Manuell nur nach einem DB-Reset erforderlich.
+1. Read `.claude/pipeline.json` to get `quality.runner` and `schema.seedCommand`
+2. Run: `<runner> <seedCommand>`
 
-Der Seed legt an (falls noch nicht vorhanden):
+After running, confirm:
 
-1. Admin-User aus `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` in `.env`
-2. Standard-Disziplinen: LP, LG, LPA, LGA
-
-```
-docker compose -f docker-compose.dev.yml run --rm app npx prisma db seed
-```
-
-Danach bestätigen:
-
-- Wurde der Admin-User angelegt (oder war er bereits vorhanden)?
-- Wurden die Disziplinen angelegt (oder bereits vorhanden)?
-- Falls Fehler: vollständige Fehlermeldung ausgeben
+- Was the seed data created (or was it already present)?
+- If errors: output the full error message

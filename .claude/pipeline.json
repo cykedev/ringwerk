@@ -1,0 +1,131 @@
+{
+  "version": "1.0.0",
+
+  "project": {
+    "name": "1gegen1 Liga-App",
+    "brief": "docs/project-brief.md",
+    "language": "de"
+  },
+
+  "pipeline": {
+    "stages": ["CLASSIFY", "ANALYZE", "PLAN", "EXECUTE"],
+    "sizing": {
+      "TRIVIAL": { "skipAnalyze": true, "inlinePlan": true },
+      "SMALL": { "reduceAnalyze": ["codebase-scout"] },
+      "MEDIUM": {},
+      "LARGE": { "extraReview": true }
+    },
+    "classification": {
+      "NEW_PLANNED": { "analyze": ["codebase-scout", "code-compliance", "schema-analyzer?"] },
+      "NEW_UNKNOWN": { "analyze": ["codebase-scout", "code-compliance", "schema-analyzer?"] },
+      "MODIFICATION": { "analyze": ["impact-analyzer", "codebase-scout", "code-compliance"] },
+      "BUGFIX": { "analyze": ["codebase-scout", "impact-analyzer?"] },
+      "MAINTENANCE": { "analyze": [] }
+    },
+    "errorRecovery": {
+      "maxRetries": 3
+    }
+  },
+
+  "agents": {
+    "impact-analyzer": { "model": "opus", "stage": "ANALYZE", "enabled": true },
+    "code-compliance": { "model": "opus", "stage": "ANALYZE", "enabled": true },
+    "codebase-scout": { "model": "opus", "stage": "ANALYZE", "enabled": true },
+    "schema-analyzer": { "model": "opus", "stage": "ANALYZE", "enabled": true },
+    "feature-builder": { "model": "sonnet", "stage": "EXECUTE", "enabled": true },
+    "test-writer": { "model": "sonnet", "stage": "EXECUTE", "enabled": true },
+    "action-audit": { "model": "haiku", "stage": "EXECUTE", "enabled": true },
+    "docs-sync": { "model": "haiku", "stage": "EXECUTE", "enabled": true },
+    "lessons-check": { "model": "haiku", "stage": "EXECUTE", "enabled": true }
+  },
+
+  "quality": {
+    "runner": "docker compose -f docker-compose.dev.yml run --rm app",
+    "gates": [
+      { "name": "lint", "command": "npm run lint" },
+      { "name": "format", "command": "npm run format:check" },
+      { "name": "test", "command": "npm run test" },
+      { "name": "typecheck", "command": "npx tsc --noEmit" }
+    ],
+    "testOnly": "npm run test",
+    "formatter": "npx prettier --write"
+  },
+
+  "schema": {
+    "tool": "prisma",
+    "migrateCommand": "prisma migrate",
+    "migrateDevCommand": "npx prisma migrate dev",
+    "seedCommand": "npx prisma db seed",
+    "markerFile": ".claude/.schema-analyzed"
+  },
+
+  "compliance": {
+    "filePattern": "\\.tsx\"",
+    "rules": [
+      {
+        "pattern": "(window\\.)?(confirm|alert|prompt)\\s*\\(",
+        "message": "Native browser dialog detected. Use the project's dialog component instead.",
+        "severity": "error"
+      },
+      {
+        "pattern": "DropdownMenu",
+        "message": "DropdownMenu detected. Use inline icon buttons in list rows for always-visible actions.",
+        "severity": "warning"
+      },
+      {
+        "pattern": "rounded-lg border\"",
+        "antiPattern": "rounded-lg border bg-card",
+        "message": "Container with 'rounded-lg border' missing 'bg-card'. Required for dark mode compatibility.",
+        "severity": "error"
+      },
+      {
+        "pattern": "size=\"icon\".*className=\"h-8 w-8\"",
+        "message": "Icon button with h-8 w-8 detected. Minimum touch target: h-10 w-10 (40px).",
+        "severity": "error"
+      },
+      {
+        "pattern": "toLocaleDateString\\(\\)",
+        "message": "toLocaleDateString() without timezone. Use the project's date formatter.",
+        "severity": "error"
+      }
+    ]
+  },
+
+  "completeness": {
+    "markers": [
+      ".claude/.action-audit-done",
+      ".claude/.docs-sync-done",
+      ".claude/.lessons-check-done"
+    ],
+    "todoFile": "tasks/todo.md",
+    "trackedExtensions": [".ts", ".tsx"]
+  },
+
+  "docs": {
+    "techStack": "docs/technical.md",
+    "codeConventions": "docs/code-conventions.md",
+    "uiPatterns": "docs/ui-patterns.md",
+    "domainModel": "docs/data-model.md",
+    "architecture": "docs/architecture.md",
+    "features": "docs/features.md",
+    "referenceFiles": "docs/reference-files.md",
+    "projectBrief": "docs/project-brief.md",
+    "pipelineGuide": "docs/claude-pipeline.md"
+  },
+
+  "layers": [
+    "Schema",
+    "Migration",
+    "Types",
+    "Queries",
+    "Actions",
+    "Calculate",
+    "Components",
+    "Page"
+  ],
+
+  "onboarding": {
+    "enabled": true,
+    "style": "brief"
+  }
+}

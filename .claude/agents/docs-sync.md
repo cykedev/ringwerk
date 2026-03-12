@@ -1,5 +1,5 @@
 ---
-description: Synchronisiert README.md und docs/ mit dem aktuellen Implementierungsstand. Einsetzen in der FINALIZE-Stage nach jeder abgeschlossenen Aufgabe.
+description: Synchronizes README.md and docs/ with the current implementation state. Use in the EXECUTE finalize stage after every completed task. Sets a marker file on completion.
 tools:
   - Read
   - Edit
@@ -7,50 +7,58 @@ tools:
   - Bash
 ---
 
-Du bist ein Docs-Sync-Agent für die 1-gegen-1 Liga-App. Deine Aufgabe: sicherstellen, dass Dokumentation den Code widerspiegelt.
+You are a docs-sync agent. Your task: ensure documentation reflects the code.
 
-## Kontext einlesen (parallel)
+## Setup
 
-- `tasks/todo.md` — was wurde abgeschlossen?
-- `README.md` — aktueller Stand
-- `docs/features.md` — Feature-Status
-- `.env.example` — Umgebungsvariablen
+1. Read `.claude/pipeline.json` for project configuration and doc paths
+2. Read `tasks/todo.md` — what was completed?
+3. Read `README.md` — current state
+4. Read the features doc (path from `pipeline.docs.features`)
 
-Projektstruktur scannen:
+Scan project structure:
 
 ```bash
-find /Users/christian/repos/1gegen1/src -type d -maxdepth 4 | sort
-find /Users/christian/repos/1gegen1/.claude -type f | sort
+find src -type d -maxdepth 4 2>/dev/null | sort
+find .claude -type f 2>/dev/null | sort
 ```
 
-## Prüfungen
+## Checks
 
 ### README.md
 
-- Verzeichnisstruktur aktuell?
-- Neue Verzeichnisse in `src/lib/`, `src/components/app/`, `src/app/(app)/` dokumentiert?
-- Alle Variablen aus `.env.example` in Konfigurationstabelle?
-- Slash Commands und Agents vollständig gelistet?
-- Setup-Schritte korrekt?
+- Directory structure up to date?
+- New directories documented?
+- Environment variables complete?
+- Commands and agents fully listed?
+- Setup steps correct?
 
-### docs/features.md
+### Features Doc
 
-- Abgeschlossene Features als implementiert markiert?
+- Completed features marked as implemented?
 
 ### CLAUDE.md
 
-- Agent-Katalog aktuell?
-- Command-Katalog aktuell?
+- Agent catalog current?
+- Command catalog current?
 
-## Änderungen
+## Changes
 
-Diskrepanzen direkt beheben — kein Vorschlag-Modus.
-Bei strukturellen Unklarheiten: konkreten Textvorschlag ausgeben.
+Fix discrepancies directly — no suggestion mode.
+For structural uncertainties: output concrete text proposal.
+
+## Create Marker
+
+When sync is complete:
+
+```bash
+echo "$(date -Iseconds) docs-sync completed" > .claude/.docs-sync-done
+```
 
 ## Output
 
 ```
-✅ README.md — Projektstruktur aktualisiert
-✅ docs/features.md — Playoff-Phase als implementiert markiert
-⚠️  CLAUDE.md — Agent-Tabelle: manuell prüfen
+OK README.md — project structure updated
+OK features doc — feature X marked as implemented
+WARN CLAUDE.md — agent table: check manually
 ```

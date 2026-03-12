@@ -1,27 +1,13 @@
-Setzt die Dev-Datenbank vollständig zurück (alle Daten gehen verloren).
+Fully reset the dev database (all data will be lost).
 
-Nur in der lokalen Entwicklungsumgebung verwenden – niemals in Produktion.
+Only use in the local development environment — never in production.
 
-Führe diese Schritte aus:
+1. Read `.claude/pipeline.json` to get `quality.runner` and `schema.seedCommand`
+2. Stop and remove containers with volumes (appropriate for the project's container setup)
+3. Start the database service
+4. Wait until the database is ready
+5. Run migrations
+6. Run the seed command: `<runner> <seedCommand>`
+7. Start the application (or use `preview_start` via launch.json)
 
-```
-docker compose -f docker-compose.dev.yml down -v
-docker compose -f docker-compose.dev.yml up -d db
-```
-
-Dann warten bis die DB bereit ist, Migrationen laufen und optional seeden:
-
-```
-docker compose -f docker-compose.dev.yml run --rm migrate
-docker compose -f docker-compose.dev.yml run --rm app npx prisma db seed
-```
-
-Danach die App starten:
-
-```
-docker compose -f docker-compose.dev.yml up app
-```
-
-Oder alles auf einmal via Watch-Modus (über launch.json / `preview_start`).
-
-Bestätigen: Login mit Seed-Admin-Account funktioniert.
+Confirm: login with the seed admin account works.

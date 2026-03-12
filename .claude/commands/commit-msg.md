@@ -1,13 +1,13 @@
-Analysiere die aktuellen Änderungen im Arbeitsbereich und erstelle eine passende Commit-Message.
+Analyze current workspace changes and create an appropriate commit message.
 
-Führe folgende Schritte aus:
+Steps:
 
-1. Führe `git diff --staged` aus. Falls leer, führe `git diff HEAD` aus, um alle uncommitteten Änderungen zu sehen.
-2. Führe zusätzlich `git status` aus, um neue (ungetrackte) Dateien zu sehen.
-3. Analysiere die Änderungen: Was wurde geändert, hinzugefügt oder entfernt? Was ist der fachliche Zweck?
-4. Gib **nur** die fertige Commit-Message aus — kein erklärender Text darum herum.
+1. Run `git diff --staged`. If empty, run `git diff HEAD` to see all uncommitted changes.
+2. Run `git status` to see new (untracked) files.
+3. Analyze the changes: what was changed, added, or removed? What is the purpose?
+4. Output **only** the finished commit message — no explanatory text around it.
 
-## Verbindliche Regeln für die Commit-Message
+## Commit Message Rules
 
 **Format:**
 
@@ -20,41 +20,20 @@ type: short imperative summary
 
 **Types:**
 
-- `feat` — neue Funktionalität
-- `fix` — Bugfix
-- `refactor` — Umstrukturierung ohne Verhaltensänderung
-- `style` — Formatierung, kein Logik-Change (Prettier, Lucide icons, CSS)
-- `docs` — nur Dokumentation
-- `chore` — Build, Dependencies, Konfiguration
-- `test` — Tests hinzufügen oder ändern
-- `perf` — Performance-Verbesserung
+- `feat` — new functionality
+- `fix` — bug fix
+- `refactor` — restructuring without behavior change
+- `style` — formatting, no logic change
+- `docs` — documentation only
+- `chore` — build, dependencies, configuration
+- `test` — adding or changing tests
+- `perf` — performance improvement
 
-**Regeln:**
+**Rules:**
 
-- Alles Englisch
-- Erste Zeile: imperativ, kein Punkt am Ende, max. 72 Zeichen
-- Bullet Points mit `-`, beschreiben WAS geändert wurde und WARUM (nicht nur "refactoring")
-- Kein "various changes", "updates", "fixes" ohne Kontext
-- Bei mehreren unabhängigen Bereichen: den dominanten Typ wählen und alle Bereiche in den Bullets abdecken
-- Keine Co-Authored-By Zeile
-
-## Beispiele
-
-```
-feat: add Meyton PDF import to match result form
-- Parse Meyton PDF via Server Action to extract rings and teiler per series
-- Pre-fill result form fields; user must confirm before saving
-- Abort with error message on parse failure (no partial import)
-```
-
-```
-fix: recalculate table after participant withdrawal
-- Exclude all results of withdrawn participant from ranking computation
-- Move withdrawn participant to table end with status indicator
-```
-
-```
-docs: clarify draw resolution and correct point values
-- Change win points from 3 to 2 across all docs
-- Document tiebreaker sequence: better series → better teiler → draw (1pt each)
-```
+- All English
+- First line: imperative, no period, max 72 characters
+- Bullet points with `-`, describe WHAT changed and WHY
+- No "various changes", "updates", "fixes" without context
+- For multiple independent areas: choose the dominant type and cover all areas in bullets
+- No Co-Authored-By line
