@@ -33,6 +33,7 @@ Copy the `.claude/` directory structure:
   settings.json              <- Hook wiring (usually unchanged)
   launch.json                <- Dev server config
   hooks/
+    session-init.sh          <- Cleans stale markers on new session
     code-compliance.sh       <- Reads rules from pipeline.json
     schema-gate.sh           <- Reads config from pipeline.json
     completeness.sh          <- Reads config from pipeline.json
@@ -166,7 +167,18 @@ tasks/
   lessons.md    <- Start empty, lessons-check agent populates
 ```
 
-### Step 5: Configure Dev Server (launch.json)
+### Step 5: Add Markers to .gitignore
+
+Completeness markers and the session tracking file are session-scoped and must not be committed:
+
+```gitignore
+# Claude pipeline markers (session-scoped, not committed)
+.claude/.session-id
+.claude/.*-done
+.claude/.schema-analyzed
+```
+
+### Step 6: Configure Dev Server (launch.json)
 
 ```json
 {
@@ -327,9 +339,19 @@ All hooks are **non-blocking** (exit 0) and read their configuration from `pipel
 
 | Hook                 | Event                  | What it does                                            |
 | -------------------- | ---------------------- | ------------------------------------------------------- |
+| `session-init.sh`    | UserPromptSubmit       | Cleans stale markers on new session (PID-based)         |
 | `code-compliance.sh` | PreToolUse: Edit/Write | Checks file content against compliance rules            |
 | `schema-gate.sh`     | PreToolUse: Bash       | Warns if migration runs without schema-analyzer         |
 | `completeness.sh`    | Stop                   | Checks open todos, missing markers, uncommitted changes |
+
+### Session-Init Hook
+
+Marker files (`.claude/.*-done`, `.claude/.schema-analyzed`) are **gitignored** and session-scoped. The `session-init.sh` hook detects a new Claude Code session by comparing the parent process PID + start time against a stored `.claude/.session-id` file:
+
+- **Same session** → exits immediately, nothing deleted
+- **New session** → deletes all markers from `completeness.markers` and `schema.markerFile` in pipeline.json, writes new `.session-id`
+
+This prevents stale markers from a previous session from falsely satisfying the completeness check.
 
 ### Prerequisites
 

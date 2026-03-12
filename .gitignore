@@ -40,3 +40,8 @@ next-env.d.ts
 # uploads
 /uploads/
 /production
+
+# Claude pipeline markers (session-scoped, not committed)
+.claude/.session-id
+.claude/.*-done
+.claude/.schema-analyzed
