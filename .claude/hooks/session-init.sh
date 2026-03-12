@@ -39,4 +39,7 @@ fi
 # Persist session key
 echo "$SESSION_KEY" > "$SESSION_FILE"
 
+# Remind Claude to run the Session Start procedure before responding
+echo "[NEW SESSION] Run the Session Start procedure from CLAUDE.md before responding to the user's request."
+
 exit 0

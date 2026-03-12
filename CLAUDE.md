@@ -10,10 +10,10 @@ Project context: read `docs.projectBrief` from pipeline.json
 2. Read the project brief doc (`docs.projectBrief` path in pipeline.json)
 3. `tasks/todo.md` — open tasks?
 4. `tasks/lessons.md` — last 5 entries
-5. Brief onboarding message **in the configured language** to user (if `onboarding.enabled` in pipeline.json):
-   - Status: "X open tasks" or "All clear"
-   - "Your request will be classified, analyzed, planned (with your approval), then implemented."
-   - List available `/commands`
+5. Onboarding message **in the configured language** to user (if `onboarding.enabled` in pipeline.json).
+   Read `onboarding.style` to determine format:
+   - **`brief`**: one-line status only — "X open tasks" or "All clear"
+   - **`detailed`**: status + pipeline hint ("Your request will be classified, analyzed, planned (with your approval), then implemented.") + list available `/commands`
 
 ---
 
@@ -47,6 +47,7 @@ When in doubt: **Always ask, never assume.**
 
 Read `pipeline.classification.<class>.analyze` for the agent list.
 Suffix `?` means conditional (only if relevant, e.g., `schema-analyzer?` = only on DB changes).
+Skip agents where `pipeline.agents.<name>.enabled` is `false`.
 Launch agents **in parallel**, using the model from `pipeline.agents.<name>.model`.
 
 ### Stage 3: PLAN

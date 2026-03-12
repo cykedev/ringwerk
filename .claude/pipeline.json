@@ -8,7 +8,6 @@
   },
 
   "pipeline": {
-    "stages": ["CLASSIFY", "ANALYZE", "PLAN", "EXECUTE"],
     "sizing": {
       "TRIVIAL": { "skipAnalyze": true, "inlinePlan": true },
       "SMALL": { "reduceAnalyze": ["codebase-scout"] },
@@ -28,15 +27,15 @@
   },
 
   "agents": {
-    "impact-analyzer": { "model": "opus", "stage": "ANALYZE", "enabled": true },
-    "code-compliance": { "model": "opus", "stage": "ANALYZE", "enabled": true },
-    "codebase-scout": { "model": "opus", "stage": "ANALYZE", "enabled": true },
-    "schema-analyzer": { "model": "opus", "stage": "ANALYZE", "enabled": true },
-    "feature-builder": { "model": "sonnet", "stage": "EXECUTE", "enabled": true },
-    "test-writer": { "model": "sonnet", "stage": "EXECUTE", "enabled": true },
-    "action-audit": { "model": "haiku", "stage": "EXECUTE", "enabled": true },
-    "docs-sync": { "model": "haiku", "stage": "EXECUTE", "enabled": true },
-    "lessons-check": { "model": "haiku", "stage": "EXECUTE", "enabled": true }
+    "impact-analyzer": { "model": "opus", "enabled": true },
+    "code-compliance": { "model": "opus", "enabled": true },
+    "codebase-scout":  { "model": "opus", "enabled": true },
+    "schema-analyzer": { "model": "opus", "enabled": true },
+    "feature-builder": { "model": "sonnet", "enabled": true },
+    "test-writer":     { "model": "sonnet", "enabled": true },
+    "action-audit":    { "model": "haiku",  "enabled": true },
+    "docs-sync":       { "model": "haiku",  "enabled": true },
+    "lessons-check":   { "model": "haiku",  "enabled": true }
   },
 
   "quality": {
@@ -52,7 +51,6 @@
   },
 
   "schema": {
-    "tool": "prisma",
     "migrateCommand": "prisma migrate",
     "migrateDevCommand": "npx prisma migrate dev",
     "seedCommand": "npx prisma db seed",
@@ -98,7 +96,7 @@
       ".claude/.lessons-check-done"
     ],
     "todoFile": "tasks/todo.md",
-    "trackedExtensions": [".ts", ".tsx"]
+    "trackedExtensions": [".ts", ".tsx", ".json", ".sh", ".md"]
   },
 
   "docs": {

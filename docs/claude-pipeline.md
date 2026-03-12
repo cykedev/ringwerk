@@ -71,7 +71,6 @@ This is the **single source of truth** for all project-specific configuration.
     "language": "en"
   },
   "pipeline": {
-    "stages": ["CLASSIFY", "ANALYZE", "PLAN", "EXECUTE"],
     "sizing": {
       "TRIVIAL": { "skipAnalyze": true, "inlinePlan": true },
       "SMALL": { "reduceAnalyze": ["codebase-scout"] },
@@ -88,15 +87,15 @@ This is the **single source of truth** for all project-specific configuration.
     "errorRecovery": { "maxRetries": 3 }
   },
   "agents": {
-    "impact-analyzer": { "model": "opus", "stage": "ANALYZE", "enabled": true },
-    "code-compliance": { "model": "opus", "stage": "ANALYZE", "enabled": true },
-    "codebase-scout": { "model": "opus", "stage": "ANALYZE", "enabled": true },
-    "schema-analyzer": { "model": "opus", "stage": "ANALYZE", "enabled": true },
-    "feature-builder": { "model": "sonnet", "stage": "EXECUTE", "enabled": true },
-    "test-writer": { "model": "sonnet", "stage": "EXECUTE", "enabled": true },
-    "action-audit": { "model": "haiku", "stage": "EXECUTE", "enabled": true },
-    "docs-sync": { "model": "haiku", "stage": "EXECUTE", "enabled": true },
-    "lessons-check": { "model": "haiku", "stage": "EXECUTE", "enabled": true }
+    "impact-analyzer": { "model": "opus",   "enabled": true },
+    "code-compliance": { "model": "opus",   "enabled": true },
+    "codebase-scout":  { "model": "opus",   "enabled": true },
+    "schema-analyzer": { "model": "opus",   "enabled": true },
+    "feature-builder": { "model": "sonnet", "enabled": true },
+    "test-writer":     { "model": "sonnet", "enabled": true },
+    "action-audit":    { "model": "haiku",  "enabled": true },
+    "docs-sync":       { "model": "haiku",  "enabled": true },
+    "lessons-check":   { "model": "haiku",  "enabled": true }
   },
   "quality": {
     "runner": "npm run",
@@ -109,7 +108,6 @@ This is the **single source of truth** for all project-specific configuration.
     "formatter": "npx prettier --write"
   },
   "schema": {
-    "tool": "prisma",
     "migrateCommand": "prisma migrate",
     "migrateDevCommand": "npx prisma migrate dev",
     "seedCommand": "npx prisma db seed",
@@ -126,7 +124,7 @@ This is the **single source of truth** for all project-specific configuration.
       ".claude/.lessons-check-done"
     ],
     "todoFile": "tasks/todo.md",
-    "trackedExtensions": [".ts", ".tsx"]
+    "trackedExtensions": [".ts", ".tsx", ".json", ".sh", ".md"]
   },
   "docs": {
     "techStack": "docs/tech-stack.md",
@@ -225,8 +223,7 @@ Maps request classes to required agents. Suffix `?` means conditional:
 #### `agents`
 
 - `model`: Which model to use (opus, sonnet, haiku)
-- `stage`: Which pipeline stage (ANALYZE or EXECUTE)
-- `enabled`: Set to false to disable an agent
+- `enabled`: Set to `false` to disable an agent — it will be skipped in ANALYZE and EXECUTE
 
 #### `quality`
 
@@ -367,7 +364,7 @@ This prevents stale markers from a previous session from falsely satisfying the 
 Set `enabled: false` in `pipeline.agents`:
 
 ```json
-"schema-analyzer": { "model": "opus", "stage": "ANALYZE", "enabled": false }
+"schema-analyzer": { "model": "opus", "enabled": false }
 ```
 
 ### Changing Models
@@ -375,7 +372,7 @@ Set `enabled: false` in `pipeline.agents`:
 Adjust `model` per agent:
 
 ```json
-"codebase-scout": { "model": "sonnet", "stage": "ANALYZE", "enabled": true }
+"codebase-scout": { "model": "sonnet", "enabled": true }
 ```
 
 ### Adding Compliance Rules
@@ -421,8 +418,15 @@ Both are populated during PLAN and kept in sync during EXECUTE.
 
 ## Session Onboarding
 
-When `onboarding.enabled` is true, each new session starts with a brief status message:
+When `onboarding.enabled` is true, each new session starts with a status message. The format is controlled by `onboarding.style`:
 
-- Open task count from todo.md
-- Pipeline overview (classify -> analyze -> plan with approval -> implement)
-- Available slash commands
+| Style | Content |
+| --------- | ------- |
+| `brief` | One-line status only — "X open tasks" or "All clear" |
+| `detailed` | Status + pipeline overview (classify → analyze → plan → implement) + available commands |
+
+Configure in `pipeline.json`:
+
+```json
+"onboarding": { "enabled": true, "style": "brief" }
+```
