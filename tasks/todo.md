@@ -4,7 +4,65 @@
 
 ## Aktuell
 
-<!-- Aktive Planung hier eintragen -->
+### [2026-03-12] Feature: Konfigurierbare Regelsets pro Liga
+
+**Ziel:** Wettkampfregeln (bisher hardkodiert) werden pro Liga konfigurierbar.
+**Ansatz:** 8 neue Inline-Felder auf `League`, Lock nach Spielplan-Generierung.
+
+#### Layer 1: Schema
+- [ ] `prisma/schema.prisma` — neuer Enum `GroupScoringMode { RINGTEILER, HIGHEST_RINGS }` + 8 neue Felder auf `League`:
+  - `shotsPerSide Int @default(10)`
+  - `groupScoringMode GroupScoringMode @default(RINGTEILER)`
+  - `playoffBestOf Int @default(3)` (Siege zum Weiterkommen VF/HF; 3 = Best-of-Five)
+  - `playoffQualThreshold Int @default(8)` (ab dieser TN-Anzahl → Viertelfinale)
+  - `playoffQualTopN1 Int @default(4)` (Qualifikanten für HF bei Direkteinstieg)
+  - `playoffQualTopN2 Int @default(8)` (Qualifikanten für VF)
+  - `finaleScoringMode GroupScoringMode @default(HIGHEST_RINGS)`
+  - `finaleHasSuddenDeath Boolean @default(true)`
+
+#### Layer 2: Migration
+- [ ] `/migrate add-league-ruleset` — Alle Defaults = bisheriges Verhalten → kein Datenverlust
+
+#### Layer 3: Types
+- [ ] `src/lib/leagues/types.ts` — `LeagueDetail` + `LeagueListItem` um alle 8 Felder erweitern
+
+#### Layer 4: Queries
+- [ ] `src/lib/leagues/queries.ts` — alle `select`-Blöcke um neue Felder erweitern
+- [ ] `src/lib/standings/queries.ts` — Liga-Ruleset an `calculateStandings()` weiterreichen
+- [ ] `src/lib/playoffs/queries.ts` — `finaleScoringMode` für Duell-Auswertung laden
+
+#### Layer 5: Actions
+- [ ] `src/lib/leagues/actions.ts` — Zod-Schema erweitern + Lock-Logik in `updateLeague()` (Guard: wenn Matchups existieren → Ruleset-Felder ignorieren)
+- [ ] `src/lib/results/actions.ts` — `groupScoringMode` aus Liga laden + an `determineOutcome()` übergeben
+- [ ] `src/lib/playoffs/actions.ts` — `playoffBestOf`, `playoffQualThreshold`, `finaleScoringMode`, `finaleHasSuddenDeath` aus Liga laden + verwenden (Breaking: mehrere Stellen)
+
+#### Layer 6: Calculate (Breaking Points zuerst)
+- [ ] `src/lib/results/calculateResult.ts` — `determineOutcome(a, b, scoringMode?)` um optionalen Parameter erweitern; bei `HIGHEST_RINGS`: höhere Ringzahl gewinnt (kein Teiler-Vergleich)
+- [ ] `src/lib/playoffs/calculatePlayoffs.ts`:
+  - `isPlayoffMatchComplete(match, requiredWins)` — hardkodierte `3` durch Parameter ersetzen; Finale bleibt bei `1`
+  - `createFirstRoundMatchups(standings, ruleset)` — `playoffQualThreshold`, `playoffQualTopN1/2` als Parameter
+  - `determinePlayoffDuelWinner()` bleibt; Finale-Branching über `finaleScoringMode`
+- [ ] `src/lib/standings/calculateStandings.ts` — `scoringMode` an `determineOutcome()` durchreichen; Tiebreak-Sortierung bei `HIGHEST_RINGS` umkehren (höher = besser)
+
+#### Layer 7: Components
+- [ ] `src/components/app/leagues/LeagueForm.tsx` — neue "Regelset"-Sektion mit `<fieldset disabled={hasMatchups}>` + alle 8 Felder (Select, Number-Input, Select für Boolean); Sperrhinweis als `text-xs text-muted-foreground`
+- [ ] `src/components/app/playoffs/PlayoffMatchCard.tsx` — dynamische Labels: `shotsPerSide`-Text, `playoffBestOf`-Label (Best-of-N), Siege-bis-Weiterkommen-Text
+- [ ] `src/components/app/playoffs/PlayoffDuelResultDialog.tsx` — Titel-Text mit `shotsPerSide` statt hardkodiert "10 Schüsse"
+- [ ] `src/components/app/matchups/ScheduleView.tsx` — `groupScoringMode` für Ergebnis-Farbmarkierung
+
+#### Layer 8: Pages
+- [ ] `src/app/(app)/leagues/new/page.tsx` + `leagues/[id]/edit/page.tsx` — `hasMatchups: boolean` prop an `LeagueForm` übergeben
+- [ ] `src/app/(app)/leagues/[id]/schedule/page.tsx` + `playoffs/page.tsx` — Ruleset-Felder weitergeben wo nötig
+
+#### Tests & Qualität
+- [ ] `src/lib/results/calculateResult.test.ts` — bestehende Tests anpassen (neuer Parameter) + neue Tests für `HIGHEST_RINGS`-Modus
+- [ ] `src/lib/playoffs/calculatePlayoffs.test.ts` — Tests parametrisieren (`bestOf`, `qualThreshold`) + neue Szenarien
+- [ ] `src/lib/standings/calculateStandings.test.ts` — `scoringMode`-Parameter + neue Tests
+- [ ] `src/lib/leagues/actions.test.ts` — Ruleset-Validierung + Lock-Logik testen
+- [ ] `/check` — alle Gates grün
+
+#### Finalisierung
+- [ ] `docs/data-model.md` + `docs/features.md` — Regelset dokumentieren
 
 ---
 
