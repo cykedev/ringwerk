@@ -67,7 +67,7 @@ This is the **single source of truth** for all project-specific configuration.
   "version": "1.0.0",
   "project": {
     "name": "Your Project Name",
-    "brief": "docs/project-brief.md",
+    "brief": ".claude/docs/project-brief.md",
     "language": "en"
   },
   "pipeline": {
@@ -123,19 +123,19 @@ This is the **single source of truth** for all project-specific configuration.
       ".claude/.docs-sync-done",
       ".claude/.lessons-check-done"
     ],
-    "todoFile": "tasks/todo.md",
+    "todoFile": ".claude/tasks/todo.md",
     "trackedExtensions": [".ts", ".tsx", ".json", ".sh", ".md"]
   },
   "docs": {
-    "techStack": "docs/tech-stack.md",
-    "codeConventions": "docs/code-conventions.md",
-    "uiPatterns": "docs/ui-patterns.md",
-    "domainModel": "docs/domain-model.md",
-    "architecture": "docs/architecture.md",
-    "features": "docs/features.md",
-    "referenceFiles": "docs/reference-files.md",
-    "projectBrief": "docs/project-brief.md",
-    "pipelineGuide": "docs/claude-pipeline.md"
+    "techStack": ".claude/docs/tech-stack.md",
+    "codeConventions": ".claude/docs/code-conventions.md",
+    "uiPatterns": ".claude/docs/ui-patterns.md",
+    "domainModel": ".claude/docs/domain-model.md",
+    "architecture": ".claude/docs/architecture.md",
+    "features": ".claude/docs/features.md",
+    "referenceFiles": ".claude/docs/reference-files.md",
+    "projectBrief": ".claude/docs/project-brief.md",
+    "pipelineGuide": ".claude/docs/claude-pipeline.md"
   },
   "layers": ["Schema", "Types", "Queries", "Actions", "Components", "Page"],
   "onboarding": { "enabled": true, "style": "brief" }
@@ -160,7 +160,7 @@ Create the docs referenced in `pipeline.docs`. At minimum:
 ### Step 4: Create Task Files
 
 ```
-tasks/
+.claude/tasks/
   todo.md       <- Start empty, pipeline writes plans here
   lessons.md    <- Start empty, lessons-check agent populates
 ```
@@ -286,7 +286,7 @@ The main context:
 
 1. Consolidates agent reports
 2. Challenges the approach
-3. Writes plan to `tasks/todo.md` (persistent)
+3. Writes plan to `.claude/tasks/todo.md` (persistent)
 4. Populates TodoWrite tool (live progress)
 5. Waits for user approval
 

@@ -13,7 +13,7 @@ You are a code compliance agent. You check components and code against the proje
 1. Read `.claude/pipeline.json` for project configuration
 2. Read the UI patterns doc (path from `pipeline.docs.uiPatterns`) — if it exists
 3. Read the code conventions doc (path from `pipeline.docs.codeConventions`)
-4. Read `tasks/lessons.md` for relevant lessons (UI, code quality)
+4. Read `.claude/tasks/lessons.md` for relevant lessons (UI, code quality)
 
 ## Scope
 

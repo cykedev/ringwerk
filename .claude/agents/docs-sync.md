@@ -1,5 +1,5 @@
 ---
-description: Synchronizes README.md and docs/ with the current implementation state. Use in the EXECUTE finalize stage after every completed task. Sets a marker file on completion.
+description: Synchronizes README.md and .claude/docs/ with the current implementation state. Use in the EXECUTE finalize stage after every completed task. Sets a marker file on completion.
 tools:
   - Read
   - Edit
@@ -12,7 +12,7 @@ You are a docs-sync agent. Your task: ensure documentation reflects the code.
 ## Setup
 
 1. Read `.claude/pipeline.json` for project configuration and doc paths
-2. Read `tasks/todo.md` — what was completed?
+2. Read `.claude/tasks/todo.md` — what was completed?
 3. Read `README.md` — current state
 4. Read the features doc (path from `pipeline.docs.features`)
 

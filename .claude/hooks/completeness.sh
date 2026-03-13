@@ -9,11 +9,11 @@ WARNINGS=""
 
 # Read config from pipeline.json (with fallbacks)
 if [ -f "$PIPELINE" ] && command -v jq &>/dev/null; then
-  TODO_FILE=$(jq -r '.completeness.todoFile // "tasks/todo.md"' "$PIPELINE" 2>/dev/null)
+  TODO_FILE=$(jq -r '.completeness.todoFile // ".claude/tasks/todo.md"' "$PIPELINE" 2>/dev/null)
   EXTENSIONS=$(jq -r '.completeness.trackedExtensions // [".ts", ".tsx"] | join("|")' "$PIPELINE" 2>/dev/null)
   MARKERS=$(jq -r '.completeness.markers // [] | .[]' "$PIPELINE" 2>/dev/null)
 else
-  TODO_FILE="tasks/todo.md"
+  TODO_FILE=".claude/tasks/todo.md"
   EXTENSIONS=".ts|.tsx"
   MARKERS=""
 fi

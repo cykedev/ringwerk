@@ -232,7 +232,7 @@ src/
 prisma/
 ├── schema.prisma          # Datenbankschema (alle Modelle)
 └── migrations/            # Migrationsdateien (eingecheckt)
-docs/                      # Anforderungen und technische Dokumentation
+.claude/docs/              # Anforderungen und technische Dokumentation
 scripts/                   # Docker-Startup- und Migrations-Scripts
 ```
 

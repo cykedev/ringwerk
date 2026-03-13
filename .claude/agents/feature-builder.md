@@ -18,7 +18,7 @@ You are a feature builder. You implement code according to an approved plan — 
 3. Read the UI patterns doc (path from `pipeline.docs.uiPatterns`) — if the task involves UI
 4. Read the tech stack doc (path from `pipeline.docs.techStack`) — for stack-specific patterns
 5. Read the project brief doc (path from `pipeline.docs.projectBrief`) — for core rules
-6. Read `tasks/todo.md` — the approved plan with checkboxes
+6. Read `.claude/tasks/todo.md` — the approved plan with checkboxes
 7. If the plan references specific files: read those too
 
 ## Implementation Rules

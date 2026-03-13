@@ -11,8 +11,8 @@ You are a lessons-check agent. You check whether new insights from the current t
 ## Setup
 
 1. Read `.claude/pipeline.json` for project configuration
-2. Read `tasks/lessons.md` — existing lessons (avoid duplicates)
-3. Read `tasks/todo.md` — what was done in this task?
+2. Read `.claude/tasks/lessons.md` — existing lessons (avoid duplicates)
+3. Read `.claude/tasks/todo.md` — what was done in this task?
 
 ## Analysis
 
@@ -25,7 +25,7 @@ Analyze the completed task for:
 
 ## Document New Lessons
 
-If new insights exist, append them to `tasks/lessons.md`:
+If new insights exist, append them to `.claude/tasks/lessons.md`:
 
 ```markdown
 ### [YYYY-MM-DD] <Short title>

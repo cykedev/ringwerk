@@ -1,6 +1,6 @@
 # Code Conventions – 1-gegen-1 Liga-App
 
-Verbindlich gleichrangig mit `docs/technical.md`.
+Verbindlich gleichrangig mit `.claude/docs/technical.md`.
 
 ## Index
 

@@ -32,7 +32,7 @@ Schema -> Migration -> Types -> Queries -> Actions -> Calculate -> Components ->
 
 ### NEW_PLANNED -- Known feature
 
-Reference `features.md` or `todo.md`:
+Reference `.claude/docs/features.md` or `.claude/tasks/todo.md`:
 
 ```
 "Implement the Meyton import feature as described in features.md."

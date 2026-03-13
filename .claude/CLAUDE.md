@@ -8,8 +8,8 @@ Project context: read `docs.projectBrief` from pipeline.json
 
 1. Read `.claude/pipeline.json` — understand project config (especially `project.language`)
 2. Read the project brief doc (`docs.projectBrief` path in pipeline.json)
-3. `tasks/todo.md` — open tasks?
-4. `tasks/lessons.md` — last 5 entries
+3. `.claude/tasks/todo.md` — open tasks?
+4. `.claude/tasks/lessons.md` — last 5 entries
 5. Onboarding message **in the configured language** to user (if `onboarding.enabled` in pipeline.json).
    Read `onboarding.style` to determine format:
    - **`brief`**: one-line status only — "X open tasks" or "All clear"
@@ -55,7 +55,7 @@ Launch agents **in parallel**, using the model from `pipeline.agents.<name>.mode
 1. Consolidate agent reports
 2. Challenge: "Is this the best approach? Is there a more elegant solution?"
 3. Ask clarifying questions if anything is ambiguous
-4. Write plan to `tasks/todo.md` with checkboxes (persistent record)
+4. Write plan to `.claude/tasks/todo.md` with checkboxes (persistent record)
 5. Populate **TodoWrite tool** with the same items (live progress tracking)
 6. **Wait for manual approval — no code without OK**
 

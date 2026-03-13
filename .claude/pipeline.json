@@ -3,7 +3,7 @@
 
   "project": {
     "name": "1gegen1 Liga-App",
-    "brief": "docs/project-brief.md",
+    "brief": ".claude/docs/project-brief.md",
     "language": "de"
   },
 
@@ -95,20 +95,20 @@
       ".claude/.docs-sync-done",
       ".claude/.lessons-check-done"
     ],
-    "todoFile": "tasks/todo.md",
+    "todoFile": ".claude/tasks/todo.md",
     "trackedExtensions": [".ts", ".tsx", ".json", ".sh", ".md"]
   },
 
   "docs": {
-    "techStack": "docs/technical.md",
-    "codeConventions": "docs/code-conventions.md",
-    "uiPatterns": "docs/ui-patterns.md",
-    "domainModel": "docs/data-model.md",
-    "architecture": "docs/architecture.md",
-    "features": "docs/features.md",
-    "referenceFiles": "docs/reference-files.md",
-    "projectBrief": "docs/project-brief.md",
-    "pipelineGuide": "docs/claude-pipeline.md"
+    "techStack": ".claude/docs/technical.md",
+    "codeConventions": ".claude/docs/code-conventions.md",
+    "uiPatterns": ".claude/docs/ui-patterns.md",
+    "domainModel": ".claude/docs/data-model.md",
+    "architecture": ".claude/docs/architecture.md",
+    "features": ".claude/docs/features.md",
+    "referenceFiles": ".claude/docs/reference-files.md",
+    "projectBrief": ".claude/docs/project-brief.md",
+    "pipelineGuide": ".claude/docs/claude-pipeline.md"
   },
 
   "layers": [
