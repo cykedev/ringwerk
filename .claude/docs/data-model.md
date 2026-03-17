@@ -31,17 +31,17 @@
 
 #### Liga-spezifisch (LEAGUE)
 
-| Feld                 | Typ          | Default    | Beschreibung                                     |
-| -------------------- | ------------ | ---------- | ------------------------------------------------ |
-| roundDeadlineHin     | DateTime?    | null       | Stichtag Hinrunde                                |
-| roundDeadlineRueck   | DateTime?    | null       | Stichtag Rückrunde                               |
-| groupScoringMode     | ScoringMode? | RINGTEILER | Wertungsmodus Gruppenphase (= scoringMode)       |
-| playoffBestOf        | Int?         | 3          | Siege zum Weiterkommen VF/HF (3 = Best-of-Five)  |
-| playoffQualThreshold | Int?         | 8          | Ab dieser TN-Zahl → Viertelfinale                |
+| Feld                 | Typ          | Default    | Beschreibung                                    |
+| -------------------- | ------------ | ---------- | ----------------------------------------------- |
+| roundDeadlineHin     | DateTime?    | null       | Stichtag Hinrunde                               |
+| roundDeadlineRueck   | DateTime?    | null       | Stichtag Rückrunde                              |
+| groupScoringMode     | ScoringMode? | RINGTEILER | Wertungsmodus Gruppenphase (= scoringMode)      |
+| playoffBestOf        | Int?         | 3          | Siege zum Weiterkommen VF/HF (3 = Best-of-Five) |
+| playoffQualThreshold | Int?         | 8          | Ab dieser TN-Zahl → Viertelfinale               |
 | playoffQualTopN1     | Int?         | 4          | Qualifikanten für HF bei Direkteinstieg         |
-| playoffQualTopN2     | Int?         | 8          | Qualifikanten für VF                             |
-| finaleScoringMode    | ScoringMode? | RINGS      | Wertungsmodus Finale                             |
-| finaleHasSuddenDeath | Boolean?     | true       | Sudden Death bei Finale-Gleichstand              |
+| playoffQualTopN2     | Int?         | 8          | Qualifikanten für VF                            |
+| finaleScoringMode    | ScoringMode? | RINGS      | Wertungsmodus Finale                            |
+| finaleHasSuddenDeath | Boolean?     | true       | Sudden Death bei Finale-Gleichstand             |
 
 #### Event-spezifisch (EVENT)
 
@@ -243,12 +243,12 @@ Ergebnis: Wer über dem Ziel liegt, kommt immer nach allen die darunter oder gle
 
 ### Liga-spezifisch: Punktevergabe (Gruppenphase)
 
-| Ergebnis       | Sieger   | Verlierer |
-| -------------- | -------- | --------- |
-| Sieg           | 2 Punkte | 0 Punkte  |
-| Kampflos-Sieg  | 2 Punkte | 0 Punkte  |
-| Unentschieden  | 1 Punkt  | 1 Punkt   |
-| Freilos        | 2 Punkte | —         |
+| Ergebnis      | Sieger   | Verlierer |
+| ------------- | -------- | --------- |
+| Sieg          | 2 Punkte | 0 Punkte  |
+| Kampflos-Sieg | 2 Punkte | 0 Punkte  |
+| Unentschieden | 1 Punkt  | 1 Punkt   |
+| Freilos       | 2 Punkte | —         |
 
 ### Liga-spezifisch: Unentschieden-Aufloesung
 
@@ -278,10 +278,10 @@ Nur Teilnehmer mit ≥ minSeries Serien werden gewertet.
 
 ## Glossar
 
-| Begriff                     | Erklärung                                                                                                       |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Serie                       | Ergebnis eines Schießdurchgangs: N Schuss (default 10), erfasst als Gesamtringe + bester Teiler + Disziplin   |
-| Teiler                      | Abstand Einschuss zur Scheibenmitte als Dezimalwert (z.B. 25.7); kleinerer Wert = näher an der Mitte          |
+| Begriff                     | Erklärung                                                                                                      |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Serie                       | Ergebnis eines Schießdurchgangs: N Schuss (default 10), erfasst als Gesamtringe + bester Teiler + Disziplin    |
+| Teiler                      | Abstand Einschuss zur Scheibenmitte als Dezimalwert (z.B. 25.7); kleinerer Wert = näher an der Mitte           |
 | Teiler-Faktor               | Korrekturfaktor pro Disziplin; gleicht unterschiedliche Schwierigkeitsgrade aus (z.B. LP /3, LG Auflage \*1.8) |
 | Korrigierter Teiler         | Teiler \* Faktor; Basis für fairen Vergleich bei gemischten Disziplinen                                        |
 | Ringteiler                  | MaxRinge − Ringe + (Teiler \* Faktor); je kleiner, desto besser                                                |

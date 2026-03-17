@@ -128,29 +128,33 @@ Iterativer Umbau von "1-gegen-1 Liga-App" zu "Ringwerk" — universelle Wettbewe
 
 #### Schema & Migration
 
-- [ ] `prisma/schema.prisma` — `MatchResult` zu `Series` umbenennen
-- [ ] `prisma/schema.prisma` — `Series` erweitern: `disciplineId String (FK)`, `shotCount Int`, `sessionDate DateTime`, `matchupId String? (FK, optional)`
-- [ ] `prisma/schema.prisma` — `totalRings` → `rings`, `bestTeiler` → `teiler` (Rename fuer Klarheit)
-- [ ] `/migrate rename-matchresult-to-series`
+- [ ] `prisma/schema.prisma` — `MatchResult` zu `Series` umbenennen; Relationen in `User`, `Participant`, `Matchup` anpassen
+- [ ] `prisma/schema.prisma` — `totalRings` → `rings` umbenennen (`teiler` bleibt unveraendert — Feld heisst bereits so)
+- [ ] `prisma/schema.prisma` — `Series` erweitern: `disciplineId String (FK Discipline)`, `shotCount Int`, `sessionDate DateTime`
+- [ ] `prisma/schema.prisma` — `matchupId String?` nullable machen (NULL-Werte verletzen `@@unique` nicht — korrekt fuer Event/Saison-Serien)
+- [ ] Manuelle Migration `rename-matchresult-to-series` mit Backfill:
+  - `disciplineId` ← `Matchup → Competition → disciplineId`
+  - `shotCount` ← `Competition.shotsPerSeries`
+  - `sessionDate` ← `Matchup.dueDate` (Fallback: `MatchResult.createdAt`)
 
 #### Scoring-Engine (neues Modul)
 
+- [ ] `src/lib/scoring/types.ts` — ScoringInput, RankedEntry, etc.
 - [ ] `src/lib/scoring/calculateScore.ts` — universelle Score-Berechnung:
-  - `calculateCorrectedTeiler(teiler, faktor): number`
-  - `calculateRingteiler(rings, teiler, faktor, maxRings): number`
-  - `calculateScore(series, mode, discipline): number`
+  - `calculateCorrectedTeiler(teiler, faktor): number` — `teiler * faktor`
+  - `calculateRingteiler(rings, teiler, faktor, maxRings): number` — `maxRings - rings + (teiler * faktor)` **(teilerFaktor wird ab Phase 3 aktiv angewendet)**
+  - `calculateScore(mode, rings, teiler, faktor, maxRings, shots?, targetValue?): number` — alle 7 Modi
 - [ ] `src/lib/scoring/rankParticipants.ts` — generische Rangliste:
   - `rankByScore(entries[], mode): RankedEntry[]`
   - TARGET_UNDER: zweistufiges Ranking (≤ Zielwert zuerst)
-- [ ] `src/lib/scoring/types.ts` — ScoringInput, RankedEntry, etc.
 - [ ] `src/lib/scoring/calculateScore.test.ts` — parametrisierte Tests fuer alle 7 Modi + Faktor-Kombinationen
 - [ ] `src/lib/scoring/rankParticipants.test.ts` — Ranking-Tests inkl. TARGET-Modi
 
 #### Bestehende Logik migrieren
 
-- [ ] `src/lib/results/calculateResult.ts` — auf Scoring-Engine umstellen (`calculateRingteiler` + `determineOutcome` nutzen `scoring/`)
-- [ ] `src/lib/standings/calculateStandings.ts` — auf Scoring-Engine umstellen
-- [ ] `src/lib/results/calculateResult.test.ts` — Tests anpassen (neuer Parameter)
+- [ ] `src/lib/results/calculateResult.ts` — `calcRingteiler` nutzt Scoring-Engine; `determineOutcome` erhaelt `scoringMode`-Parameter (Default: RINGTEILER, Vorbereitung fuer Phase 6) **(teilerFaktor wird jetzt angewendet — breaking change bei berechneten ringteiler-Werten, pre-launch unproblematisch)**
+- [ ] `src/lib/standings/calculateStandings.ts` — `bestRingteiler` via Scoring-Engine berechnen
+- [ ] `src/lib/results/calculateResult.test.ts` — Tests anpassen (neuer scoringMode-Parameter + Faktor)
 - [ ] `src/lib/standings/calculateStandings.test.ts` — Tests anpassen
 
 #### Queries & Actions

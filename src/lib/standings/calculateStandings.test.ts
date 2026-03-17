@@ -3,8 +3,8 @@ import { calculateStandings } from "./calculateStandings"
 import type { StandingsParticipant, StandingsMatchup } from "./calculateStandings"
 
 // Hilfsfunktion: Ergebnis für einen Teilnehmer
-function makeResult(participantId: string, totalRings: number, teiler: number, ringteiler: number) {
-  return { participantId, totalRings, teiler, ringteiler }
+function makeResult(participantId: string, rings: number, teiler: number, ringteiler: number) {
+  return { participantId, rings, teiler, ringteiler }
 }
 
 // Teilnehmer-Fixtures

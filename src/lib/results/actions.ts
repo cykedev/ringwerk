@@ -5,11 +5,12 @@ import { db } from "@/lib/db"
 import { getAuthSession } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import type { SaveMatchResultInput } from "./types"
-import { calcRingteiler, MAX_RINGS } from "./calculateResult"
+import { calculateRingteiler, MAX_RINGS } from "./calculateResult"
 
 /**
  * Speichert das Ergebnis einer Paarung (beide Schützen).
  * Bestehende Ergebnisse werden überschrieben (Korrektur) → AuditLog-Eintrag.
+ * Ab Phase 3: teilerFaktor wird in die Ringteiler-Berechnung einbezogen.
  */
 export async function saveMatchResult(
   matchupId: string,
@@ -25,13 +26,21 @@ export async function saveMatchResult(
       id: true,
       status: true,
       round: true,
+      dueDate: true,
       homeParticipantId: true,
       homeParticipant: { select: { firstName: true, lastName: true } },
       awayParticipantId: true,
       awayParticipant: { select: { firstName: true, lastName: true } },
       competitionId: true,
-      competition: { select: { discipline: { select: { scoringType: true } } } },
-      results: { select: { id: true } },
+      competition: {
+        select: {
+          shotsPerSeries: true,
+          discipline: {
+            select: { id: true, scoringType: true, teilerFaktor: true },
+          },
+        },
+      },
+      series: { select: { id: true } },
     },
   })
 
@@ -40,23 +49,30 @@ export async function saveMatchResult(
   if (!matchup.awayParticipantId) return { error: "Ungültige Paarung: kein Gegner zugeordnet." }
   if (!matchup.competition.discipline) return { error: "Disziplin nicht konfiguriert." }
 
-  const maxRings = MAX_RINGS[matchup.competition.discipline.scoringType]
-  const homeRingteiler = calcRingteiler(
-    maxRings,
-    data.homeResult.totalRings,
-    data.homeResult.teiler
+  const discipline = matchup.competition.discipline
+  const maxRings = MAX_RINGS[discipline.scoringType]
+  const faktor = discipline.teilerFaktor.toNumber()
+  const sessionDate = matchup.dueDate ?? new Date()
+  const shotCount = matchup.competition.shotsPerSeries
+
+  const homeRingteiler = calculateRingteiler(
+    data.homeResult.rings,
+    data.homeResult.teiler,
+    faktor,
+    maxRings
   )
-  const awayRingteiler = calcRingteiler(
-    maxRings,
-    data.awayResult.totalRings,
-    data.awayResult.teiler
+  const awayRingteiler = calculateRingteiler(
+    data.awayResult.rings,
+    data.awayResult.teiler,
+    faktor,
+    maxRings
   )
 
-  const isCorrection = matchup.results.length > 0
+  const isCorrection = matchup.series.length > 0
 
   try {
     await db.$transaction(async (tx) => {
-      await tx.matchResult.upsert({
+      await tx.series.upsert({
         where: {
           matchupId_participantId: {
             matchupId,
@@ -66,21 +82,27 @@ export async function saveMatchResult(
         create: {
           matchupId,
           participantId: matchup.homeParticipantId,
-          totalRings: data.homeResult.totalRings,
+          disciplineId: discipline.id,
+          shotCount,
+          sessionDate,
+          rings: data.homeResult.rings,
           teiler: data.homeResult.teiler,
           ringteiler: homeRingteiler,
           importSource: "MANUAL",
           recordedByUserId: session.user.id,
         },
         update: {
-          totalRings: data.homeResult.totalRings,
+          disciplineId: discipline.id,
+          shotCount,
+          sessionDate,
+          rings: data.homeResult.rings,
           teiler: data.homeResult.teiler,
           ringteiler: homeRingteiler,
           recordedByUserId: session.user.id,
         },
       })
 
-      await tx.matchResult.upsert({
+      await tx.series.upsert({
         where: {
           matchupId_participantId: {
             matchupId,
@@ -90,14 +112,20 @@ export async function saveMatchResult(
         create: {
           matchupId,
           participantId: matchup.awayParticipantId!,
-          totalRings: data.awayResult.totalRings,
+          disciplineId: discipline.id,
+          shotCount,
+          sessionDate,
+          rings: data.awayResult.rings,
           teiler: data.awayResult.teiler,
           ringteiler: awayRingteiler,
           importSource: "MANUAL",
           recordedByUserId: session.user.id,
         },
         update: {
-          totalRings: data.awayResult.totalRings,
+          disciplineId: discipline.id,
+          shotCount,
+          sessionDate,
+          rings: data.awayResult.rings,
           teiler: data.awayResult.teiler,
           ringteiler: awayRingteiler,
           recordedByUserId: session.user.id,
@@ -120,10 +148,10 @@ export async function saveMatchResult(
         details: {
           round: matchup.round,
           homeName: `${matchup.homeParticipant.firstName} ${matchup.homeParticipant.lastName}`,
-          homeTotalRings: data.homeResult.totalRings,
+          homeRings: data.homeResult.rings,
           homeTeiler: data.homeResult.teiler,
           awayName: `${matchup.awayParticipant!.firstName} ${matchup.awayParticipant!.lastName}`,
-          awayTotalRings: data.awayResult.totalRings,
+          awayRings: data.awayResult.rings,
           awayTeiler: data.awayResult.teiler,
         },
       },

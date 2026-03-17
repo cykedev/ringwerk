@@ -3,7 +3,7 @@ import type { ScoringType } from "@/generated/prisma/client"
 export type { ScoringType }
 
 export interface ResultInput {
-  totalRings: number
+  rings: number
   teiler: number
 }
 
@@ -12,9 +12,12 @@ export interface SaveMatchResultInput {
   awayResult: ResultInput
 }
 
-export interface MatchResultSummary {
+export interface SeriesSummary {
   participantId: string
-  totalRings: number
+  rings: number
   teiler: number
   ringteiler: number
 }
+
+/** @deprecated Bitte SeriesSummary verwenden */
+export type MatchResultSummary = SeriesSummary

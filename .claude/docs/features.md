@@ -13,19 +13,19 @@
 
 ### Berechtigungsmatrix
 
-| Aktion                               | ADMIN | MANAGER  | USER |
-| ------------------------------------ | ----- | -------- | ---- |
-| Wettbewerbe erstellen/bearbeiten     | Ja    | Ja       | Nein |
-| Ergebnisse erfassen/korrigieren      | Ja    | Ja       | Nein |
-| Teilnehmer verwalten                 | Ja    | Ja       | Nein |
-| Disziplinen verwalten                | Ja    | Ja       | Nein |
-| Playoffs starten/verwalten           | Ja    | Ja       | Nein |
-| Wettbewerb archivieren/abschliessen  | Ja    | Ja       | Nein |
-| Audit-Log einsehen                   | Ja    | Ja       | Nein |
-| **Nutzerverwaltung** (/admin/\*)     | Ja    | **Nein** | Nein |
-| **Force-Delete**                     | Ja    | **Nein** | Nein |
-| **Rollen zuweisen**                  | Ja    | **Nein** | Nein |
-| Ergebnisse/Tabellen ansehen          | Ja    | Ja       | Ja   |
+| Aktion                              | ADMIN | MANAGER  | USER |
+| ----------------------------------- | ----- | -------- | ---- |
+| Wettbewerbe erstellen/bearbeiten    | Ja    | Ja       | Nein |
+| Ergebnisse erfassen/korrigieren     | Ja    | Ja       | Nein |
+| Teilnehmer verwalten                | Ja    | Ja       | Nein |
+| Disziplinen verwalten               | Ja    | Ja       | Nein |
+| Playoffs starten/verwalten          | Ja    | Ja       | Nein |
+| Wettbewerb archivieren/abschliessen | Ja    | Ja       | Nein |
+| Audit-Log einsehen                  | Ja    | Ja       | Nein |
+| **Nutzerverwaltung** (/admin/\*)    | Ja    | **Nein** | Nein |
+| **Force-Delete**                    | Ja    | **Nein** | Nein |
+| **Rollen zuweisen**                 | Ja    | **Nein** | Nein |
+| Ergebnisse/Tabellen ansehen         | Ja    | Ja       | Ja   |
 
 ---
 
@@ -58,11 +58,11 @@
 
 Ringwerk kennt drei Wettbewerbstypen. Alle teilen dieselbe Scoring-Engine und den Teilnehmerpool.
 
-| Typ                     | Ablauf                                        | Ergebnis                                     |
-| ----------------------- | --------------------------------------------- | -------------------------------------------- |
-| **Liga** (LEAGUE)       | Spielplan → Gruppenphase → Tabelle → Playoffs | Meister + Platzierungen                      |
-| **Event** (EVENT)       | Anmeldung → Schiessen → Rangliste             | Rangliste (ggf. mit Zielwert)                |
-| **Saison** (SEASON)     | Serien über Monate → Auswertung               | Mehrfach-Ranking (Ringe, Teiler, Ringteiler) |
+| Typ                 | Ablauf                                        | Ergebnis                                     |
+| ------------------- | --------------------------------------------- | -------------------------------------------- |
+| **Liga** (LEAGUE)   | Spielplan → Gruppenphase → Tabelle → Playoffs | Meister + Platzierungen                      |
+| **Event** (EVENT)   | Anmeldung → Schiessen → Rangliste             | Rangliste (ggf. mit Zielwert)                |
+| **Saison** (SEASON) | Serien über Monate → Auswertung               | Mehrfach-Ranking (Ringe, Teiler, Ringteiler) |
 
 ### Gemeinsame Konfiguration
 
@@ -133,9 +133,9 @@ Regelset ist **nach Spielplan-Generierung gesperrt** — Änderungen nur vor dem
 
 ### Validierungsregeln
 
-| Wertungsart  | Gültige Einzelwerte                                       |
-| ------------ | --------------------------------------------------------- |
-| Ganzringe    | 0–10, ganzzahlig                                          |
+| Wertungsart  | Gültige Einzelwerte                                      |
+| ------------ | -------------------------------------------------------- |
+| Ganzringe    | 0–10, ganzzahlig                                         |
 | Zehntelringe | 0.0 oder 1.0–10.9 (eine Dezimalstelle; 0.1–0.9 ungültig) |
 
 - Seriensumme ≤ Schussanzahl × Max.Ringe/Schuss
@@ -184,14 +184,14 @@ Seeding: 1 vs. letzter, 2 vs. vorletzter, usw.
 
 #### Finale (Sondermodus)
 
-| Regel            | Beschreibung                                                       |
-| ---------------- | ------------------------------------------------------------------ |
-| Wertung          | gemäß `finaleScoringMode` (default: nur Ringe, höchste gewinnt)    |
-| Gleichstand      | wenn `finaleHasSuddenDeath`: weiteres Duell bis Entscheid          |
-| Einrichtungszeit | 3 Minuten                                                          |
-| Probeschuss      | Keiner                                                             |
-| Ansage           | Jeder Schuss einzeln                                               |
-| Zeit pro Schuss  | 75 Sekunden                                                        |
+| Regel            | Beschreibung                                                    |
+| ---------------- | --------------------------------------------------------------- |
+| Wertung          | gemäß `finaleScoringMode` (default: nur Ringe, höchste gewinnt) |
+| Gleichstand      | wenn `finaleHasSuddenDeath`: weiteres Duell bis Entscheid       |
+| Einrichtungszeit | 3 Minuten                                                       |
+| Probeschuss      | Keiner                                                          |
+| Ansage           | Jeder Schuss einzeln                                            |
+| Zeit pro Schuss  | 75 Sekunden                                                     |
 
 App-Umfang: **nur Ergebniserfassung** (keine Zeitnahme oder Ansage-Unterstützung)
 
@@ -223,16 +223,16 @@ Alle Teilnehmer schiessen, eine Rangliste wird erstellt.
 
 ### Konfiguration
 
-| Parameter       | Beschreibung                                                |
-| --------------- | ----------------------------------------------------------- |
-| scoringMode     | Wertungsmodus (alle 7 Modi möglich)                         |
-| shotsPerSeries  | Schusszahl pro Serie (default 10, z.B. 5 für Kurz-Kranzl)   |
-| disciplineId    | null = gemischt (Faktor aktiv), oder fixe Disziplin         |
-| eventDate       | Veranstaltungsdatum                                         |
-| allowGuests     | Gastteilnehmer zugelassen                                   |
-| teamSize        | null = Einzel; 2+ = Teamgröße                              |
-| targetValue     | Zielwert für TARGET-Modi (z.B. 512 oder 76.0)              |
-| targetValueType | TEILER, RINGS oder RINGS_DECIMAL                            |
+| Parameter       | Beschreibung                                              |
+| --------------- | --------------------------------------------------------- |
+| scoringMode     | Wertungsmodus (alle 7 Modi möglich)                       |
+| shotsPerSeries  | Schusszahl pro Serie (default 10, z.B. 5 für Kurz-Kranzl) |
+| disciplineId    | null = gemischt (Faktor aktiv), oder fixe Disziplin       |
+| eventDate       | Veranstaltungsdatum                                       |
+| allowGuests     | Gastteilnehmer zugelassen                                 |
+| teamSize        | null = Einzel; 2+ = Teamgröße                             |
+| targetValue     | Zielwert für TARGET-Modi (z.B. 512 oder 76.0)             |
+| targetValueType | TEILER, RINGS oder RINGS_DECIMAL                          |
 
 ### Teilnehmer & Gäste
 
@@ -284,14 +284,14 @@ Serien werden "gekauft" — jede geschossene Serie zählt als gekauft.
 
 ### Konfiguration
 
-| Parameter      | Beschreibung                                                             |
-| -------------- | ------------------------------------------------------------------------ |
-| scoringMode    | Primärer Wertungsmodus (für die Hauptsortierung)                         |
-| shotsPerSeries | Schusszahl pro Serie                                                     |
-| disciplineId   | Immer null (gemischt) — Teilnehmer können Disziplin pro Serie wechseln   |
-| minSeries      | Mindestanzahl Serien für Wertung (default 20)                            |
-| seasonStart    | Saisonbeginn                                                             |
-| seasonEnd      | Saisonende                                                               |
+| Parameter      | Beschreibung                                                           |
+| -------------- | ---------------------------------------------------------------------- |
+| scoringMode    | Primärer Wertungsmodus (für die Hauptsortierung)                       |
+| shotsPerSeries | Schusszahl pro Serie                                                   |
+| disciplineId   | Immer null (gemischt) — Teilnehmer können Disziplin pro Serie wechseln |
+| minSeries      | Mindestanzahl Serien für Wertung (default 20)                          |
+| seasonStart    | Saisonbeginn                                                           |
+| seasonEnd      | Saisonende                                                             |
 
 ### Serien-Erfassung
 

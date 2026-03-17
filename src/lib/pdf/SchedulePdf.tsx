@@ -150,7 +150,7 @@ function PlayerCell({
   isRowWithdrawn,
 }: {
   name: string
-  result: { totalRings: number; teiler: number; ringteiler: number } | null
+  result: { rings: number; teiler: number; ringteiler: number } | null
   isWinner: boolean
   isRowWithdrawn: boolean
 }): ReactElement {
@@ -167,7 +167,7 @@ function PlayerCell({
       <Text style={isWinner ? styles.playerNameWinner : styles.playerName}>{name}</Text>
       {result && (
         <Text style={styles.resultSmall}>
-          {`${result.totalRings.toFixed(0)} R \u00b7 T ${result.teiler.toFixed(1)} \u00b7 RT `}
+          {`${result.rings.toFixed(0)} R \u00b7 T ${result.teiler.toFixed(1)} \u00b7 RT `}
           <Text style={isWinner ? styles.resultSmallRT : {}}>{result.ringteiler.toFixed(1)}</Text>
         </Text>
       )}

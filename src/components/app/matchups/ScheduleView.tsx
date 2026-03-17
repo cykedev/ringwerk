@@ -54,7 +54,7 @@ function ParticipantResult({
     <div className="space-y-0.5">
       <div className="font-medium">{name}</div>
       <div className="text-xs text-muted-foreground">
-        {result.totalRings} R · {result.teiler.toFixed(1)} T · RT {result.ringteiler.toFixed(1)}
+        {result.rings} R · {result.teiler.toFixed(1)} T · RT {result.ringteiler.toFixed(1)}
       </div>
     </div>
   )

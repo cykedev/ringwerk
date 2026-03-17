@@ -7,7 +7,7 @@ const {
   createMock,
   updateMock,
   deleteMock,
-  leagueCountMock,
+  competitionCountMock,
 } = vi.hoisted(() => ({
   getAuthSessionMock: vi.fn(),
   revalidatePathMock: vi.fn(),
@@ -15,7 +15,7 @@ const {
   createMock: vi.fn(),
   updateMock: vi.fn(),
   deleteMock: vi.fn(),
-  leagueCountMock: vi.fn(),
+  competitionCountMock: vi.fn(),
 }))
 
 vi.mock("@/lib/auth-helpers", () => ({ getAuthSession: getAuthSessionMock }))
@@ -28,7 +28,7 @@ vi.mock("@/lib/db", () => ({
       update: updateMock,
       delete: deleteMock,
     },
-    league: { count: leagueCountMock },
+    competition: { count: competitionCountMock },
   },
 }))
 
@@ -162,7 +162,7 @@ describe("updateDiscipline", () => {
   it("blockiert Wertungsartwechsel wenn Ligen vorhanden", async () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
     findUniqueMock.mockResolvedValue({ id: "d1", scoringType: "WHOLE" })
-    leagueCountMock.mockResolvedValue(2)
+    competitionCountMock.mockResolvedValue(2)
 
     const result = await updateDiscipline(
       "d1",
@@ -177,7 +177,7 @@ describe("updateDiscipline", () => {
   it("erlaubt Wertungsartwechsel ohne Ligen", async () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
     findUniqueMock.mockResolvedValue({ id: "d1", scoringType: "WHOLE" })
-    leagueCountMock.mockResolvedValue(0)
+    competitionCountMock.mockResolvedValue(0)
 
     const result = await updateDiscipline(
       "d1",
@@ -212,18 +212,18 @@ describe("deleteDiscipline", () => {
   it("blockiert Löschen wenn Ligen vorhanden", async () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
     findUniqueMock.mockResolvedValue({ id: "d1" })
-    leagueCountMock.mockResolvedValue(1)
+    competitionCountMock.mockResolvedValue(1)
 
     const result = await deleteDiscipline("d1")
 
-    expect(result).toMatchObject({ error: expect.stringContaining("Ligen") })
+    expect(result).toMatchObject({ error: expect.stringContaining("Wettbewerben") })
     expect(deleteMock).not.toHaveBeenCalled()
   })
 
   it("löscht Disziplin ohne Ligen", async () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
     findUniqueMock.mockResolvedValue({ id: "d1" })
-    leagueCountMock.mockResolvedValue(0)
+    competitionCountMock.mockResolvedValue(0)
 
     const result = await deleteDiscipline("d1")
 

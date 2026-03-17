@@ -236,7 +236,7 @@ export async function forceDeleteCompetition(
       }
 
       if (matchupIds.length > 0) {
-        await tx.matchResult.deleteMany({
+        await tx.series.deleteMany({
           where: { matchupId: { in: matchupIds } },
         })
       }

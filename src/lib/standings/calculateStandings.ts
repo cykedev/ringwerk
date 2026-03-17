@@ -10,7 +10,7 @@ export interface StandingsParticipant {
 
 export interface StandingsMatchupResult {
   participantId: string
-  totalRings: number
+  rings: number
   teiler: number
   ringteiler: number
 }
@@ -92,7 +92,10 @@ export function calculateStandings(
     const awayResult = matchup.results.find((r) => r.participantId === matchup.awayParticipantId)
     if (!homeResult || !awayResult) continue
 
-    const outcome = determineOutcome(homeResult, awayResult)
+    const outcome = determineOutcome(
+      { rings: homeResult.rings, teiler: homeResult.teiler, ringteiler: homeResult.ringteiler },
+      { rings: awayResult.rings, teiler: awayResult.teiler, ringteiler: awayResult.ringteiler }
+    )
 
     const homeStats = statsMap.get(matchup.homeParticipantId)!
     const awayStats = statsMap.get(matchup.awayParticipantId!)!
@@ -197,7 +200,10 @@ function sortWithDirectComparison(
         const awayResult = m.results.find((r) => r.participantId === m.awayParticipantId)
         if (!homeResult || !awayResult) continue
 
-        const outcome = determineOutcome(homeResult, awayResult)
+        const outcome = determineOutcome(
+          { rings: homeResult.rings, teiler: homeResult.teiler, ringteiler: homeResult.ringteiler },
+          { rings: awayResult.rings, teiler: awayResult.teiler, ringteiler: awayResult.ringteiler }
+        )
         if (outcome === "DRAW") {
           dp += 1
         } else if ((isHome && outcome === "HOME_WIN") || (isAway && outcome === "AWAY_WIN")) {

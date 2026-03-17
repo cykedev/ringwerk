@@ -41,10 +41,10 @@ export async function getMatchupsForCompetition(competitionId: string): Promise<
       dueDate: true,
       homeParticipant: { select: participantSelect(competitionId) },
       awayParticipant: { select: participantSelect(competitionId) },
-      results: {
+      series: {
         select: {
           participantId: true,
-          totalRings: true,
+          rings: true,
           teiler: true,
           ringteiler: true,
         },
@@ -62,9 +62,9 @@ export async function getMatchupsForCompetition(competitionId: string): Promise<
     homeParticipant: mapParticipant(row.homeParticipant),
     awayParticipant: row.awayParticipant ? mapParticipant(row.awayParticipant) : null,
     // Decimal-Felder in number umwandeln (Prisma 7)
-    results: row.results.map((r) => ({
+    results: row.series.map((r) => ({
       participantId: r.participantId,
-      totalRings: r.totalRings.toNumber(),
+      rings: r.rings.toNumber(),
       teiler: r.teiler.toNumber(),
       ringteiler: r.ringteiler.toNumber(),
     })),

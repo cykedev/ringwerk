@@ -103,7 +103,7 @@ model User {
 
   createdCompetitions        Competition[]
   createdParticipants        Participant[]
-  recordedResults            MatchResult[]
+  recordedResults            Series[]
   recordedPlayoffDuelResults PlayoffDuelResult[]
   auditLogs                  AuditLog[]
 }
@@ -149,6 +149,7 @@ model Discipline {
 
   competitions             Competition[]
   competitionParticipants  CompetitionParticipant[]
+  series                   Series[]
 
   @@index([isArchived])
 }
@@ -238,7 +239,7 @@ model Participant {
   competitions       CompetitionParticipant[]
   homeMatchups       Matchup[]               @relation("HomeParticipant")
   awayMatchups       Matchup[]               @relation("AwayParticipant")
-  matchResults       MatchResult[]
+  series             Series[]
   playoffMatchesA    PlayoffMatch[]          @relation("ParticipantA")
   playoffMatchesB    PlayoffMatch[]          @relation("ParticipantB")
   playoffDuelResults PlayoffDuelResult[]
@@ -296,7 +297,7 @@ model Matchup {
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 
-  results           MatchResult[]
+  series            Series[]
 
   @@index([competitionId])
   @@index([competitionId, homeParticipantId])
@@ -304,25 +305,34 @@ model Matchup {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MatchResult (Duell-Ergebnis — Gruppenphase)
+// Series (Schiessserie — universell für Liga, Event, Saison)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Pro COMPLETED Matchup: 2 MatchResults (je einer pro Schütze).
-// Bei BYE/WALKOVER: 0 MatchResults (Punkte werden algorithmisch vergeben).
-model MatchResult {
+// LIGA: matchupId gesetzt, je 2 Series pro COMPLETED Matchup (eine pro Schütze).
+//        Bei BYE/WALKOVER: keine Series (Punkte algorithmisch).
+// EVENT/SAISON: matchupId null, beliebig viele Series pro Teilnehmer.
+model Series {
   id            String      @id @default(cuid())
-  matchupId     String
-  matchup       Matchup     @relation(fields: [matchupId], references: [id])
+  // Liga: matchupId gesetzt. Event/Saison: null.
+  matchupId     String?
+  matchup       Matchup?    @relation(fields: [matchupId], references: [id])
   participantId String
   participant   Participant @relation(fields: [participantId], references: [id])
+  // Disziplin dieser Serie (bei Liga: aus Competition.disciplineId)
+  disciplineId  String
+  discipline    Discipline  @relation(fields: [disciplineId], references: [id])
+  // Anzahl der Schüsse dieser Serie
+  shotCount     Int
+  // Datum der Serie (Liga: aus Matchup.dueDate; Event/Saison: tatsächliches Datum)
+  sessionDate   DateTime
   // Einzelschüsse als JSON-Array von Strings (exakte Dezimaldarstellung)
   // z.B. ["9", "10", "8", ...] (WHOLE) oder ["9.5", "10.1", "8.7", ...] (DECIMAL)
   shots         Json?
-  // Seriensumme — Gesamtringe dieser Seite
-  totalRings    Decimal      @db.Decimal(5, 1)
+  // Seriensumme — Gesamtringe dieser Serie
+  rings         Decimal      @db.Decimal(5, 1)
   // Bester Teiler der Serie (kleinster Wert = nächste Scheibenmitte); max 9999.9
   teiler        Decimal      @db.Decimal(6, 1)
-  // Ringteiler = MaxRinge − totalRings + teiler (niedriger gewinnt)
+  // Ringteiler = MaxRinge − rings + (teiler * teilerFaktor) (niedriger gewinnt)
   // MaxRinge: 100 (WHOLE) oder 109 (DECIMAL), abgeleitet aus Disziplin
   ringteiler    Decimal      @db.Decimal(7, 1)
   importSource  ImportSource @default(MANUAL)
@@ -332,10 +342,11 @@ model MatchResult {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
-  // Genau ein Ergebnis pro Schütze pro Paarung
+  // Liga: genau eine Serie pro Schütze pro Paarung (NULL-Werte sind per SQL-Standard distinct)
   @@unique([matchupId, participantId])
   @@index([matchupId])
   @@index([participantId])
+  @@index([disciplineId])
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -24,10 +24,10 @@ export async function getStandingsForCompetition(competitionId: string): Promise
         status: true,
         homeParticipantId: true,
         awayParticipantId: true,
-        results: {
+        series: {
           select: {
             participantId: true,
-            totalRings: true,
+            rings: true,
             teiler: true,
             ringteiler: true,
           },
@@ -49,9 +49,9 @@ export async function getStandingsForCompetition(competitionId: string): Promise
     status: m.status,
     homeParticipantId: m.homeParticipantId,
     awayParticipantId: m.awayParticipantId,
-    results: m.results.map((r) => ({
+    results: m.series.map((r) => ({
       participantId: r.participantId,
-      totalRings: r.totalRings.toNumber(),
+      rings: r.rings.toNumber(),
       teiler: r.teiler.toNumber(),
       ringteiler: r.ringteiler.toNumber(),
     })),

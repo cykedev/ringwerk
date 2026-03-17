@@ -64,10 +64,10 @@ export function formatAuditDetails(eventType: string, details: unknown): DetailR
     case "RESULT_ENTERED":
     case "RESULT_CORRECTED":
       if (d.homeName) rows.push({ label: "Heim", value: str(d.homeName) })
-      rows.push({ label: "Heim – Ringe", value: rings(d.homeTotalRings) })
+      rows.push({ label: "Heim – Ringe", value: rings(d.homeRings) })
       rows.push({ label: "Heim – Teiler", value: teiler(d.homeTeiler) })
       if (d.awayName) rows.push({ label: "Gast", value: str(d.awayName) })
-      rows.push({ label: "Gast – Ringe", value: rings(d.awayTotalRings) })
+      rows.push({ label: "Gast – Ringe", value: rings(d.awayRings) })
       rows.push({ label: "Gast – Teiler", value: teiler(d.awayTeiler) })
       break
 

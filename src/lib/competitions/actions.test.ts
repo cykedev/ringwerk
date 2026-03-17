@@ -322,7 +322,7 @@ describe("forceDeleteCompetition", () => {
   const mockTx = {
     competitionParticipant: { findMany: vi.fn(), deleteMany: vi.fn() },
     matchup: { findMany: vi.fn(), deleteMany: vi.fn() },
-    matchResult: { findMany: vi.fn(), deleteMany: vi.fn() },
+    series: { findMany: vi.fn(), deleteMany: vi.fn() },
     playoffMatch: { findMany: vi.fn(), deleteMany: vi.fn() },
     playoffDuel: { findMany: vi.fn(), deleteMany: vi.fn() },
     playoffDuelResult: { deleteMany: vi.fn() },
@@ -333,13 +333,13 @@ describe("forceDeleteCompetition", () => {
   function setupEmptyTx() {
     mockTx.competitionParticipant.findMany.mockResolvedValue([])
     mockTx.matchup.findMany.mockResolvedValue([])
-    mockTx.matchResult.findMany.mockResolvedValue([])
+    mockTx.series.findMany.mockResolvedValue([])
     mockTx.playoffMatch.findMany.mockResolvedValue([])
     mockTx.playoffDuel.findMany.mockResolvedValue([])
     mockTx.playoffDuelResult.deleteMany.mockResolvedValue({ count: 0 })
     mockTx.playoffDuel.deleteMany.mockResolvedValue({ count: 0 })
     mockTx.playoffMatch.deleteMany.mockResolvedValue({ count: 0 })
-    mockTx.matchResult.deleteMany.mockResolvedValue({ count: 0 })
+    mockTx.series.deleteMany.mockResolvedValue({ count: 0 })
     mockTx.matchup.deleteMany.mockResolvedValue({ count: 0 })
     mockTx.auditLog.deleteMany.mockResolvedValue({ count: 0 })
     mockTx.competitionParticipant.deleteMany.mockResolvedValue({ count: 0 })
@@ -397,7 +397,7 @@ describe("forceDeleteCompetition", () => {
 
     mockTx.competitionParticipant.findMany.mockResolvedValue([{ id: "cp1" }, { id: "cp2" }])
     mockTx.matchup.findMany.mockResolvedValue([{ id: "mu1" }, { id: "mu2" }])
-    mockTx.matchResult.findMany.mockResolvedValue([{ id: "mr1" }])
+    mockTx.series.findMany.mockResolvedValue([{ id: "mr1" }])
     mockTx.playoffMatch.findMany.mockResolvedValue([{ id: "pm1" }])
     mockTx.playoffDuel.findMany.mockResolvedValue([{ id: "pd1" }, { id: "pd2" }])
 
@@ -414,7 +414,7 @@ describe("forceDeleteCompetition", () => {
     expect(mockTx.playoffMatch.deleteMany).toHaveBeenCalledWith({
       where: { id: { in: ["pm1"] } },
     })
-    expect(mockTx.matchResult.deleteMany).toHaveBeenCalledWith({
+    expect(mockTx.series.deleteMany).toHaveBeenCalledWith({
       where: { matchupId: { in: ["mu1", "mu2"] } },
     })
     expect(mockTx.matchup.deleteMany).toHaveBeenCalledWith({ where: { competitionId: "c1" } })

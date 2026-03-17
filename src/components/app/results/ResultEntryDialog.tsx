@@ -17,7 +17,7 @@ import { saveMatchResult } from "@/lib/results/actions"
 import type { MatchResultSummary } from "@/lib/matchups/types"
 
 interface ParticipantResult {
-  totalRings: string
+  rings: string
   teiler: string
 }
 
@@ -56,11 +56,11 @@ export function ResultEntryDialog({
   const existingAway = getExisting(existingResults, awayParticipantId)
 
   const [home, setHome] = useState<ParticipantResult>({
-    totalRings: existingHome ? String(existingHome.totalRings) : "",
+    rings: existingHome ? String(existingHome.rings) : "",
     teiler: existingHome ? String(existingHome.teiler) : "",
   })
   const [away, setAway] = useState<ParticipantResult>({
-    totalRings: existingAway ? String(existingAway.totalRings) : "",
+    rings: existingAway ? String(existingAway.rings) : "",
     teiler: existingAway ? String(existingAway.teiler) : "",
   })
 
@@ -68,11 +68,11 @@ export function ResultEntryDialog({
     if (isOpen) {
       // Beim Öffnen: existierende Werte neu laden
       setHome({
-        totalRings: existingHome ? String(existingHome.totalRings) : "",
+        rings: existingHome ? String(existingHome.rings) : "",
         teiler: existingHome ? String(existingHome.teiler) : "",
       })
       setAway({
-        totalRings: existingAway ? String(existingAway.totalRings) : "",
+        rings: existingAway ? String(existingAway.rings) : "",
         teiler: existingAway ? String(existingAway.teiler) : "",
       })
       setError(null)
@@ -81,9 +81,9 @@ export function ResultEntryDialog({
   }
 
   function handleSubmit() {
-    const homeTotalRings = parseFloat(home.totalRings.replace(",", "."))
+    const homeTotalRings = parseFloat(home.rings.replace(",", "."))
     const homeTeiler = parseFloat(home.teiler.replace(",", "."))
-    const awayTotalRings = parseFloat(away.totalRings.replace(",", "."))
+    const awayTotalRings = parseFloat(away.rings.replace(",", "."))
     const awayTeiler = parseFloat(away.teiler.replace(",", "."))
 
     if (isNaN(homeTotalRings) || isNaN(homeTeiler) || isNaN(awayTotalRings) || isNaN(awayTeiler)) {
@@ -105,8 +105,8 @@ export function ResultEntryDialog({
 
     startTransition(async () => {
       const result = await saveMatchResult(matchupId, {
-        homeResult: { totalRings: homeTotalRings, teiler: homeTeiler },
-        awayResult: { totalRings: awayTotalRings, teiler: awayTeiler },
+        homeResult: { rings: homeTotalRings, teiler: homeTeiler },
+        awayResult: { rings: awayTotalRings, teiler: awayTeiler },
       })
 
       if ("error" in result) {
@@ -150,8 +150,8 @@ export function ResultEntryDialog({
                   type="number"
                   step="0.1"
                   min="0"
-                  value={home.totalRings}
-                  onChange={(e) => setHome((p) => ({ ...p, totalRings: e.target.value }))}
+                  value={home.rings}
+                  onChange={(e) => setHome((p) => ({ ...p, rings: e.target.value }))}
                   placeholder="z.B. 96"
                   disabled={isPending}
                 />
@@ -194,8 +194,8 @@ export function ResultEntryDialog({
                   type="number"
                   step="0.1"
                   min="0"
-                  value={away.totalRings}
-                  onChange={(e) => setAway((p) => ({ ...p, totalRings: e.target.value }))}
+                  value={away.rings}
+                  onChange={(e) => setAway((p) => ({ ...p, rings: e.target.value }))}
                   placeholder="z.B. 94"
                   disabled={isPending}
                 />

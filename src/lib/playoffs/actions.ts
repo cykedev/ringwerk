@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { getAuthSession } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
-import { calcRingteiler, MAX_RINGS } from "@/lib/results/calculateResult"
+import { calculateRingteiler, MAX_RINGS } from "@/lib/results/calculateResult"
 import { getStandingsForCompetition } from "@/lib/standings/queries"
 import {
   createFirstRoundMatchups,
@@ -125,7 +125,9 @@ export async function savePlayoffDuelResult(
           participantA: { select: { firstName: true, lastName: true } },
           participantBId: true,
           participantB: { select: { firstName: true, lastName: true } },
-          competition: { select: { discipline: { select: { scoringType: true } } } },
+          competition: {
+            select: { discipline: { select: { scoringType: true, teilerFaktor: true } } },
+          },
         },
       },
     },
@@ -172,8 +174,9 @@ export async function savePlayoffDuelResult(
   } else {
     if (!duel.playoffMatch.competition.discipline) return { error: "Disziplin nicht konfiguriert." }
     const maxRings = MAX_RINGS[duel.playoffMatch.competition.discipline.scoringType]
-    ringteilerA = calcRingteiler(maxRings, input.totalRingsA, input.teilerA ?? 0)
-    ringteilerB = calcRingteiler(maxRings, input.totalRingsB, input.teilerB ?? 0)
+    const faktor = duel.playoffMatch.competition.discipline.teilerFaktor.toNumber()
+    ringteilerA = calculateRingteiler(input.totalRingsA, input.teilerA ?? 0, faktor, maxRings)
+    ringteilerB = calculateRingteiler(input.totalRingsB, input.teilerB ?? 0, faktor, maxRings)
     outcome = determinePlayoffDuelWinner(
       ringteilerA,
       input.totalRingsA,

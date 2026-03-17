@@ -11,7 +11,7 @@ export interface MatchupParticipant {
 
 export interface MatchResultSummary {
   participantId: string
-  totalRings: number
+  rings: number
   teiler: number
   ringteiler: number
 }
