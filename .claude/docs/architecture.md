@@ -157,6 +157,12 @@ src/
       queries.ts              ← Tabellendaten laden
       calculateStandings.ts   ← Tabellenberechnung (Punkte, Direktvergleich, RT, testpflichtig)
       calculateStandings.test.ts
+    scoring/
+      calculateScore.ts       ← Kernfunktion für alle 7 Wertungsmodi
+      calculateScore.test.ts
+      rankParticipants.ts     ← Ranglistenberechnung pro Wertungsmodus
+      rankParticipants.test.ts
+      types.ts                ← ScoringMode, ScoreInput, RankableEntry, RankedEntry
     playoffs/
       actions.ts              ← Playoffs starten, Duell-Ergebnis speichern, Duel anlegen
       queries.ts              ← Bracket-Daten laden
