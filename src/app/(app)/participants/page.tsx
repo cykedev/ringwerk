@@ -44,9 +44,10 @@ export default async function ParticipantsPage() {
                     <span className="text-sm font-medium">
                       {p.lastName}, {p.firstName}
                     </span>
-                    {p._count.leagues > 0 && (
+                    {p._count.competitions > 0 && (
                       <Badge variant="secondary" className="text-xs">
-                        {p._count.leagues} {p._count.leagues === 1 ? "Liga" : "Ligen"}
+                        {p._count.competitions}{" "}
+                        {p._count.competitions === 1 ? "Wettbewerb" : "Wettbewerbe"}
                       </Badge>
                     )}
                   </div>

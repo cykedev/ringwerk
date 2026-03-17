@@ -30,7 +30,7 @@ export default proxy
 export const config = {
   matcher: [
     "/",
-    "/leagues/:path*",
+    "/competitions/:path*",
     "/participants/:path*",
     "/disciplines/:path*",
     "/admin/:path*",

@@ -15,29 +15,29 @@ Verbindlich gleichrangig mit `.claude/docs/technical.md`. Neue Dateien immer gem
 ## Routen
 
 ```
-/login                          ← öffentlich
-/                               ← Dashboard (Übersicht aktiver Ligen)
-/leagues                        ← alle Ligen
-/leagues/new                    ← Liga anlegen (Admin)
-/leagues/[id]/participants      ← Teilnehmer einschreiben/verwalten (Admin)
-/leagues/[id]/schedule          ← Spielplan + Tabelle (unified, Admin)
-/leagues/[id]/standings         ← Ligatabelle (Tabellenberechnung)
-/leagues/[id]/playoffs          ← Playoff-Bracket (Admin)
-/leagues/[id]/audit-log         ← Liga-Protokoll (nur Admin)
-/participants                   ← Teilnehmerverwaltung
-/participants/new               ← Teilnehmer anlegen (Admin)
-/participants/[id]              ← Profil: alle Duelle, Ergebnisse, Statistik
-/disciplines                    ← Disziplinverwaltung (Admin)
-/disciplines/new                ← Disziplin anlegen (Admin)
-/disciplines/[id]/edit          ← Disziplin bearbeiten (Admin)
-/admin/users                    ← Nutzerverwaltung (nur Admin)
-/admin/users/new                ← Nutzer anlegen (nur Admin)
-/admin/users/[id]/edit          ← Nutzer bearbeiten (nur Admin)
-/admin/audit-log                ← Globales Protokoll (nur Admin)
-/account                        ← Passwort ändern (eingeloggt)
-/api/auth/[...nextauth]         ← NextAuth-Handler
-/api/leagues/[id]/pdf/schedule  ← PDF-Export: Spielplan + Tabelle
-/api/leagues/[id]/pdf/playoffs  ← PDF-Export: Playoff-Bracket
+/login                              ← öffentlich
+/                                   ← Dashboard (Übersicht aktiver Wettbewerbe)
+/competitions                       ← alle Wettbewerbe
+/competitions/new                   ← Wettbewerb anlegen (Admin)
+/competitions/[id]/participants     ← Teilnehmer einschreiben/verwalten (Admin)
+/competitions/[id]/schedule         ← Spielplan + Tabelle (unified, Admin)
+/competitions/[id]/standings        ← Ligatabelle (Tabellenberechnung)
+/competitions/[id]/playoffs         ← Playoff-Bracket (Admin)
+/competitions/[id]/audit-log        ← Wettbewerb-Protokoll (nur Admin)
+/participants                       ← Teilnehmerverwaltung
+/participants/new                   ← Teilnehmer anlegen (Admin)
+/participants/[id]                  ← Profil: alle Duelle, Ergebnisse, Statistik
+/disciplines                        ← Disziplinverwaltung (Admin)
+/disciplines/new                    ← Disziplin anlegen (Admin)
+/disciplines/[id]/edit              ← Disziplin bearbeiten (Admin)
+/admin/users                        ← Nutzerverwaltung (nur Admin)
+/admin/users/new                    ← Nutzer anlegen (nur Admin)
+/admin/users/[id]/edit              ← Nutzer bearbeiten (nur Admin)
+/admin/audit-log                    ← Globales Protokoll (nur Admin)
+/account                            ← Passwort ändern (eingeloggt)
+/api/auth/[...nextauth]             ← NextAuth-Handler
+/api/competitions/[id]/pdf/schedule ← PDF-Export: Spielplan + Tabelle
+/api/competitions/[id]/pdf/playoffs ← PDF-Export: Playoff-Bracket
 ```
 
 ---
@@ -53,7 +53,7 @@ src/
     (app)/
       layout.tsx              ← Auth-Guard + Navigation
       page.tsx                ← Dashboard
-      leagues/
+      competitions/
         page.tsx
         new/
           page.tsx
@@ -101,7 +101,7 @@ src/
       auth/
         [...nextauth]/
           route.ts
-      leagues/
+      competitions/
         [id]/
           pdf/
             schedule/
@@ -111,8 +111,8 @@ src/
   components/
     ui/                       ← shadcn/ui (auto-generiert, nicht manuell editieren)
     app/
-      leagues/                ← Liga-spezifische Komponenten
-      leagueParticipants/     ← Einschreiben + Rückzug
+      competitions/           ← Wettbewerbs-spezifische Komponenten
+      competitionParticipants/ ← Einschreiben + Rückzug
       matchups/               ← Spielplan-Generierung + Anzeige
       results/                ← Ergebniserfassung (Dialog)
       standings/              ← Tabellenberechnung + Anzeige
@@ -134,11 +134,11 @@ src/
     startup.ts                ← Erstinitialisierung (Admin + Disziplinen), aufgerufen aus root layout.tsx
     utils.ts                  ← cn() und andere UI-Helfer
     types.ts                  ← Shared Types (ActionResult etc.)
-    leagues/
-      actions.ts              ← Server Actions: Liga anlegen/bearbeiten/abschliessen/force-delete
-      queries.ts              ← Datenbankabfragen: Liga laden
+    competitions/
+      actions.ts              ← Server Actions: Wettbewerb anlegen/bearbeiten/abschliessen/force-delete
+      queries.ts              ← Datenbankabfragen: Wettbewerb laden
       types.ts
-    leagueParticipants/
+    competitionParticipants/
       actions.ts              ← Einschreiben, Rückzug, Rückzug rückgängig
       queries.ts
       types.ts
@@ -177,7 +177,7 @@ src/
       queries.ts
       types.ts
     auditLog/
-      queries.ts              ← getAuditLogsByLeague(), getAuditLogs() (globale Abfrage)
+      queries.ts              ← getAuditLogsByCompetition(), getAuditLogs() (globale Abfrage)
       types.ts                ← AuditEventType, AUDIT_EVENT_LABELS, formatAuditDetails()
     pdf/
       styles.ts               ← Gemeinsames StyleSheet + Farbkonstanten (react-pdf)
@@ -215,7 +215,7 @@ export const proxy = withAuth({
 export default proxy
 
 export const config = {
-  matcher: ["/leagues/:path*", "/participants/:path*" /* ... */],
+  matcher: ["/competitions/:path*", "/participants/:path*" /* ... */],
 }
 ```
 

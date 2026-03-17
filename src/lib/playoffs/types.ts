@@ -43,7 +43,7 @@ export interface PlayoffMatchItem {
 }
 
 export interface PlayoffBracketData {
-  leagueId: string
+  competitionId: string
   quarterFinals: PlayoffMatchItem[]
   semiFinals: PlayoffMatchItem[]
   final: PlayoffMatchItem | null

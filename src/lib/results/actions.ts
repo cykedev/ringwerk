@@ -29,8 +29,8 @@ export async function saveMatchResult(
       homeParticipant: { select: { firstName: true, lastName: true } },
       awayParticipantId: true,
       awayParticipant: { select: { firstName: true, lastName: true } },
-      leagueId: true,
-      league: { select: { discipline: { select: { scoringType: true } } } },
+      competitionId: true,
+      competition: { select: { discipline: { select: { scoringType: true } } } },
       results: { select: { id: true } },
     },
   })
@@ -38,8 +38,9 @@ export async function saveMatchResult(
   if (!matchup) return { error: "Paarung nicht gefunden." }
   if (matchup.status === "BYE") return { error: "Freilos-Paarungen haben keine Ergebnisse." }
   if (!matchup.awayParticipantId) return { error: "Ungültige Paarung: kein Gegner zugeordnet." }
+  if (!matchup.competition.discipline) return { error: "Disziplin nicht konfiguriert." }
 
-  const maxRings = MAX_RINGS[matchup.league.discipline.scoringType]
+  const maxRings = MAX_RINGS[matchup.competition.discipline.scoringType]
   const homeRingteiler = calcRingteiler(
     maxRings,
     data.homeResult.totalRings,
@@ -115,7 +116,7 @@ export async function saveMatchResult(
         entityType: "MATCHUP",
         entityId: matchupId,
         userId: session.user.id,
-        leagueId: matchup.leagueId,
+        competitionId: matchup.competitionId,
         details: {
           round: matchup.round,
           homeName: `${matchup.homeParticipant.firstName} ${matchup.homeParticipant.lastName}`,
@@ -132,8 +133,8 @@ export async function saveMatchResult(
     return { error: "Ergebnis konnte nicht gespeichert werden." }
   }
 
-  revalidatePath(`/leagues/${matchup.leagueId}/schedule`)
-  revalidatePath(`/leagues/${matchup.leagueId}/standings`)
+  revalidatePath(`/competitions/${matchup.competitionId}/schedule`)
+  revalidatePath(`/competitions/${matchup.competitionId}/standings`)
 
   return { success: true }
 }

@@ -2,8 +2,8 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 import { Trophy } from "lucide-react"
 import { getAuthSession } from "@/lib/auth-helpers"
-import { getLeaguesForManagement } from "@/lib/leagues/queries"
-import { getStandingsForLeague } from "@/lib/standings/queries"
+import { getCompetitionsForManagement } from "@/lib/competitions/queries"
+import { getStandingsForCompetition } from "@/lib/standings/queries"
 import { getPlayoffBracket } from "@/lib/playoffs/queries"
 import { StandingsTable } from "@/components/app/standings/StandingsTable"
 import { PlayoffBracket } from "@/components/app/playoffs/PlayoffBracket"
@@ -16,14 +16,14 @@ export default async function DashboardPage() {
   const session = await getAuthSession()
   if (!session) redirect("/login")
 
-  const leagues = await getLeaguesForManagement()
-  const active = leagues.filter((l) => l.status === "ACTIVE")
+  const competitions = await getCompetitionsForManagement()
+  const active = competitions.filter((c) => c.status === "ACTIVE")
 
-  const dataPerLeague = await Promise.all(
-    active.map(async (l) => ({
-      league: l,
-      standings: await getStandingsForLeague(l.id),
-      bracket: await getPlayoffBracket(l.id),
+  const dataPerCompetition = await Promise.all(
+    active.map(async (c) => ({
+      competition: c,
+      standings: await getStandingsForCompetition(c.id),
+      bracket: await getPlayoffBracket(c.id),
     }))
   )
 
@@ -31,26 +31,26 @@ export default async function DashboardPage() {
     <div className="mx-auto max-w-3xl space-y-8 px-4 py-8">
       <div>
         <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Aktive Ligen auf einen Blick</p>
+        <p className="mt-1 text-sm text-muted-foreground">Aktive Wettbewerbe auf einen Blick</p>
       </div>
 
-      {dataPerLeague.length === 0 ? (
+      {dataPerCompetition.length === 0 ? (
         <p className="rounded-lg border px-4 py-8 text-center text-sm text-muted-foreground">
-          Keine aktiven Ligen vorhanden.
+          Keine aktiven Wettbewerbe vorhanden.
         </p>
       ) : (
         <div className="space-y-10">
-          {dataPerLeague.map(({ league, standings, bracket }) => {
+          {dataPerCompetition.map(({ competition, standings, bracket }) => {
             const playoffsStarted =
               bracket.quarterFinals.length + bracket.semiFinals.length > 0 || bracket.final !== null
 
             return (
-              <div key={league.id} className="space-y-3">
-                {/* Liga-Titel */}
+              <div key={competition.id} className="space-y-3">
+                {/* Wettbewerb-Titel */}
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-lg font-semibold">{league.name}</h2>
+                  <h2 className="text-lg font-semibold">{competition.name}</h2>
                   <Badge variant="secondary" className="text-xs">
-                    {league.discipline.name}
+                    {competition.discipline?.name}
                   </Badge>
                 </div>
 
@@ -64,7 +64,7 @@ export default async function DashboardPage() {
                     <PlayoffBracket bracket={bracket} isAdmin={false} compact={true} />
                     <div className="flex justify-end">
                       <Button asChild variant="outline" size="sm">
-                        <Link href={`/leagues/${league.id}/playoffs`}>Details →</Link>
+                        <Link href={`/competitions/${competition.id}/playoffs`}>Details →</Link>
                       </Button>
                     </div>
                   </div>
@@ -73,7 +73,7 @@ export default async function DashboardPage() {
                     <StandingsTable rows={standings} />
                     <div className="flex justify-end">
                       <Button asChild variant="outline" size="sm">
-                        <Link href={`/leagues/${league.id}/schedule`}>Details →</Link>
+                        <Link href={`/competitions/${competition.id}/schedule`}>Details →</Link>
                       </Button>
                     </div>
                   </div>

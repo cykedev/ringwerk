@@ -8,7 +8,7 @@ import {
   getAuditDescription,
   type AuditEventCategory,
 } from "@/lib/auditLog/types"
-import type { AuditLogEntry, AuditLogEntryWithLeague } from "@/lib/auditLog/queries"
+import type { AuditLogEntry, AuditLogEntryWithCompetition } from "@/lib/auditLog/queries"
 
 const CATEGORY_BADGE_CLASS: Record<AuditEventCategory, string> = {
   participant: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
@@ -27,10 +27,10 @@ function formatDateTime(date: Date): string {
   })
 }
 
-type Entry = AuditLogEntry | AuditLogEntryWithLeague
+type Entry = AuditLogEntry | AuditLogEntryWithCompetition
 
-function hasLeague(entry: Entry): entry is AuditLogEntryWithLeague {
-  return "league" in entry
+function hasCompetition(entry: Entry): entry is AuditLogEntryWithCompetition {
+  return "competition" in entry
 }
 
 interface Props {
@@ -59,7 +59,7 @@ export function AuditLogList({ entries, showLeagueName = false }: Props) {
           const details = formatAuditDetails(entry.eventType, entry.details)
           const description = getAuditDescription(entry.eventType, entry.details)
           const leagueName =
-            showLeagueName && hasLeague(entry) ? (entry.league?.name ?? null) : null
+            showLeagueName && hasCompetition(entry) ? (entry.competition?.name ?? null) : null
 
           return (
             <details key={entry.id} className="group">

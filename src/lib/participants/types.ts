@@ -5,7 +5,7 @@ export type ParticipantListItem = {
   contact: string
   isActive: boolean
   createdAt: Date
-  _count: { leagues: number }
+  _count: { competitions: number }
 }
 
 export type ParticipantDetail = {

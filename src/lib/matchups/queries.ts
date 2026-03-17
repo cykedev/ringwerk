@@ -6,7 +6,7 @@ type RawParticipant = {
   id: string
   firstName: string
   lastName: string
-  leagues: Array<{ status: string }>
+  competitions: Array<{ status: string }>
 }
 
 function mapParticipant(p: RawParticipant): MatchupParticipant {
@@ -14,33 +14,33 @@ function mapParticipant(p: RawParticipant): MatchupParticipant {
     id: p.id,
     firstName: p.firstName,
     lastName: p.lastName,
-    withdrawn: p.leagues[0]?.status === "WITHDRAWN",
+    withdrawn: p.competitions[0]?.status === "WITHDRAWN",
   }
 }
 
-function participantSelect(leagueId: string) {
+function participantSelect(competitionId: string) {
   return {
     id: true,
     firstName: true,
     lastName: true,
-    leagues: {
-      where: { leagueId },
+    competitions: {
+      where: { competitionId },
       select: { status: true },
     },
   } as const
 }
 
-export async function getMatchupsForLeague(leagueId: string): Promise<MatchupListItem[]> {
+export async function getMatchupsForCompetition(competitionId: string): Promise<MatchupListItem[]> {
   const rows = await db.matchup.findMany({
-    where: { leagueId },
+    where: { competitionId },
     select: {
       id: true,
       round: true,
       roundIndex: true,
       status: true,
       dueDate: true,
-      homeParticipant: { select: participantSelect(leagueId) },
-      awayParticipant: { select: participantSelect(leagueId) },
+      homeParticipant: { select: participantSelect(competitionId) },
+      awayParticipant: { select: participantSelect(competitionId) },
       results: {
         select: {
           participantId: true,
@@ -71,10 +71,10 @@ export async function getMatchupsForLeague(leagueId: string): Promise<MatchupLis
   }))
 }
 
-export async function getScheduleStatus(leagueId: string): Promise<ScheduleStatus> {
+export async function getScheduleStatus(competitionId: string): Promise<ScheduleStatus> {
   const [total, completed] = await Promise.all([
-    db.matchup.count({ where: { leagueId } }),
-    db.matchup.count({ where: { leagueId, status: "COMPLETED" } }),
+    db.matchup.count({ where: { competitionId } }),
+    db.matchup.count({ where: { competitionId, status: "COMPLETED" } }),
   ])
 
   return {

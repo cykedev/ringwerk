@@ -4,11 +4,11 @@ import type { StandingRow, StandingsMatchup, StandingsParticipant } from "./calc
 
 export type { StandingRow }
 
-/** Berechnet und gibt die aktuelle Ligatabelle zurück. */
-export async function getStandingsForLeague(leagueId: string): Promise<StandingRow[]> {
+/** Berechnet und gibt die aktuelle Tabelle einer Meisterschaft zurück. */
+export async function getStandingsForCompetition(competitionId: string): Promise<StandingRow[]> {
   const [enrollments, rawMatchups] = await Promise.all([
-    db.leagueParticipant.findMany({
-      where: { leagueId },
+    db.competitionParticipant.findMany({
+      where: { competitionId },
       select: {
         status: true,
         participant: {
@@ -18,7 +18,7 @@ export async function getStandingsForLeague(leagueId: string): Promise<StandingR
       orderBy: { createdAt: "asc" },
     }),
     db.matchup.findMany({
-      where: { leagueId },
+      where: { competitionId },
       select: {
         id: true,
         status: true,

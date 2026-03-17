@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils"
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: Target },
-  { href: "/leagues", label: "Ligen", icon: Trophy },
+  { href: "/competitions", label: "Wettbewerbe", icon: Trophy },
 ]
 
 const adminNavItems = [

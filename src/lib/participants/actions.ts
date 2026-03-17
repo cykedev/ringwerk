@@ -115,13 +115,13 @@ export async function setParticipantActive(id: string, isActive: boolean): Promi
   if (participant.isActive === isActive) return { success: true }
 
   if (!isActive) {
-    const activeEnrollments = await db.leagueParticipant.count({
+    const activeEnrollments = await db.competitionParticipant.count({
       where: { participantId: id, status: "ACTIVE" },
     })
     if (activeEnrollments > 0) {
       return {
         error:
-          "Teilnehmer hat aktive Liga-Einschreibungen und kann nicht deaktiviert werden. Bitte zuerst zurückziehen.",
+          "Teilnehmer hat aktive Meisterschafts-Einschreibungen und kann nicht deaktiviert werden. Bitte zuerst zurückziehen.",
       }
     }
   }

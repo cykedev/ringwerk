@@ -26,7 +26,8 @@ enum ScoringType {
   DECIMAL
 }
 
-enum LeagueStatus {
+enum CompetitionStatus {
+  DRAFT
   ACTIVE
   COMPLETED
   ARCHIVED
@@ -60,8 +61,6 @@ enum ImportSource {
   URL
   PDF
 }
-
-// ── Neue Enums (Phase 2+) ──────────────────────────────────────────────────
 
 enum CompetitionType {
   LEAGUE // Liga mit Spielplan, Tabelle, Playoffs
@@ -102,7 +101,7 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  createdLeagues             League[]
+  createdCompetitions        Competition[]
   createdParticipants        Participant[]
   recordedResults            MatchResult[]
   recordedPlayoffDuelResults PlayoffDuelResult[]
@@ -143,43 +142,78 @@ model Discipline {
   // MaxRinge/Seite wird aus scoringType abgeleitet: WHOLE→100, DECIMAL→109
   // isSystem: true → von startup.ts angelegt
   isSystem     Boolean     @default(false)
-  // Archiviert statt gelöscht — bestehende Ligaergebnisse bleiben lesbar
+  // Archiviert statt gelöscht — bestehende Ergebnisse bleiben lesbar
   isArchived   Boolean     @default(false)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
-  leagues      League[]
+  competitions             Competition[]
+  competitionParticipants  CompetitionParticipant[]
 
   @@index([isArchived])
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// League (Liga)
+// Competition (Wettbewerb)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// DESIGN: Ligen sind vereinsweit sichtbar — kein userId-Filter nötig.
+// DESIGN: Wettbewerbe sind vereinsweit sichtbar — kein userId-Filter nötig.
 // createdByUserId dient dem Audit, nicht der Isolation.
-model League {
-  id           String       @id @default(cuid())
-  name         String
-  disciplineId String
-  discipline   Discipline   @relation(fields: [disciplineId], references: [id])
-  status       LeagueStatus @default(ACTIVE)
-  // Stichtage optional — Orientierung für Spieler, nicht systemseitig erzwungen
-  firstLegDeadline  DateTime?
-  secondLegDeadline DateTime?
-  // Audit: wer hat die Liga angelegt
-  createdByUserId String
-  createdBy       User         @relation(fields: [createdByUserId], references: [id])
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+// type=LEAGUE: Liga mit Spielplan, Tabelle, Playoffs (wie bisher).
+// type=EVENT: Einmaliges Event (Kranzlschiessen) — Phase 4.
+// type=SEASON: Langzeit-Wettbewerb (Jahrespreisschiessen) — Phase 5.
+model Competition {
+  id   String            @id @default(cuid())
+  name String
+  type CompetitionType   @default(LEAGUE)
 
-  participants   LeagueParticipant[]
+  // ── Shared Felder ────────────────────────────────────────────────────────
+  // disciplineId: null = gemischte Disziplinen (Teilnehmer wählen selbst)
+  disciplineId String?
+  discipline   Discipline?  @relation(fields: [disciplineId], references: [id])
+  // Wertungsmodus (wird in Phase 3/6 genutzt)
+  scoringMode    ScoringMode @default(RINGTEILER)
+  shotsPerSeries Int         @default(10)
+
+  status CompetitionStatus @default(ACTIVE)
+
+  // Audit: wer hat den Wettbewerb angelegt
+  createdByUserId String
+  createdBy       User       @relation(fields: [createdByUserId], references: [id])
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  // ── Liga-spezifische Felder (nullable, type=LEAGUE) ─────────────────────
+  // Stichtage optional — Orientierung für Spieler, nicht systemseitig erzwungen
+  hinrundeDeadline  DateTime?
+  rueckrundeDeadline DateTime?
+  // Playoff-Konfiguration (wird in Phase 6 ausgewertet)
+  playoffBestOf            Int?
+  playoffQualThreshold     Int?
+  playoffQualTopN1         Int?
+  playoffQualTopN2         Int?
+  finaleScoringMode        ScoringMode?
+  finaleHasSuddenDeath     Boolean?
+
+  // ── Event-spezifische Felder (nullable, type=EVENT) ─────────────────────
+  eventDate    DateTime?
+  allowGuests  Boolean?
+  teamSize     Int?
+  targetValue  Decimal?       @db.Decimal(8, 2)
+  targetValueType TargetValueType?
+
+  // ── Saison-spezifische Felder (nullable, type=SEASON) ───────────────────
+  minSeries   Int?
+  seasonStart DateTime?
+  seasonEnd   DateTime?
+
+  participants   CompetitionParticipant[]
   matchups       Matchup[]
   playoffMatches PlayoffMatch[]
   auditLogs      AuditLog[]
 
   @@index([status])
+  @@index([type])
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -187,7 +221,7 @@ model League {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // DESIGN: Teilnehmer sind vereinsweit sichtbar — kein userId-Filter nötig.
-// Ein Teilnehmer kann in mehreren Ligen eingeschrieben sein (via LeagueParticipant).
+// Ein Teilnehmer kann in mehreren Wettbewerben eingeschrieben sein (via CompetitionParticipant).
 model Participant {
   id        String   @id @default(cuid())
   firstName String
@@ -201,12 +235,12 @@ model Participant {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  leagues            LeagueParticipant[]
-  homeMatchups       Matchup[]           @relation("HomeParticipant")
-  awayMatchups       Matchup[]           @relation("AwayParticipant")
+  competitions       CompetitionParticipant[]
+  homeMatchups       Matchup[]               @relation("HomeParticipant")
+  awayMatchups       Matchup[]               @relation("AwayParticipant")
   matchResults       MatchResult[]
-  playoffMatchesA    PlayoffMatch[]      @relation("ParticipantA")
-  playoffMatchesB    PlayoffMatch[]      @relation("ParticipantB")
+  playoffMatchesA    PlayoffMatch[]          @relation("ParticipantA")
+  playoffMatchesB    PlayoffMatch[]          @relation("ParticipantB")
   playoffDuelResults PlayoffDuelResult[]
 
   @@index([isActive])
@@ -214,25 +248,30 @@ model Participant {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LeagueParticipant (Einschreibung Teilnehmer ↔ Liga)
+// CompetitionParticipant (Einschreibung Teilnehmer ↔ Wettbewerb)
 // ─────────────────────────────────────────────────────────────────────────────
 
-model LeagueParticipant {
+model CompetitionParticipant {
   id            String            @id @default(cuid())
-  leagueId      String
-  league        League            @relation(fields: [leagueId], references: [id])
+  competitionId String
+  competition   Competition       @relation(fields: [competitionId], references: [id])
   participantId String
   participant   Participant       @relation(fields: [participantId], references: [id])
   status        ParticipantStatus @default(ACTIVE)
-  // Startnummer innerhalb dieser Liga (optional, manuell vergeben)
+  // Startnummer innerhalb dieses Wettbewerbs (optional, manuell vergeben)
   startNumber   Int?
   // Zeitpunkt des Rückzugs — für Audit und Nachvollziehbarkeit
   withdrawnAt   DateTime?
+  // Disziplin-Wahl pro Teilnehmer (für gemischte Events/Saisonen)
+  disciplineId  String?
+  discipline    Discipline?       @relation(fields: [disciplineId], references: [id])
+  // Gast-Schütze (nur für Events relevant)
+  isGuest       Boolean           @default(false)
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
 
-  @@unique([leagueId, participantId])
-  @@index([leagueId])
+  @@unique([competitionId, participantId])
+  @@index([competitionId])
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -241,8 +280,8 @@ model LeagueParticipant {
 
 model Matchup {
   id                String      @id @default(cuid())
-  leagueId          String
-  league            League      @relation(fields: [leagueId], references: [id])
+  competitionId     String
+  competition       Competition @relation(fields: [competitionId], references: [id])
   homeParticipantId String
   homeParticipant   Participant @relation("HomeParticipant", fields: [homeParticipantId], references: [id])
   // Null bei BYE — kein Gegner vorhanden
@@ -252,16 +291,16 @@ model Matchup {
   // Spieltag-Nummer innerhalb der Runde (1-basiert): z.B. Hinrunde Spieltag 1, 2, 3 ...
   roundIndex        Int
   status            MatchStatus @default(PENDING)
-  // Stichtag für diese Paarung (aus Liga-Stichtag übernommen, editierbar)
+  // Stichtag für diese Paarung (aus Wettbewerb-Stichtag übernommen, editierbar)
   dueDate           DateTime?
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 
   results           MatchResult[]
 
-  @@index([leagueId])
-  @@index([leagueId, homeParticipantId])
-  @@index([leagueId, awayParticipantId])
+  @@index([competitionId])
+  @@index([competitionId, homeParticipantId])
+  @@index([competitionId, awayParticipantId])
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -303,12 +342,12 @@ model MatchResult {
 // PlayoffMatch (Playoff-Paarung, Best-of-Five)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Ob Playoffs gestartet wurden: db.playoffMatch.count({ where: { leagueId } }) > 0
+// Ob Playoffs gestartet wurden: db.playoffMatch.count({ where: { competitionId } }) > 0
 // Qualifikation: 4–7 TN → Top4 → HF; 8+ TN → Top8 → VF (1vs8, 2vs7, 3vs6, 4vs5)
 model PlayoffMatch {
   id             String       @id @default(cuid())
-  leagueId       String
-  league         League       @relation(fields: [leagueId], references: [id])
+  competitionId  String
+  competition    Competition  @relation(fields: [competitionId], references: [id])
   round          PlayoffRound
   participantAId String
   participantA   Participant  @relation("ParticipantA", fields: [participantAId], references: [id])
@@ -324,8 +363,8 @@ model PlayoffMatch {
 
   duels          PlayoffDuel[]
 
-  @@index([leagueId])
-  @@index([leagueId, round])
+  @@index([competitionId])
+  @@index([competitionId, round])
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -389,20 +428,20 @@ model AuditLog {
   id         String   @id @default(cuid())
   // Freitext-Enum-Wert: "PARTICIPANT_WITHDRAWN", "WITHDRAWAL_REVOKED", "RESULT_CORRECTED"
   eventType  String
-  // z.B. "LEAGUE_PARTICIPANT", "MATCHUP", "MATCH_RESULT"
+  // z.B. "COMPETITION_PARTICIPANT", "MATCHUP", "MATCH_RESULT"
   entityType String
   entityId   String
   userId     String
   user       User     @relation(fields: [userId], references: [id])
-  // Optional: Liga-Bezug für einfache Filterung
-  leagueId   String?
-  league     League?  @relation(fields: [leagueId], references: [id])
+  // Optional: Wettbewerb-Bezug für einfache Filterung
+  competitionId String?
+  competition   Competition? @relation(fields: [competitionId], references: [id])
   // Details: z.B. { before: {...}, after: {...}, reason: "..." }
   details    Json?
   createdAt  DateTime @default(now())
 
   @@index([entityType, entityId])
   @@index([userId])
-  @@index([leagueId])
+  @@index([competitionId])
   @@index([createdAt])
 }

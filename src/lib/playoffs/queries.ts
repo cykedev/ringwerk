@@ -102,10 +102,10 @@ function mapMatchItem(raw: {
   }
 }
 
-/** Lädt alle Playoff-Paarungen einer Liga, gruppiert nach Runde. */
-export async function getPlayoffBracket(leagueId: string): Promise<PlayoffBracketData> {
+/** Lädt alle Playoff-Paarungen einer Meisterschaft, gruppiert nach Runde. */
+export async function getPlayoffBracket(competitionId: string): Promise<PlayoffBracketData> {
   const matches = await db.playoffMatch.findMany({
-    where: { leagueId },
+    where: { competitionId },
     select: {
       id: true,
       round: true,
@@ -160,14 +160,14 @@ export async function getPlayoffBracket(leagueId: string): Promise<PlayoffBracke
   }))
 
   return {
-    leagueId,
+    competitionId,
     quarterFinals: mapped.filter((m) => m.round === "QUARTER_FINAL"),
     semiFinals: mapped.filter((m) => m.round === "SEMI_FINAL"),
     final: mapped.find((m) => m.round === "FINAL") ?? null,
   }
 }
 
-export async function hasPlayoffsStarted(leagueId: string): Promise<boolean> {
-  const count = await db.playoffMatch.count({ where: { leagueId } })
+export async function hasPlayoffsStarted(competitionId: string): Promise<boolean> {
+  const count = await db.playoffMatch.count({ where: { competitionId } })
   return count > 0
 }

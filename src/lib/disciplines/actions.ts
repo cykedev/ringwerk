@@ -64,11 +64,11 @@ export async function updateDiscipline(
 
   if (parsed.data.scoringType !== discipline.scoringType) {
     // Wertungsartwechsel verhindert inkonsistente historische Ergebnisse
-    const leagueCount = await db.league.count({ where: { disciplineId: id } })
-    if (leagueCount > 0) {
+    const competitionCount = await db.competition.count({ where: { disciplineId: id } })
+    if (competitionCount > 0) {
       return {
         error:
-          "Wertungsart kann nicht geändert werden — die Disziplin wird bereits in Ligen verwendet.",
+          "Wertungsart kann nicht geändert werden — die Disziplin wird bereits in Wettbewerben verwendet.",
       }
     }
   }
@@ -106,10 +106,10 @@ export async function deleteDiscipline(id: string): Promise<ActionResult> {
   })
   if (!discipline) return { error: "Disziplin nicht gefunden." }
 
-  // Endgültiges Löschen nur ohne Ligaverwendung, damit keine FK-Verweise brechen
-  const leagueCount = await db.league.count({ where: { disciplineId: id } })
-  if (leagueCount > 0) {
-    return { error: "Disziplin kann nicht gelöscht werden — sie wird in Ligen verwendet." }
+  // Endgültiges Löschen nur ohne Wettbewerbsverwendung, damit keine FK-Verweise brechen
+  const competitionCount = await db.competition.count({ where: { disciplineId: id } })
+  if (competitionCount > 0) {
+    return { error: "Disziplin kann nicht gelöscht werden — sie wird in Wettbewerben verwendet." }
   }
 
   await db.discipline.delete({ where: { id } })

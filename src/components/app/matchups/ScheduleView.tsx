@@ -6,9 +6,9 @@ import { ResultEntryDialog } from "@/components/app/results/ResultEntryDialog"
 
 interface Props {
   matchups: MatchupListItem[]
-  firstLegDeadline: Date | null
-  secondLegDeadline: Date | null
-  leagueId: string
+  hinrundeDeadline: Date | null
+  rueckrundeDeadline: Date | null
+  competitionId: string
   /** Nur ADMIN darf Ergebnisse eintragen */
   isAdmin: boolean
   /** Keine Erfassung/Korrektur mehr möglich wenn Playoffs laufen */
@@ -216,8 +216,8 @@ function StatusBadge({ status }: { status: string }) {
 
 export function ScheduleView({
   matchups,
-  firstLegDeadline,
-  secondLegDeadline,
+  hinrundeDeadline,
+  rueckrundeDeadline,
   isAdmin,
   playoffsStarted = false,
 }: Props) {
@@ -243,7 +243,7 @@ export function ScheduleView({
         <LegTable
           title="Hinrunde"
           matchups={firstLeg}
-          deadline={firstLegDeadline}
+          deadline={hinrundeDeadline}
           isAdmin={isAdmin && !playoffsStarted}
         />
       )}
@@ -251,7 +251,7 @@ export function ScheduleView({
         <LegTable
           title="Rückrunde"
           matchups={secondLeg}
-          deadline={secondLegDeadline}
+          deadline={rueckrundeDeadline}
           isAdmin={isAdmin && !playoffsStarted}
         />
       )}

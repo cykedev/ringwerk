@@ -7,37 +7,37 @@ import type { ActionResult } from "@/lib/types"
 import { generateSchedule } from "./generateSchedule"
 
 /**
- * Generiert den Spielplan für eine aktive Liga.
+ * Generiert den Spielplan für einen aktiven Wettkampf.
  * Voraussetzungen:
- * - Liga muss ACTIVE sein
+ * - Wettkampf muss ACTIVE sein
  * - Mindestens 4 aktive Teilnehmer eingeschrieben
  * - Keine bereits abgeschlossenen Paarungen vorhanden
  *
  * Bestehende PENDING-Paarungen werden gelöscht und neu generiert.
  */
-export async function generateLeagueSchedule(leagueId: string): Promise<ActionResult> {
+export async function generateCompetitionSchedule(competitionId: string): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet." }
   if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung." }
 
-  // Liga laden und Voraussetzungen prüfen
-  const league = await db.league.findUnique({
-    where: { id: leagueId },
+  // Wettkampf laden und Voraussetzungen prüfen
+  const competition = await db.competition.findUnique({
+    where: { id: competitionId },
     select: {
       id: true,
       status: true,
-      firstLegDeadline: true,
-      secondLegDeadline: true,
+      hinrundeDeadline: true,
+      rueckrundeDeadline: true,
     },
   })
-  if (!league) return { error: "Liga nicht gefunden." }
-  if (league.status !== "ACTIVE") {
+  if (!competition) return { error: "Liga nicht gefunden." }
+  if (competition.status !== "ACTIVE") {
     return { error: "Spielplan kann nur für aktive Ligen generiert werden." }
   }
 
   // Aktive Teilnehmer laden
-  const enrollments = await db.leagueParticipant.findMany({
-    where: { leagueId, status: "ACTIVE" },
+  const enrollments = await db.competitionParticipant.findMany({
+    where: { competitionId, status: "ACTIVE" },
     select: { participantId: true },
     orderBy: { createdAt: "asc" },
   })
@@ -50,7 +50,7 @@ export async function generateLeagueSchedule(leagueId: string): Promise<ActionRe
 
   // Abgeschlossene Paarungen prüfen → Regenerierung verhindern
   const completedCount = await db.matchup.count({
-    where: { leagueId, status: "COMPLETED" },
+    where: { competitionId, status: "COMPLETED" },
   })
   if (completedCount > 0) {
     return {
@@ -64,22 +64,23 @@ export async function generateLeagueSchedule(leagueId: string): Promise<ActionRe
 
   // Transaktional: PENDING-Paarungen löschen + neue anlegen
   await db.$transaction([
-    db.matchup.deleteMany({ where: { leagueId, status: "PENDING" } }),
+    db.matchup.deleteMany({ where: { competitionId, status: "PENDING" } }),
     db.matchup.createMany({
       data: matchups.map((m) => ({
-        leagueId,
+        competitionId,
         homeParticipantId: m.homeId,
         awayParticipantId: m.awayId,
         round: m.round,
         roundIndex: m.roundIndex,
         status: m.awayId === null ? "BYE" : "PENDING",
-        dueDate: m.round === "FIRST_LEG" ? league.firstLegDeadline : league.secondLegDeadline,
+        dueDate:
+          m.round === "FIRST_LEG" ? competition.hinrundeDeadline : competition.rueckrundeDeadline,
       })),
     }),
   ])
 
-  revalidatePath(`/leagues/${leagueId}/schedule`)
-  revalidatePath(`/leagues/${leagueId}/participants`)
+  revalidatePath(`/competitions/${competitionId}/schedule`)
+  revalidatePath(`/competitions/${competitionId}/participants`)
 
   return { success: true }
 }

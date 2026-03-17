@@ -18,16 +18,16 @@ import { toast } from "sonner"
 import { advanceRound } from "@/lib/playoffs/actions"
 
 interface Props {
-  leagueId: string
+  competitionId: string
   label: string
 }
 
-export function AdvanceRoundButton({ leagueId, label }: Props) {
+export function AdvanceRoundButton({ competitionId, label }: Props) {
   const [isPending, startTransition] = useTransition()
 
   function handleAdvance() {
     startTransition(async () => {
-      const result = await advanceRound(leagueId)
+      const result = await advanceRound(competitionId)
       if ("error" in result) {
         toast.error(
           typeof result.error === "string" ? result.error : "Fehler beim Anlegen der Runde."

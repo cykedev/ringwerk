@@ -16,7 +16,7 @@ export async function getParticipants(): Promise<ParticipantListItem[]> {
       contact: true,
       isActive: true,
       createdAt: true,
-      _count: { select: { leagues: true } },
+      _count: { select: { competitions: true } },
     },
     orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
   })
@@ -32,7 +32,7 @@ export async function getParticipantsForManagement(): Promise<ParticipantListIte
       contact: true,
       isActive: true,
       createdAt: true,
-      _count: { select: { leagues: true } },
+      _count: { select: { competitions: true } },
     },
     orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
   })
@@ -53,12 +53,14 @@ export async function getParticipantById(id: string): Promise<ParticipantDetail 
   })
 }
 
-/** Aktive Teilnehmer, die noch nicht in der angegebenen Liga eingeschrieben sind. */
-export async function getParticipantsNotInLeague(leagueId: string): Promise<ParticipantOption[]> {
+/** Aktive Teilnehmer, die noch nicht in der angegebenen Meisterschaft eingeschrieben sind. */
+export async function getParticipantsNotInCompetition(
+  competitionId: string
+): Promise<ParticipantOption[]> {
   return db.participant.findMany({
     where: {
       isActive: true,
-      leagues: { none: { leagueId } },
+      competitions: { none: { competitionId } },
     },
     select: { id: true, firstName: true, lastName: true, contact: true },
     orderBy: [{ lastName: "asc" }, { firstName: "asc" }],

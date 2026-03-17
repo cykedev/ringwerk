@@ -5,7 +5,7 @@ import { db } from "@/lib/db"
 import { getAuthSession } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import { calcRingteiler, MAX_RINGS } from "@/lib/results/calculateResult"
-import { getStandingsForLeague } from "@/lib/standings/queries"
+import { getStandingsForCompetition } from "@/lib/standings/queries"
 import {
   createFirstRoundMatchups,
   createNextRoundMatchups,
@@ -20,33 +20,33 @@ import type { SavePlayoffDuelResultInput } from "./types"
  * Erstellt die erste Runde (VF oder HF) basierend auf der aktuellen Tabelle.
  *
  * Voraussetzungen:
- * - Liga muss ACTIVE sein
+ * - Meisterschaft muss ACTIVE sein
  * - Playoffs noch nicht gestartet
  * - ≥ 4 aktive (nicht zurückgezogene) Teilnehmer
  * - Keine PENDING-Paarungen in der Gruppenphase
  */
-export async function startPlayoffs(leagueId: string): Promise<ActionResult> {
+export async function startPlayoffs(competitionId: string): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet." }
   if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung." }
 
-  const league = await db.league.findUnique({
-    where: { id: leagueId },
+  const competition = await db.competition.findUnique({
+    where: { id: competitionId },
     select: { id: true, status: true },
   })
-  if (!league) return { error: "Liga nicht gefunden." }
-  if (league.status !== "ACTIVE")
-    return { error: "Playoffs können nur für aktive Ligen gestartet werden." }
+  if (!competition) return { error: "Meisterschaft nicht gefunden." }
+  if (competition.status !== "ACTIVE")
+    return { error: "Playoffs können nur für aktive Meisterschaften gestartet werden." }
 
   const [existingCount, pendingCount] = await Promise.all([
-    db.playoffMatch.count({ where: { leagueId } }),
-    db.matchup.count({ where: { leagueId, status: "PENDING" } }),
+    db.playoffMatch.count({ where: { competitionId } }),
+    db.matchup.count({ where: { competitionId, status: "PENDING" } }),
   ])
 
   if (existingCount > 0) return { error: "Playoffs wurden bereits gestartet." }
   if (pendingCount > 0) return { error: "Es gibt noch ausstehende Paarungen in der Gruppenphase." }
 
-  const standings = await getStandingsForLeague(leagueId)
+  const standings = await getStandingsForCompetition(competitionId)
   const activeStandings = standings.filter((r) => !r.withdrawn)
 
   if (activeStandings.length < 4) {
@@ -58,7 +58,7 @@ export async function startPlayoffs(leagueId: string): Promise<ActionResult> {
   try {
     await db.playoffMatch.createMany({
       data: matchups.map((m) => ({
-        leagueId,
+        competitionId,
         round: m.round,
         participantAId: m.participantAId,
         participantBId: m.participantBId,
@@ -68,10 +68,10 @@ export async function startPlayoffs(leagueId: string): Promise<ActionResult> {
     await db.auditLog.create({
       data: {
         eventType: "PLAYOFFS_STARTED",
-        entityType: "LEAGUE",
-        entityId: leagueId,
+        entityType: "COMPETITION",
+        entityId: competitionId,
         userId: session.user.id,
-        leagueId,
+        competitionId,
         details: { participantCount: activeStandings.length },
       },
     })
@@ -80,7 +80,7 @@ export async function startPlayoffs(leagueId: string): Promise<ActionResult> {
     return { error: "Playoffs konnten nicht gestartet werden." }
   }
 
-  revalidatePath(`/leagues/${leagueId}/playoffs`)
+  revalidatePath(`/competitions/${competitionId}/playoffs`)
   return { success: true }
 }
 
@@ -120,12 +120,12 @@ export async function savePlayoffDuelResult(
           winsA: true,
           winsB: true,
           status: true,
-          leagueId: true,
+          competitionId: true,
           participantAId: true,
           participantA: { select: { firstName: true, lastName: true } },
           participantBId: true,
           participantB: { select: { firstName: true, lastName: true } },
-          league: { select: { discipline: { select: { scoringType: true } } } },
+          competition: { select: { discipline: { select: { scoringType: true } } } },
         },
       },
     },
@@ -143,7 +143,7 @@ export async function savePlayoffDuelResult(
     const nextRound = match.round === "QUARTER_FINAL" ? "SEMI_FINAL" : "FINAL"
     const nextMatchWithDuels = await db.playoffMatch.findFirst({
       where: {
-        leagueId: match.leagueId,
+        competitionId: match.competitionId,
         round: nextRound,
         duels: { some: {} },
         OR: [
@@ -170,7 +170,8 @@ export async function savePlayoffDuelResult(
   if (isFinal) {
     outcome = determineFinaleRoundWinner(input.totalRingsA, input.totalRingsB)
   } else {
-    const maxRings = MAX_RINGS[duel.playoffMatch.league.discipline.scoringType]
+    if (!duel.playoffMatch.competition.discipline) return { error: "Disziplin nicht konfiguriert." }
+    const maxRings = MAX_RINGS[duel.playoffMatch.competition.discipline.scoringType]
     ringteilerA = calcRingteiler(maxRings, input.totalRingsA, input.teilerA ?? 0)
     ringteilerB = calcRingteiler(maxRings, input.totalRingsB, input.teilerB ?? 0)
     outcome = determinePlayoffDuelWinner(
@@ -289,7 +290,7 @@ export async function savePlayoffDuelResult(
       entityType: "PLAYOFF_DUEL",
       entityId: input.duelId,
       userId: session.user.id,
-      leagueId: match.leagueId,
+      competitionId: match.competitionId,
       details: {
         duelId: input.duelId,
         matchId: match.id,
@@ -321,7 +322,7 @@ export async function savePlayoffDuelResult(
     await cascadeDeleteEmptyNextRound(match)
   }
 
-  revalidatePath(`/leagues/${match.leagueId}/playoffs`)
+  revalidatePath(`/competitions/${match.competitionId}/playoffs`)
   return { success: true }
 }
 
@@ -346,7 +347,7 @@ export async function deleteLastPlayoffDuel(duelId: string): Promise<ActionResul
           round: true,
           winsA: true,
           winsB: true,
-          leagueId: true,
+          competitionId: true,
           participantAId: true,
           participantA: { select: { firstName: true, lastName: true } },
           participantBId: true,
@@ -383,7 +384,7 @@ export async function deleteLastPlayoffDuel(duelId: string): Promise<ActionResul
     const nextRound = match.round === "QUARTER_FINAL" ? "SEMI_FINAL" : "FINAL"
     const nextMatchWithDuels = await db.playoffMatch.findFirst({
       where: {
-        leagueId: match.leagueId,
+        competitionId: match.competitionId,
         round: nextRound,
         duels: { some: {} },
         OR: [
@@ -446,7 +447,7 @@ export async function deleteLastPlayoffDuel(duelId: string): Promise<ActionResul
       const nextRound = match.round === "QUARTER_FINAL" ? "SEMI_FINAL" : "FINAL"
       const emptyNextMatches = await tx.playoffMatch.findMany({
         where: {
-          leagueId: match.leagueId,
+          competitionId: match.competitionId,
           round: nextRound,
           duels: { none: {} },
           OR: [
@@ -473,7 +474,7 @@ export async function deleteLastPlayoffDuel(duelId: string): Promise<ActionResul
       entityType: "PLAYOFF_DUEL",
       entityId: duel.id,
       userId: session.user.id,
-      leagueId: match.leagueId,
+      competitionId: match.competitionId,
       details: {
         duelId: duel.id,
         matchId: match.id,
@@ -490,7 +491,7 @@ export async function deleteLastPlayoffDuel(duelId: string): Promise<ActionResul
     },
   })
 
-  revalidatePath(`/leagues/${match.leagueId}/playoffs`)
+  revalidatePath(`/competitions/${match.competitionId}/playoffs`)
   return { success: true }
 }
 
@@ -499,7 +500,7 @@ export async function deleteLastPlayoffDuel(duelId: string): Promise<ActionResul
  */
 async function cascadeDeleteEmptyNextRound(match: {
   round: "QUARTER_FINAL" | "SEMI_FINAL" | "FINAL"
-  leagueId: string
+  competitionId: string
   participantAId: string
   participantBId: string
 }): Promise<void> {
@@ -507,7 +508,7 @@ async function cascadeDeleteEmptyNextRound(match: {
   const nextRound = match.round === "QUARTER_FINAL" ? "SEMI_FINAL" : "FINAL"
   const emptyNextMatches = await db.playoffMatch.findMany({
     where: {
-      leagueId: match.leagueId,
+      competitionId: match.competitionId,
       round: nextRound,
       duels: { none: {} },
       OR: [
@@ -528,13 +529,13 @@ async function cascadeDeleteEmptyNextRound(match: {
  * Setzt manuell die nächste Runde an, wenn alle Matches der aktuellen Runde abgeschlossen sind.
  * Nur Admin; ersetzt das frühere automatische Seeding.
  */
-export async function advanceRound(leagueId: string): Promise<ActionResult> {
+export async function advanceRound(competitionId: string): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet." }
   if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung." }
 
   const matches = await db.playoffMatch.findMany({
-    where: { leagueId },
+    where: { competitionId },
     select: {
       id: true,
       round: true,
@@ -566,9 +567,9 @@ export async function advanceRound(leagueId: string): Promise<ActionResult> {
     return { error: "Noch nicht alle Matches der aktuellen Runde abgeschlossen." }
   }
 
-  await handleMatchCompletion(currentRoundMatches[0].id, leagueId, roundToAdvance)
+  await handleMatchCompletion(currentRoundMatches[0].id, competitionId, roundToAdvance)
 
-  revalidatePath(`/leagues/${leagueId}/playoffs`)
+  revalidatePath(`/competitions/${competitionId}/playoffs`)
   return { success: true }
 }
 
@@ -579,14 +580,14 @@ export async function advanceRound(leagueId: string): Promise<ActionResult> {
  */
 async function handleMatchCompletion(
   matchId: string,
-  leagueId: string,
+  competitionId: string,
   round: "QUARTER_FINAL" | "SEMI_FINAL" | "FINAL"
 ): Promise<void> {
   if (round === "FINAL") return
 
   // Alle Matches der aktuellen Runde laden
   const allMatchesInRound = await db.playoffMatch.findMany({
-    where: { leagueId, round },
+    where: { competitionId, round },
     select: {
       id: true,
       status: true,
@@ -612,7 +613,7 @@ async function handleMatchCompletion(
     // Reihenfolge: erster Match-Gewinner vs. zweiter Match-Gewinner
     await db.playoffMatch.create({
       data: {
-        leagueId,
+        competitionId,
         round: "FINAL",
         participantAId: winners[0],
         participantBId: winners[1],
@@ -622,13 +623,13 @@ async function handleMatchCompletion(
   }
 
   // SEMI_FINAL: Re-Seeding nach Original-Gruppenrang
-  const standings = await getStandingsForLeague(leagueId)
+  const standings = await getStandingsForCompetition(competitionId)
   const rankMap = new Map(standings.map((s) => [s.participantId, s.rank]))
   const nextMatchups = createNextRoundMatchups(winners, rankMap)
 
   await db.playoffMatch.createMany({
     data: nextMatchups.map((m) => ({
-      leagueId,
+      competitionId,
       round: nextRound,
       participantAId: m.participantAId,
       participantBId: m.participantBId,
@@ -672,7 +673,7 @@ export async function addPlayoffDuel(
     select: {
       id: true,
       status: true,
-      leagueId: true,
+      competitionId: true,
       duels: { orderBy: { duelNumber: "desc" }, take: 1, select: { duelNumber: true } },
     },
   })
@@ -693,7 +694,7 @@ export async function addPlayoffDuel(
       select: { id: true },
     })
 
-    revalidatePath(`/leagues/${match.leagueId}/playoffs`)
+    revalidatePath(`/competitions/${match.competitionId}/playoffs`)
     return { success: true, data: { duelId: duel.id } }
   } catch (error) {
     console.error("Fehler beim Anlegen des Duells:", error)

@@ -18,17 +18,17 @@ import { toast } from "sonner"
 import { startPlayoffs } from "@/lib/playoffs/actions"
 
 interface Props {
-  leagueId: string
+  competitionId: string
   disabled?: boolean
   disabledReason?: string
 }
 
-export function StartPlayoffsButton({ leagueId, disabled, disabledReason }: Props) {
+export function StartPlayoffsButton({ competitionId, disabled, disabledReason }: Props) {
   const [isPending, startTransition] = useTransition()
 
   function handleConfirm() {
     startTransition(async () => {
-      const result = await startPlayoffs(leagueId)
+      const result = await startPlayoffs(competitionId)
       if ("error" in result) {
         toast.error(
           typeof result.error === "string" ? result.error : "Fehler beim Starten der Playoffs."

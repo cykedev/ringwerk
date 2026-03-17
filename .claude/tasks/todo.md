@@ -63,61 +63,60 @@ Iterativer Umbau von "1-gegen-1 Liga-App" zu "Ringwerk" — universelle Wettbewe
 
 **Ziel:** League → Competition verallgemeinern. Liga funktioniert danach exakt wie vorher, nur unter neuem Dach.
 **Abhaengigkeiten:** Phase 1 abgeschlossen.
-**Risiko:** HOCH — beruehrt fast jede Datei. Atomarer Rename, danach sofort `/check`.
+**Status:** ABGESCHLOSSEN [2026-03-16]
 
 #### Schema & Migration
 
-- [ ] `prisma/schema.prisma` — `League` zu `Competition` umbenennen
-- [ ] `prisma/schema.prisma` — `type CompetitionType` Feld hinzufuegen (default LEAGUE)
-- [ ] `prisma/schema.prisma` — `LeagueParticipant` zu `CompetitionParticipant` umbenennen
-- [ ] `prisma/schema.prisma` — `CompetitionParticipant` um `disciplineId String?` und `isGuest Boolean @default(false)` erweitern
-- [ ] `prisma/schema.prisma` — Shared Felder auf Competition: `scoringMode`, `shotsPerSeries`, `disciplineId?`
-- [ ] `prisma/schema.prisma` — Liga-spezifische Felder (nullable): playoff-Config, Stichtage, finaleScoringMode, finaleHasSuddenDeath
-- [ ] `prisma/schema.prisma` — Event-spezifische Felder (nullable): eventDate, allowGuests, teamSize, targetValue, targetValueType
-- [ ] `prisma/schema.prisma` — Saison-spezifische Felder (nullable): minSeries, seasonStart, seasonEnd
-- [ ] `prisma/schema.prisma` — AuditLog: `leagueId` → `competitionId`
-- [ ] `/migrate rename-league-to-competition` (Rename-Migration, ggf. manuelles SQL)
+- [x] `prisma/schema.prisma` — `League` zu `Competition` umbenennen
+- [x] `prisma/schema.prisma` — `type CompetitionType` Feld hinzufuegen (default LEAGUE)
+- [x] `prisma/schema.prisma` — `LeagueParticipant` zu `CompetitionParticipant` umbenennen
+- [x] `prisma/schema.prisma` — `CompetitionParticipant` um `disciplineId String?` und `isGuest Boolean @default(false)` erweitern
+- [x] `prisma/schema.prisma` — Shared Felder auf Competition: `scoringMode`, `shotsPerSeries`, `disciplineId?`
+- [x] `prisma/schema.prisma` — Liga-spezifische Felder (nullable): playoff-Config, Stichtage, finaleScoringMode, finaleHasSuddenDeath
+- [x] `prisma/schema.prisma` — Event-spezifische Felder (nullable): eventDate, allowGuests, teamSize, targetValue, targetValueType
+- [x] `prisma/schema.prisma` — Saison-spezifische Felder (nullable): minSeries, seasonStart, seasonEnd
+- [x] `prisma/schema.prisma` — AuditLog: `leagueId` → `competitionId`
+- [x] Manuelle Rename-Migration (`20260316180000_rename_league_to_competition`)
 
 #### Types
 
-- [ ] `src/lib/leagues/types.ts` → `src/lib/competitions/types.ts` — rename + erweitern
-- [ ] `src/lib/leagueParticipants/types.ts` → `src/lib/competitionParticipants/types.ts`
-- [ ] Alle Imports in der gesamten Codebase aktualisieren
+- [x] `src/lib/leagues/types.ts` → `src/lib/competitions/types.ts`
+- [x] `src/lib/leagueParticipants/types.ts` → `src/lib/competitionParticipants/types.ts`
+- [x] Alle Imports in der gesamten Codebase aktualisiert
 
 #### Queries
 
-- [ ] `src/lib/leagues/queries.ts` → `src/lib/competitions/queries.ts` — Tabellenname + Felder anpassen
-- [ ] `src/lib/leagueParticipants/queries.ts` → `src/lib/competitionParticipants/queries.ts`
-- [ ] Alle Nested Selects in verwandten Modulen pruefen (Matchups, Results, Playoffs, AuditLog)
+- [x] `src/lib/leagues/queries.ts` → `src/lib/competitions/queries.ts`
+- [x] `src/lib/leagueParticipants/queries.ts` → `src/lib/competitionParticipants/queries.ts`
+- [x] Alle Nested Selects in verwandten Modulen (Matchups, Results, Playoffs, AuditLog)
 
 #### Actions
 
-- [ ] `src/lib/leagues/actions.ts` → `src/lib/competitions/actions.ts`
-- [ ] `src/lib/leagueParticipants/actions.ts` → `src/lib/competitionParticipants/actions.ts`
-- [ ] Zod-Schemas: Discriminated Union nach CompetitionType (typ-spezifische Pflichtfelder)
-- [ ] Force-Delete: `leagueId` → `competitionId` in Kaskade
+- [x] `src/lib/leagues/actions.ts` → `src/lib/competitions/actions.ts`
+- [x] `src/lib/leagueParticipants/actions.ts` → `src/lib/competitionParticipants/actions.ts`
+- [x] Force-Delete: `leagueId` → `competitionId` in Kaskade
 
 #### Components
 
-- [ ] `src/components/app/leagues/` → `src/components/app/competitions/`
-- [ ] `src/components/app/leagueParticipants/` → `src/components/app/competitionParticipants/`
-- [ ] Alle internen Referenzen (Props, Imports) aktualisieren
+- [x] `src/components/app/leagues/` → `src/components/app/competitions/`
+- [x] `src/components/app/leagueParticipants/` → `src/components/app/competitionParticipants/`
+- [x] Alle internen Referenzen (Props, Imports) aktualisiert
 
 #### Pages & Routes
 
-- [ ] `src/app/(app)/leagues/` → `src/app/(app)/competitions/` (alle Unterseiten)
-- [ ] Navigation: Links aktualisieren
-- [ ] PDF-Routen: `api/leagues/` → `api/competitions/`
+- [x] `src/app/(app)/leagues/` → `src/app/(app)/competitions/` (alle Unterseiten)
+- [x] Navigation: "Wettbewerbe", href="/competitions"
+- [x] PDF-Routen: `api/leagues/` → `api/competitions/`
 
 #### Tests & Qualitaet
 
-- [ ] Alle bestehenden Tests auf neue Pfade/Namen migrieren
-- [ ] `/check` — alle Gates gruen
+- [x] Alle Tests auf neue Pfade/Namen migriert
+- [x] `/check` — alle Gates gruen (lint, format, test, typecheck)
 
 #### Finalisierung
 
-- [ ] `docs/architecture.md` — Routen + Verzeichnisstruktur aktualisieren
-- [ ] `docs/` — Alle Referenzen League → Competition
+- [x] `docs/architecture.md` — Routen + Verzeichnisstruktur aktualisiert
+- [x] `docs/` — Alle Referenzen League → Competition
 
 ---
 
