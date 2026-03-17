@@ -326,7 +326,7 @@ Ringteiler muss aus **derselben Serie** stammen (Ringe und Teiler gehören zusam
 
 ## Teilnehmerverwaltung
 
-- Felder: Name, Vorname, Kontaktmoeglichkeit (E-Mail oder Telefon, Pflicht)
+- Felder: Name, Vorname, Kontaktmoeglichkeit (E-Mail oder Telefon, optional)
 - Teilnahme in mehreren Wettbewerben gleichzeitig moeglich
 - Startnummer pro Wettbewerb (optional)
 

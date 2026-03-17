@@ -23,7 +23,7 @@ interface Props {
   participantId: string
   firstName: string
   lastName: string
-  contact: string
+  contact: string | null
   isActive: boolean
 }
 

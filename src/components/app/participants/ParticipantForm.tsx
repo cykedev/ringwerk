@@ -61,7 +61,9 @@ export function ParticipantForm({ participant, action, onSuccess }: Props) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="contact">E-Mail / Telefon</Label>
+        <Label htmlFor="contact">
+          E-Mail / Telefon <span className="text-muted-foreground font-normal">(optional)</span>
+        </Label>
         <Input
           id="contact"
           name="contact"

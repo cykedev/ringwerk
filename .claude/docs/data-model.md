@@ -72,7 +72,7 @@
 
 ### Teilnehmer (Participant)
 
-- Name, Vorname, Kontaktmoeglichkeit (E-Mail oder Telefon, Pflicht)
+- Name, Vorname, Kontaktmoeglichkeit (E-Mail oder Telefon, optional)
 - Status: aktiv | inaktiv
 - Kann in mehreren Wettbewerben eingeschrieben sein
 - Gaeste werden ebenfalls als Participant angelegt (wiederverwendbar)

@@ -9,7 +9,12 @@ import type { ActionResult } from "@/lib/types"
 const ParticipantSchema = z.object({
   firstName: z.string().min(1, "Vorname ist erforderlich").max(100, "Vorname zu lang"),
   lastName: z.string().min(1, "Nachname ist erforderlich").max(100, "Nachname zu lang"),
-  contact: z.string().min(1, "Kontakt ist erforderlich").max(255, "Kontakt zu lang"),
+  contact: z
+    .string()
+    .max(255, "Kontakt zu lang")
+    .nullable()
+    .optional()
+    .transform((v) => (v && v.trim().length > 0 ? v.trim() : null)),
 })
 
 function revalidateParticipantPaths(): void {
@@ -36,10 +41,12 @@ export async function createParticipant(
   })
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
 
-  const contact = parsed.data.contact.trim()
+  const contact = parsed.data.contact ?? null
 
-  const existing = await db.participant.findUnique({ where: { contact }, select: { id: true } })
-  if (existing) return { error: "Diese Kontaktangabe wird bereits verwendet." }
+  if (contact) {
+    const existing = await db.participant.findUnique({ where: { contact }, select: { id: true } })
+    if (existing) return { error: "Diese Kontaktangabe wird bereits verwendet." }
+  }
 
   await db.participant.create({
     data: {
@@ -77,13 +84,15 @@ export async function updateParticipant(
   })
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
 
-  const contact = parsed.data.contact.trim()
+  const contact = parsed.data.contact ?? null
 
-  const contactConflict = await db.participant.findFirst({
-    where: { contact, NOT: { id } },
-    select: { id: true },
-  })
-  if (contactConflict) return { error: "Diese Kontaktangabe wird bereits verwendet." }
+  if (contact) {
+    const contactConflict = await db.participant.findFirst({
+      where: { contact, NOT: { id } },
+      select: { id: true },
+    })
+    if (contactConflict) return { error: "Diese Kontaktangabe wird bereits verwendet." }
+  }
 
   await db.participant.update({
     where: { id },
