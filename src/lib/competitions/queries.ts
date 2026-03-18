@@ -59,6 +59,13 @@ export async function getCompetitionById(id: string): Promise<CompetitionDetail 
       shotsPerSeries: true,
       disciplineId: true,
       discipline: { select: disciplineSelect },
+      playoffBestOf: true,
+      playoffHasViertelfinale: true,
+      playoffHasAchtelfinale: true,
+      finalePrimary: true,
+      finaleTiebreaker1: true,
+      finaleTiebreaker2: true,
+      finaleHasSuddenDeath: true,
       hinrundeDeadline: true,
       rueckrundeDeadline: true,
       eventDate: true,
@@ -70,6 +77,7 @@ export async function getCompetitionById(id: string): Promise<CompetitionDetail 
       seasonStart: true,
       seasonEnd: true,
       createdAt: true,
+      _count: { select: { matchups: true } },
     },
   })
   if (!row) return null

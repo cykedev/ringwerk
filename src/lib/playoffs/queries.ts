@@ -1,6 +1,6 @@
 import { db } from "@/lib/db"
 import { determineFinaleRoundWinner, determinePlayoffDuelWinner } from "./calculatePlayoffs"
-import type { PlayoffBracketData, PlayoffDuelItem, PlayoffMatchItem } from "./types"
+import type { PlayoffBracketData, PlayoffDuelItem, PlayoffMatchItem, PlayoffRound } from "./types"
 
 function mapDuelItem(
   duel: {
@@ -17,7 +17,7 @@ function mapDuelItem(
   },
   participantAId: string,
   participantBId: string,
-  round: "QUARTER_FINAL" | "SEMI_FINAL" | "FINAL"
+  round: PlayoffRound
 ): PlayoffDuelItem {
   const rawA = duel.results.find((r) => r.participantId === participantAId)
   const rawB = duel.results.find((r) => r.participantId === participantBId)
@@ -68,7 +68,7 @@ function mapDuelItem(
 
 function mapMatchItem(raw: {
   id: string
-  round: "QUARTER_FINAL" | "SEMI_FINAL" | "FINAL"
+  round: PlayoffRound
   status: "PENDING" | "COMPLETED" | "BYE" | "WALKOVER"
   winsA: number
   winsB: number
@@ -137,7 +137,12 @@ export async function getPlayoffBracket(competitionId: string): Promise<PlayoffB
 
   const base = matches.map(mapMatchItem)
 
-  // canCorrect: FINAL immer; QF/HF nur wenn Folge-Runde noch keine Duelle hat
+  // canCorrect: FINAL immer; alle anderen Runden nur wenn Folge-Runde noch keine Duelle hat
+  const qfIdsWithDuels = new Set(
+    base
+      .filter((m) => m.round === "QUARTER_FINAL" && m.duels.length > 0)
+      .flatMap((m) => [m.participantA.id, m.participantB.id])
+  )
   const sfIdsWithDuels = new Set(
     base
       .filter((m) => m.round === "SEMI_FINAL" && m.duels.length > 0)
@@ -154,13 +159,16 @@ export async function getPlayoffBracket(competitionId: string): Promise<PlayoffB
     canCorrect:
       m.round === "FINAL"
         ? true
-        : m.round === "QUARTER_FINAL"
-          ? !sfIdsWithDuels.has(m.participantA.id) && !sfIdsWithDuels.has(m.participantB.id)
-          : !finalIdsWithDuels.has(m.participantA.id) && !finalIdsWithDuels.has(m.participantB.id),
+        : m.round === "SEMI_FINAL"
+          ? !finalIdsWithDuels.has(m.participantA.id) && !finalIdsWithDuels.has(m.participantB.id)
+          : m.round === "QUARTER_FINAL"
+            ? !sfIdsWithDuels.has(m.participantA.id) && !sfIdsWithDuels.has(m.participantB.id)
+            : !qfIdsWithDuels.has(m.participantA.id) && !qfIdsWithDuels.has(m.participantB.id),
   }))
 
   return {
     competitionId,
+    eighthFinals: mapped.filter((m) => m.round === "EIGHTH_FINAL"),
     quarterFinals: mapped.filter((m) => m.round === "QUARTER_FINAL"),
     semiFinals: mapped.filter((m) => m.round === "SEMI_FINAL"),
     final: mapped.find((m) => m.round === "FINAL") ?? null,

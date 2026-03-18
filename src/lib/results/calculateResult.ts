@@ -12,32 +12,49 @@ export const MAX_RINGS: Record<ScoringType, number> = {
 export type MatchOutcome = "HOME_WIN" | "AWAY_WIN" | "DRAW"
 
 /**
- * Bestimmt das Ergebnis eines Duells anhand der Ringteiler.
- * Niedrigerer Ringteiler gewinnt.
- * Bei Gleichstand (identischer Ringteiler):
- *   1. Bessere Serie (höhere Seriensumme) gewinnt
- *   2. Besserer Teiler (kleinerer Wert) gewinnt
- *   3. Kein Gewinner → DRAW
+ * Bestimmt das Ergebnis eines Duells anhand des Wertungsmodus.
  *
- * Der scoringMode-Parameter bereitet Phase 6 vor (konfigurierbare Regelsets).
- * Aktuell wird immer RINGTEILER-Logik angewendet.
+ * RINGTEILER:    Niedrigerer Ringteiler gewinnt. Tiebreak: höhere Ringe, dann kleinerer Teiler.
+ * RINGS:         Höhere Seriensumme gewinnt. Tiebreak: niedrigerer Teiler.
+ * RINGS_DECIMAL: Wie RINGS.
+ * TEILER:        Kleinerer Teiler gewinnt. Tiebreak: höhere Ringe.
+ * Alle anderen:  Fallback auf RINGTEILER.
  */
 export function determineOutcome(
   home: { rings: number; teiler: number; ringteiler: number },
   away: { rings: number; teiler: number; ringteiler: number },
   scoringMode: ScoringMode = "RINGTEILER"
 ): MatchOutcome {
-  void scoringMode // Phase 6: Modi-spezifische Vergleichslogik implementieren
+  if (scoringMode === "RINGS" || scoringMode === "RINGS_DECIMAL") {
+    // Höhere Ringe gewinnt
+    if (home.rings > away.rings) return "HOME_WIN"
+    if (home.rings < away.rings) return "AWAY_WIN"
+    // Tiebreak: kleinerer Teiler
+    if (home.teiler < away.teiler) return "HOME_WIN"
+    if (home.teiler > away.teiler) return "AWAY_WIN"
+    return "DRAW"
+  }
 
-  // Primär: Ringteiler (niedrigerer gewinnt)
+  if (scoringMode === "TEILER") {
+    // Kleinerer Teiler gewinnt
+    if (home.teiler < away.teiler) return "HOME_WIN"
+    if (home.teiler > away.teiler) return "AWAY_WIN"
+    // Tiebreak: höhere Ringe
+    if (home.rings > away.rings) return "HOME_WIN"
+    if (home.rings < away.rings) return "AWAY_WIN"
+    return "DRAW"
+  }
+
+  // RINGTEILER (und alle anderen Modi als Fallback)
+  // Niedrigerer Ringteiler gewinnt
   if (home.ringteiler < away.ringteiler) return "HOME_WIN"
   if (home.ringteiler > away.ringteiler) return "AWAY_WIN"
 
-  // Gleichstand: Tiebreak 1 — höhere Seriensumme gewinnt
+  // Tiebreak 1: höhere Seriensumme
   if (home.rings > away.rings) return "HOME_WIN"
   if (home.rings < away.rings) return "AWAY_WIN"
 
-  // Gleichstand: Tiebreak 2 — kleinerer Teiler gewinnt
+  // Tiebreak 2: kleinerer Teiler
   if (home.teiler < away.teiler) return "HOME_WIN"
   if (home.teiler > away.teiler) return "AWAY_WIN"
 

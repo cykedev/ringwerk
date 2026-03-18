@@ -44,6 +44,7 @@ export interface PlayoffMatchItem {
 
 export interface PlayoffBracketData {
   competitionId: string
+  eighthFinals: PlayoffMatchItem[]
   quarterFinals: PlayoffMatchItem[]
   semiFinals: PlayoffMatchItem[]
   final: PlayoffMatchItem | null

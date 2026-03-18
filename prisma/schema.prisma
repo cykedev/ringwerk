@@ -51,9 +51,10 @@ enum Round {
 }
 
 enum PlayoffRound {
-  QUARTER_FINAL
-  SEMI_FINAL
-  FINAL
+  EIGHTH_FINAL   // Achtelfinale (16 TN)
+  QUARTER_FINAL  // Viertelfinale (8 TN)
+  SEMI_FINAL     // Halbfinale (4 TN)
+  FINAL          // Finale (2 TN)
 }
 
 enum ImportSource {
@@ -188,13 +189,14 @@ model Competition {
   // Stichtage optional — Orientierung für Spieler, nicht systemseitig erzwungen
   hinrundeDeadline  DateTime?
   rueckrundeDeadline DateTime?
-  // Playoff-Konfiguration (wird in Phase 6 ausgewertet)
-  playoffBestOf            Int?
-  playoffQualThreshold     Int?
-  playoffQualTopN1         Int?
-  playoffQualTopN2         Int?
-  finaleScoringMode        ScoringMode?
-  finaleHasSuddenDeath     Boolean?
+  // Playoff-Konfiguration
+  playoffBestOf              Int?
+  playoffHasViertelfinale    Boolean  @default(true)
+  playoffHasAchtelfinale     Boolean  @default(false)
+  finalePrimary              ScoringMode  @default(RINGS)
+  finaleTiebreaker1          ScoringMode?
+  finaleTiebreaker2          ScoringMode?
+  finaleHasSuddenDeath       Boolean?
 
   // ── Event-spezifische Felder (nullable, type=EVENT) ─────────────────────
   eventDate    DateTime?

@@ -1,6 +1,7 @@
 import { Clock } from "lucide-react"
 import { formatDateOnly, getDisplayTimeZone } from "@/lib/dateTime"
 import { determineOutcome } from "@/lib/results/calculateResult"
+import type { ScoringMode } from "@/generated/prisma/client"
 import type { MatchupListItem, MatchupParticipant, MatchResultSummary } from "@/lib/matchups/types"
 import { ResultEntryDialog } from "@/components/app/results/ResultEntryDialog"
 
@@ -13,6 +14,7 @@ interface Props {
   isAdmin: boolean
   /** Keine Erfassung/Korrektur mehr möglich wenn Playoffs laufen */
   playoffsStarted?: boolean
+  scoringMode?: ScoringMode
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -65,11 +67,13 @@ function LegTable({
   matchups,
   deadline,
   isAdmin,
+  scoringMode,
 }: {
   title: string
   matchups: MatchupListItem[]
   deadline: Date | null
   isAdmin: boolean
+  scoringMode: ScoringMode
 }) {
   const tz = getDisplayTimeZone()
 
@@ -116,7 +120,7 @@ function LegTable({
                 awayResult = m.results.find((r) => r.participantId === m.awayParticipant!.id)
 
                 if (homeResult && awayResult) {
-                  const raw = determineOutcome(homeResult, awayResult)
+                  const raw = determineOutcome(homeResult, awayResult, scoringMode)
                   if (raw === "HOME_WIN") {
                     homeOutcome = "WIN"
                     awayOutcome = "LOSS"
@@ -220,6 +224,7 @@ export function ScheduleView({
   rueckrundeDeadline,
   isAdmin,
   playoffsStarted = false,
+  scoringMode = "RINGTEILER",
 }: Props) {
   if (matchups.length === 0) {
     return (
@@ -245,6 +250,7 @@ export function ScheduleView({
           matchups={firstLeg}
           deadline={hinrundeDeadline}
           isAdmin={isAdmin && !playoffsStarted}
+          scoringMode={scoringMode}
         />
       )}
       {secondLeg.length > 0 && (
@@ -253,6 +259,7 @@ export function ScheduleView({
           matchups={secondLeg}
           deadline={rueckrundeDeadline}
           isAdmin={isAdmin && !playoffsStarted}
+          scoringMode={scoringMode}
         />
       )}
     </div>

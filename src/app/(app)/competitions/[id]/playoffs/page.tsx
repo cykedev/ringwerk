@@ -33,27 +33,35 @@ export default async function CompetitionPlayoffsPage({ params }: Props) {
 
   const isAdmin = session.user.role === "ADMIN"
   const playoffsStarted =
-    bracket.quarterFinals.length + bracket.semiFinals.length > 0 || bracket.final !== null
+    bracket.eighthFinals.length + bracket.quarterFinals.length + bracket.semiFinals.length > 0 ||
+    bracket.final !== null
 
   // Prüfen ob nächste Runde manuell angelegt werden kann
+  const allAfComplete =
+    bracket.eighthFinals.length > 0 && bracket.eighthFinals.every((m) => m.status === "COMPLETED")
   const allQfComplete =
     bracket.quarterFinals.length > 0 && bracket.quarterFinals.every((m) => m.status === "COMPLETED")
   const allSfComplete =
     bracket.semiFinals.length > 0 && bracket.semiFinals.every((m) => m.status === "COMPLETED")
 
   let advanceLabel: string | null = null
-  if (allQfComplete && bracket.semiFinals.length === 0) {
+  if (allAfComplete && bracket.quarterFinals.length === 0) {
+    advanceLabel = "Viertelfinale anlegen"
+  } else if (allQfComplete && bracket.semiFinals.length === 0) {
     advanceLabel = "Halbfinale anlegen"
   } else if (allSfComplete && bracket.final === null) {
     advanceLabel = "Finale anlegen"
   }
 
+  const hasAF = competition.playoffHasAchtelfinale
+  const hasVF = competition.playoffHasViertelfinale
+  const minRequired = hasAF ? 16 : hasVF ? 8 : 4
   const activeCount = standings.filter((r) => !r.withdrawn).length
-  const canStart = activeCount >= 4 && pendingCount === 0
+  const canStart = activeCount >= minRequired && pendingCount === 0
 
   let disabledReason: string | undefined
-  if (activeCount < 4) {
-    disabledReason = "Mindestens 4 aktive Teilnehmer erforderlich."
+  if (activeCount < minRequired) {
+    disabledReason = `Mindestens ${minRequired} aktive Teilnehmer erforderlich.`
   } else if (pendingCount > 0) {
     disabledReason = `Noch ${pendingCount} ausstehende Paarung${pendingCount !== 1 ? "en" : ""} in der Gruppenphase.`
   }
@@ -102,11 +110,13 @@ export default async function CompetitionPlayoffsPage({ params }: Props) {
               <div>
                 <p className="text-sm font-medium">Playoffs noch nicht gestartet</p>
                 <p className="text-sm text-muted-foreground">
-                  {activeCount < 4
-                    ? "Zu wenige aktive Teilnehmer für Playoffs."
-                    : activeCount >= 8
-                      ? `Top 8 von ${activeCount} Teilnehmern qualifizieren sich für das Viertelfinale.`
-                      : `Top 4 von ${activeCount} Teilnehmern qualifizieren sich für das Halbfinale.`}
+                  {activeCount < minRequired
+                    ? `Zu wenige aktive Teilnehmer für Playoffs (mind. ${minRequired} erforderlich).`
+                    : hasAF
+                      ? `Top 16 von ${activeCount} Teilnehmern qualifizieren sich für das Achtelfinale.`
+                      : hasVF
+                        ? `Top 8 von ${activeCount} Teilnehmern qualifizieren sich für das Viertelfinale.`
+                        : `Top 4 von ${activeCount} Teilnehmern qualifizieren sich für das Halbfinale.`}
                 </p>
               </div>
               <StartPlayoffsButton
@@ -131,7 +141,15 @@ export default async function CompetitionPlayoffsPage({ params }: Props) {
 
       {/* Bracket */}
       {playoffsStarted ? (
-        <PlayoffBracket bracket={bracket} isAdmin={isAdmin} />
+        <PlayoffBracket
+          bracket={bracket}
+          isAdmin={isAdmin}
+          shotsPerSeries={competition.shotsPerSeries}
+          playoffBestOf={competition.playoffBestOf}
+          finalePrimary={competition.finalePrimary}
+          finaleTiebreaker1={competition.finaleTiebreaker1}
+          finaleTiebreaker2={competition.finaleTiebreaker2}
+        />
       ) : (
         !isAdmin && (
           <p className="text-sm text-muted-foreground">Die Playoffs wurden noch nicht gestartet.</p>

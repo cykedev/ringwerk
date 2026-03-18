@@ -17,15 +17,42 @@ import {
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
 import { addPlayoffDuel, deleteLastPlayoffDuel } from "@/lib/playoffs/actions"
+import { requiredWinsFromBestOf } from "@/lib/playoffs/calculatePlayoffs"
 import type { PlayoffMatchItem } from "@/lib/playoffs/types"
+import type { ScoringMode } from "@/generated/prisma/client"
 import { PlayoffDuelResultDialog } from "./PlayoffDuelResultDialog"
+
+const FINALE_CRITERIA_LABEL: Record<string, string> = {
+  RINGS: "Ringe",
+  RINGS_DECIMAL: "Ringe (Zehntel)",
+  RINGTEILER: "Ringteiler",
+  TEILER: "Teiler",
+}
+
+function finaleHintText(
+  primary: ScoringMode,
+  tb1: ScoringMode | null,
+  tb2: ScoringMode | null
+): string {
+  const label = (m: ScoringMode) => FINALE_CRITERIA_LABEL[m] ?? m
+  const parts = [`Primär: ${label(primary)}`]
+  if (tb1) parts.push(`TB: ${label(tb1)}`)
+  if (tb2) parts.push(`TB2: ${label(tb2)}`)
+  return parts.join(" · ")
+}
 
 interface Props {
   match: PlayoffMatchItem
   isAdmin: boolean
+  shotsPerSeries: number
+  playoffBestOf: number | null
+  finalePrimary: ScoringMode
+  finaleTiebreaker1: ScoringMode | null
+  finaleTiebreaker2: ScoringMode | null
 }
 
 const ROUND_LABEL: Record<string, string> = {
+  EIGHTH_FINAL: "Achtelfinale",
   QUARTER_FINAL: "Viertelfinale",
   SEMI_FINAL: "Halbfinale",
   FINAL: "Finale",
@@ -36,9 +63,20 @@ const WINNER_BADGE: Record<string, string> = {
   FINAL: "border-yellow-400/60 bg-yellow-400/10 text-yellow-600 dark:text-yellow-400",
   SEMI_FINAL: "border-slate-400/60 bg-slate-400/10 text-slate-500 dark:text-slate-300",
   QUARTER_FINAL: "border-orange-500/60 bg-orange-500/10 text-orange-600 dark:text-orange-400",
+  EIGHTH_FINAL: "border-blue-500/60 bg-blue-500/10 text-blue-600 dark:text-blue-400",
 }
 
-export function PlayoffMatchCard({ match, isAdmin }: Props) {
+export function PlayoffMatchCard({
+  match,
+  isAdmin,
+  shotsPerSeries,
+  playoffBestOf,
+  finalePrimary,
+  finaleTiebreaker1,
+  finaleTiebreaker2,
+}: Props) {
+  const requiredWins = requiredWinsFromBestOf(playoffBestOf)
+  const bestOfLabel = playoffBestOf ? `Best-of-${playoffBestOf}` : "Best-of-Five"
   const [isPending, startTransition] = useTransition()
   const [confirmDuelId, setConfirmDuelId] = useState<string | null>(null)
 
@@ -161,7 +199,7 @@ export function PlayoffMatchCard({ match, isAdmin }: Props) {
                           ? "Verlängerung"
                           : "Entscheid"
                         : isFinal
-                          ? "10 Schüsse"
+                          ? `${shotsPerSeries}\u00A0Sch.`
                           : `Duell ${duel.duelNumber}`}
                     </span>
 
@@ -201,6 +239,10 @@ export function PlayoffMatchCard({ match, isAdmin }: Props) {
                               participantB={match.participantB}
                               isCorrection={true}
                               isFinalMatch={isFinal}
+                              shotsPerSeries={shotsPerSeries}
+                              finalePrimary={finalePrimary}
+                              finaleTiebreaker1={finaleTiebreaker1}
+                              finaleTiebreaker2={finaleTiebreaker2}
                             />
                             {duel.id === lastDuelId && (
                               <Button
@@ -227,6 +269,10 @@ export function PlayoffMatchCard({ match, isAdmin }: Props) {
                               participantB={match.participantB}
                               isCorrection={false}
                               isFinalMatch={isFinal}
+                              shotsPerSeries={shotsPerSeries}
+                              finalePrimary={finalePrimary}
+                              finaleTiebreaker1={finaleTiebreaker1}
+                              finaleTiebreaker2={finaleTiebreaker2}
                             />
                             {match.canCorrect && duel.id === lastDuelId && (
                               <Button
@@ -259,7 +305,11 @@ export function PlayoffMatchCard({ match, isAdmin }: Props) {
               disabled={isPending}
             >
               <Plus className="mr-1 h-3 w-3" />
-              {isPending ? "Anlegen…" : isFinal ? "10 Schüsse anlegen" : "Erstes Duell anlegen"}
+              {isPending
+                ? "Anlegen…"
+                : isFinal
+                  ? `${shotsPerSeries} Schüsse anlegen`
+                  : "Erstes Duell anlegen"}
             </Button>
           )}
 
@@ -281,11 +331,13 @@ export function PlayoffMatchCard({ match, isAdmin }: Props) {
           {!isCompleted &&
             (isFinal ? (
               <p className="text-center text-xs text-muted-foreground">
-                Höchste Ringzahl gewinnt · bei Gleichstand Verlängerung
+                {finaleHintText(finalePrimary, finaleTiebreaker1, finaleTiebreaker2)} · bei
+                Gleichstand Verlängerung
               </p>
             ) : (
               <p className="text-center text-xs text-muted-foreground">
-                Best-of-Five · noch {3 - Math.max(match.winsA, match.winsB)} Siege zum Weiterkommen
+                {bestOfLabel} · noch {requiredWins - Math.max(match.winsA, match.winsB)} Siege zum
+                Weiterkommen
               </p>
             ))}
         </CardContent>

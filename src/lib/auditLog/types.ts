@@ -53,6 +53,7 @@ export const AUDIT_EVENT_CATEGORY: Record<string, AuditEventCategory> = {
 const ROUND_LABELS: Record<string, string> = {
   FIRST_LEG: "Hinrunde",
   SECOND_LEG: "Rückrunde",
+  EIGHTH_FINAL: "Achtelfinale",
   QUARTER_FINAL: "Viertelfinale",
   SEMI_FINAL: "Halbfinale",
   FINAL: "Finale",

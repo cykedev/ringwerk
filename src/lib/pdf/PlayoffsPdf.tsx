@@ -27,6 +27,8 @@ function formatDate(date: Date): string {
 
 function roundLabel(round: string): string {
   switch (round) {
+    case "EIGHTH_FINAL":
+      return "Achtelfinale"
     case "QUARTER_FINAL":
       return "Viertelfinale"
     case "SEMI_FINAL":
@@ -44,8 +46,11 @@ function roundColor(round: string): string {
       return PDF_COLORS.gold
     case "SEMI_FINAL":
       return PDF_COLORS.silver
-    default:
+    case "QUARTER_FINAL":
       return PDF_COLORS.orange
+    default:
+      // EIGHTH_FINAL
+      return "#3b82f6"
   }
 }
 
@@ -53,6 +58,16 @@ function winnerOf(match: PlayoffMatchItem): "A" | "B" | null {
   if (match.winsA > match.winsB) return "A"
   if (match.winsB > match.winsA) return "B"
   return null
+}
+
+/** Y-Mittelpunkte eines Tops-Arrays */
+function mids(tops: number[]): number[] {
+  return tops.map((t) => t + SLOT_H / 2)
+}
+
+/** Zentrierter Top-Wert zwischen zwei Mittelpunkten */
+function centeredTop(mid1: number, mid2: number): number {
+  return (mid1 + mid2) / 2 - SLOT_H / 2
 }
 
 // ─── Kopfzeile ────────────────────────────────────────────────────────────────
@@ -164,88 +179,149 @@ function BracketCard({ match }: { match: PlayoffMatchItem | undefined }): ReactE
   )
 }
 
-// ─── SVG-Connector (nur Linien) ───────────────────────────────────────────────
+// ─── SVG-Connector-Linien ─────────────────────────────────────────────────────
 
-function ConnectorLines({
-  isVF,
-  totalW,
-  totalH,
-  xConnQF,
-  xHF,
-  xConnHF,
-  xFinal,
-  qfMids,
-  hfMids,
-  finalMid,
-}: {
-  isVF: boolean
-  totalW: number
-  totalH: number
-  xConnQF: number
-  xHF: number
-  xConnHF: number
-  xFinal: number
-  qfMids: number[]
-  hfMids: number[]
-  finalMid: number
-}): ReactElement {
-  const midQF = xConnQF + CONN_W / 2
-  const midHF = xConnHF + CONN_W / 2
+interface ConnectorPdf {
+  in1: number
+  in2: number
+  out: number
+  xLeft: number // linke Kante des Connectors
+}
 
+function ConnectorLineGroup({ conn }: { conn: ConnectorPdf }): ReactElement {
+  const midX = conn.xLeft + CONN_W / 2
+  const rightX = conn.xLeft + CONN_W
   return (
-    <Svg style={{ position: "absolute", top: 0, left: 0 }} width={totalW} height={totalH}>
-      <G stroke="#cccccc" strokeWidth={1.5} fill="none">
-        {/* QF → HF (nur bei Viertelfinale) */}
-        {isVF && (
-          <G>
-            {/* Gruppe 1: QF[0]+QF[1] → HF[0] */}
-            <Line x1={xConnQF} y1={qfMids[0]} x2={midQF} y2={qfMids[0]} />
-            <Line x1={xConnQF} y1={qfMids[1]} x2={midQF} y2={qfMids[1]} />
-            <Line x1={midQF} y1={qfMids[0]} x2={midQF} y2={qfMids[1]} />
-            <Line x1={midQF} y1={hfMids[0]} x2={xHF} y2={hfMids[0]} />
-            {/* Gruppe 2: QF[2]+QF[3] → HF[1] */}
-            <Line x1={xConnQF} y1={qfMids[2]} x2={midQF} y2={qfMids[2]} />
-            <Line x1={xConnQF} y1={qfMids[3]} x2={midQF} y2={qfMids[3]} />
-            <Line x1={midQF} y1={qfMids[2]} x2={midQF} y2={qfMids[3]} />
-            <Line x1={midQF} y1={hfMids[1]} x2={xHF} y2={hfMids[1]} />
-          </G>
-        )}
-
-        {/* HF → Finale */}
-        <Line x1={xConnHF} y1={hfMids[0]} x2={midHF} y2={hfMids[0]} />
-        <Line x1={xConnHF} y1={hfMids[1]} x2={midHF} y2={hfMids[1]} />
-        <Line x1={midHF} y1={hfMids[0]} x2={midHF} y2={hfMids[1]} />
-        <Line x1={midHF} y1={finalMid} x2={xFinal} y2={finalMid} />
-      </G>
-    </Svg>
+    <G>
+      <Line x1={conn.xLeft} y1={conn.in1} x2={midX} y2={conn.in1} />
+      <Line x1={conn.xLeft} y1={conn.in2} x2={midX} y2={conn.in2} />
+      <Line x1={midX} y1={conn.in1} x2={midX} y2={conn.in2} />
+      <Line x1={midX} y1={conn.out} x2={rightX} y2={conn.out} />
+    </G>
   )
 }
 
-// ─── Bracket-Layout (View-basiert mit SVG-Connector-Overlay) ──────────────────
+// ─── Bracket-Layout ───────────────────────────────────────────────────────────
 
 function BracketLayout({ bracket }: { bracket: PlayoffBracketData }): ReactElement {
-  const { quarterFinals: qf, semiFinals: hf, final: fin } = bracket
-  const isVF = qf.length > 0
+  const { eighthFinals: af, quarterFinals: qf, semiFinals: hf, final: fin } = bracket
+  const isAF = af.length > 0
+  const isVF = !isAF && qf.length > 0
 
-  const totalH = isVF ? 4 * SLOT_H + PAIR_GAP : 2 * SLOT_H + PAIR_GAP
+  const half = SLOT_H / 2
+
+  let totalH: number
+  let afTops: number[]
+  let qfTops: number[]
+  let hfTops: number[]
+  let finalTop: number
 
   // X-Positionen
-  const xQF = 0
-  const xConnQF = SLOT_W
-  const xHF = isVF ? SLOT_W + CONN_W : 0
-  const xConnHF = xHF + SLOT_W
-  const xFinal = xConnHF + CONN_W
-  const totalW = isVF ? 3 * SLOT_W + 2 * CONN_W : 2 * SLOT_W + CONN_W
+  let xAF: number
+  let xConnAF: number
+  let xQF: number
+  let xConnQF: number
+  let xHF: number
+  let xConnHF: number
+  let xFinal: number
+  let totalW: number
 
-  // Y-Positionen (identisch zu PlayoffBracket.tsx)
-  const qfTops = [0, SLOT_H, 2 * SLOT_H + PAIR_GAP, 3 * SLOT_H + PAIR_GAP]
-  const hfTops = isVF ? [SLOT_H / 2, 2.5 * SLOT_H + PAIR_GAP] : [0, SLOT_H + PAIR_GAP]
-  const finalTop = isVF ? 1.5 * SLOT_H + PAIR_GAP / 2 : SLOT_H / 2 + PAIR_GAP / 2
+  interface PairSpec {
+    in1: number
+    in2: number
+    out: number
+    xLeft: number
+  }
+  const connectorPairs: PairSpec[] = []
 
-  // Mittelpunkte für Connector-Linien
-  const qfMids = qfTops.map((t) => t + SLOT_H / 2)
-  const hfMids = hfTops.map((t) => t + SLOT_H / 2)
-  const finalMid = finalTop + SLOT_H / 2
+  if (isAF) {
+    afTops = [
+      0,
+      SLOT_H,
+      2 * SLOT_H + PAIR_GAP,
+      3 * SLOT_H + PAIR_GAP,
+      4 * SLOT_H + 2 * PAIR_GAP,
+      5 * SLOT_H + 2 * PAIR_GAP,
+      6 * SLOT_H + 3 * PAIR_GAP,
+      7 * SLOT_H + 3 * PAIR_GAP,
+    ]
+    totalH = 8 * SLOT_H + 3 * PAIR_GAP
+
+    const afM = mids(afTops)
+    qfTops = [
+      centeredTop(afM[0], afM[1]),
+      centeredTop(afM[2], afM[3]),
+      centeredTop(afM[4], afM[5]),
+      centeredTop(afM[6], afM[7]),
+    ]
+    const qfM = mids(qfTops)
+    hfTops = [centeredTop(qfM[0], qfM[1]), centeredTop(qfM[2], qfM[3])]
+    const hfM = mids(hfTops)
+    finalTop = centeredTop(hfM[0], hfM[1])
+    const finM = finalTop + half
+
+    xAF = 0
+    xConnAF = SLOT_W
+    xQF = xConnAF + CONN_W
+    xConnQF = xQF + SLOT_W
+    xHF = xConnQF + CONN_W
+    xConnHF = xHF + SLOT_W
+    xFinal = xConnHF + CONN_W
+    totalW = 4 * SLOT_W + 3 * CONN_W
+
+    // AF → QF
+    for (let i = 0; i < 4; i++) {
+      connectorPairs.push({ in1: afM[i * 2], in2: afM[i * 2 + 1], out: qfM[i], xLeft: xConnAF })
+    }
+    // QF → HF
+    connectorPairs.push({ in1: qfM[0], in2: qfM[1], out: hfM[0], xLeft: xConnQF })
+    connectorPairs.push({ in1: qfM[2], in2: qfM[3], out: hfM[1], xLeft: xConnQF })
+    // HF → Final
+    connectorPairs.push({ in1: hfM[0], in2: hfM[1], out: finM, xLeft: xConnHF })
+  } else if (isVF) {
+    afTops = []
+    qfTops = [0, SLOT_H, 2 * SLOT_H + PAIR_GAP, 3 * SLOT_H + PAIR_GAP]
+    totalH = 4 * SLOT_H + PAIR_GAP
+    hfTops = [half, 2.5 * SLOT_H + PAIR_GAP]
+    finalTop = 1.5 * SLOT_H + PAIR_GAP / 2
+
+    xAF = 0
+    xConnAF = 0
+    xQF = 0
+    xConnQF = SLOT_W
+    xHF = xConnQF + CONN_W
+    xConnHF = xHF + SLOT_W
+    xFinal = xConnHF + CONN_W
+    totalW = 3 * SLOT_W + 2 * CONN_W
+
+    const qfM = mids(qfTops)
+    const hfM = mids(hfTops)
+    const finM = finalTop + half
+
+    connectorPairs.push({ in1: qfM[0], in2: qfM[1], out: hfM[0], xLeft: xConnQF })
+    connectorPairs.push({ in1: qfM[2], in2: qfM[3], out: hfM[1], xLeft: xConnQF })
+    connectorPairs.push({ in1: hfM[0], in2: hfM[1], out: finM, xLeft: xConnHF })
+  } else {
+    // HF-only
+    afTops = []
+    qfTops = []
+    totalH = 2 * SLOT_H + PAIR_GAP
+    hfTops = [0, SLOT_H + PAIR_GAP]
+    finalTop = half + PAIR_GAP / 2
+
+    xAF = 0
+    xConnAF = 0
+    xQF = 0
+    xConnQF = 0
+    xHF = 0
+    xConnHF = SLOT_W
+    xFinal = xConnHF + CONN_W
+    totalW = 2 * SLOT_W + CONN_W
+
+    const hfM = mids(hfTops)
+    const finM = finalTop + half
+    connectorPairs.push({ in1: hfM[0], in2: hfM[1], out: finM, xLeft: xConnHF })
+  }
 
   const labelStyle = {
     fontSize: 7,
@@ -258,8 +334,18 @@ function BracketLayout({ bracket }: { bracket: PlayoffBracketData }): ReactEleme
     <View>
       {/* Spalten-Beschriftungen */}
       <View style={{ flexDirection: "row", marginBottom: 8 }}>
-        {isVF && <Text style={[labelStyle, { width: SLOT_W }]}>VIERTELFINALE</Text>}
-        {isVF && <View style={{ width: CONN_W }} />}
+        {isAF && (
+          <>
+            <Text style={[labelStyle, { width: SLOT_W }]}>ACHTELFINALE</Text>
+            <View style={{ width: CONN_W }} />
+          </>
+        )}
+        {(isAF || isVF) && (
+          <>
+            <Text style={[labelStyle, { width: SLOT_W }]}>VIERTELFINALE</Text>
+            <View style={{ width: CONN_W }} />
+          </>
+        )}
         <Text style={[labelStyle, { width: SLOT_W }]}>HALBFINALE</Text>
         <View style={{ width: CONN_W }} />
         <Text style={[labelStyle, { width: SLOT_W }]}>FINALE</Text>
@@ -267,31 +353,34 @@ function BracketLayout({ bracket }: { bracket: PlayoffBracketData }): ReactEleme
 
       {/* Bracket-Körper: absolute positionierte Cards + SVG-Linien-Overlay */}
       <View style={{ position: "relative", width: totalW, height: totalH }}>
-        {/* SVG nur für Connector-Linien */}
-        <ConnectorLines
-          isVF={isVF}
-          totalW={totalW}
-          totalH={totalH}
-          xConnQF={xConnQF}
-          xHF={xHF}
-          xConnHF={xConnHF}
-          xFinal={xFinal}
-          qfMids={qfMids}
-          hfMids={hfMids}
-          finalMid={finalMid}
-        />
+        {/* SVG-Connector-Overlay */}
+        <Svg style={{ position: "absolute", top: 0, left: 0 }} width={totalW} height={totalH}>
+          <G stroke="#cccccc" strokeWidth={1.5} fill="none">
+            {connectorPairs.map((p, i) => (
+              <ConnectorLineGroup key={i} conn={p} />
+            ))}
+          </G>
+        </Svg>
+
+        {/* AF-Karten */}
+        {isAF &&
+          afTops.map((top, i) => (
+            <View key={i} style={{ position: "absolute", top, left: xAF }}>
+              <BracketCard match={af[i]} />
+            </View>
+          ))}
 
         {/* QF-Karten */}
-        {isVF &&
-          [0, 1, 2, 3].map((i) => (
-            <View key={i} style={{ position: "absolute", top: qfTops[i], left: xQF }}>
+        {(isAF || isVF) &&
+          qfTops.map((top, i) => (
+            <View key={i} style={{ position: "absolute", top, left: xQF }}>
               <BracketCard match={qf[i]} />
             </View>
           ))}
 
         {/* HF-Karten */}
-        {[0, 1].map((i) => (
-          <View key={i} style={{ position: "absolute", top: hfTops[i], left: xHF }}>
+        {hfTops.map((top, i) => (
+          <View key={i} style={{ position: "absolute", top, left: xHF }}>
             <BracketCard match={hf[i]} />
           </View>
         ))}
@@ -398,11 +487,27 @@ function MatchDetail({
 }
 
 function DetailSection({ bracket }: { bracket: PlayoffBracketData }): ReactElement {
-  const { quarterFinals: qf, semiFinals: hf, final: fin } = bracket
+  const { eighthFinals: af, quarterFinals: qf, semiFinals: hf, final: fin } = bracket
 
   return (
     <View>
       <Text style={[styles.sectionTitle, { marginTop: 8 }]}>Ergebnisse im Detail</Text>
+
+      {af.length > 0 && (
+        <View style={{ marginBottom: 8 }}>
+          <Text
+            style={[
+              styles.sectionSubtitle,
+              { marginBottom: 6, fontFamily: "Helvetica-Bold", color: "#3b82f6" },
+            ]}
+          >
+            Achtelfinale
+          </Text>
+          {af.map((m, i) => (
+            <MatchDetail key={m.id} match={m} index={i} total={af.length} />
+          ))}
+        </View>
+      )}
 
       {qf.length > 0 && (
         <View style={{ marginBottom: 8 }}>

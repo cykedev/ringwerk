@@ -11,9 +11,12 @@ import {
   createNextRoundMatchups,
   determineFinaleRoundWinner,
   determinePlayoffDuelWinner,
+  finaleNeedsTeiler,
+  getNextRound,
   isPlayoffMatchComplete,
+  requiredWinsFromBestOf,
 } from "./calculatePlayoffs"
-import type { SavePlayoffDuelResultInput } from "./types"
+import type { PlayoffRound, SavePlayoffDuelResultInput } from "./types"
 
 /**
  * Startet die Playoff-Phase für eine Liga.
@@ -32,7 +35,13 @@ export async function startPlayoffs(competitionId: string): Promise<ActionResult
 
   const competition = await db.competition.findUnique({
     where: { id: competitionId },
-    select: { id: true, status: true },
+    select: {
+      id: true,
+      status: true,
+      playoffBestOf: true,
+      playoffHasViertelfinale: true,
+      playoffHasAchtelfinale: true,
+    },
   })
   if (!competition) return { error: "Meisterschaft nicht gefunden." }
   if (competition.status !== "ACTIVE")
@@ -49,11 +58,19 @@ export async function startPlayoffs(competitionId: string): Promise<ActionResult
   const standings = await getStandingsForCompetition(competitionId)
   const activeStandings = standings.filter((r) => !r.withdrawn)
 
-  if (activeStandings.length < 4) {
-    return { error: "Mindestens 4 aktive Teilnehmer für Playoffs erforderlich." }
+  const minRequired = competition.playoffHasAchtelfinale
+    ? 16
+    : competition.playoffHasViertelfinale
+      ? 8
+      : 4
+  if (activeStandings.length < minRequired) {
+    return { error: `Mindestens ${minRequired} aktive Teilnehmer für Playoffs erforderlich.` }
   }
 
-  const matchups = createFirstRoundMatchups(standings)
+  const matchups = createFirstRoundMatchups(standings, {
+    playoffHasViertelfinale: competition.playoffHasViertelfinale,
+    playoffHasAchtelfinale: competition.playoffHasAchtelfinale,
+  })
 
   try {
     await db.playoffMatch.createMany({
@@ -126,7 +143,14 @@ export async function savePlayoffDuelResult(
           participantBId: true,
           participantB: { select: { firstName: true, lastName: true } },
           competition: {
-            select: { discipline: { select: { scoringType: true, teilerFaktor: true } } },
+            select: {
+              discipline: { select: { scoringType: true, teilerFaktor: true } },
+              playoffBestOf: true,
+              finalePrimary: true,
+              finaleTiebreaker1: true,
+              finaleTiebreaker2: true,
+              finaleHasSuddenDeath: true,
+            },
           },
         },
       },
@@ -139,10 +163,17 @@ export async function savePlayoffDuelResult(
   const match = duel.playoffMatch
   const isFinal = match.round === "FINAL"
   const wasMatchComplete = match.status === "COMPLETED"
+  const finalePrimary = match.competition.finalePrimary
+  const finaleTiebreaker1 = match.competition.finaleTiebreaker1 ?? null
+  const finaleTiebreaker2 = match.competition.finaleTiebreaker2 ?? null
+  const finaleHasSuddenDeath = match.competition.finaleHasSuddenDeath ?? true
+  const requiredWins = requiredWinsFromBestOf(match.competition.playoffBestOf)
+  const finaleTeilerNeeded =
+    isFinal && finaleNeedsTeiler(finalePrimary, finaleTiebreaker1, finaleTiebreaker2)
 
   // Korrektur nur erlaubt wenn Folge-Runde noch keine Duelle hat
   if (isCorrection && !isFinal) {
-    const nextRound = match.round === "QUARTER_FINAL" ? "SEMI_FINAL" : "FINAL"
+    const nextRound = getNextRound(match.round)!
     const nextMatchWithDuels = await db.playoffMatch.findFirst({
       where: {
         competitionId: match.competitionId,
@@ -163,28 +194,51 @@ export async function savePlayoffDuelResult(
     }
   }
 
-  // Finale: Einzelschüsse ohne Teiler → nur Ringvergleich
-  // VF/HF: Ringteiler-Berechnung + vollständiger Vergleich
+  // Finale: Kette primary → tb1 → tb2; VF/HF: Ringteiler-Berechnung
   let ringteilerA: number | null = null
   let ringteilerB: number | null = null
   let outcome: "A" | "B" | "DRAW"
 
-  if (isFinal) {
-    outcome = determineFinaleRoundWinner(input.totalRingsA, input.totalRingsB)
+  if (isFinal && !finaleTeilerNeeded) {
+    outcome = determineFinaleRoundWinner(
+      input.totalRingsA,
+      input.totalRingsB,
+      finalePrimary,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      finaleTiebreaker1,
+      finaleTiebreaker2
+    )
   } else {
     if (!duel.playoffMatch.competition.discipline) return { error: "Disziplin nicht konfiguriert." }
     const maxRings = MAX_RINGS[duel.playoffMatch.competition.discipline.scoringType]
     const faktor = duel.playoffMatch.competition.discipline.teilerFaktor.toNumber()
     ringteilerA = calculateRingteiler(input.totalRingsA, input.teilerA ?? 0, faktor, maxRings)
     ringteilerB = calculateRingteiler(input.totalRingsB, input.teilerB ?? 0, faktor, maxRings)
-    outcome = determinePlayoffDuelWinner(
-      ringteilerA,
-      input.totalRingsA,
-      input.teilerA ?? 0,
-      ringteilerB,
-      input.totalRingsB,
-      input.teilerB ?? 0
-    )
+    if (isFinal) {
+      outcome = determineFinaleRoundWinner(
+        input.totalRingsA,
+        input.totalRingsB,
+        finalePrimary,
+        ringteilerA,
+        input.teilerA ?? 0,
+        ringteilerB,
+        input.teilerB ?? 0,
+        finaleTiebreaker1,
+        finaleTiebreaker2
+      )
+    } else {
+      outcome = determinePlayoffDuelWinner(
+        ringteilerA,
+        input.totalRingsA,
+        input.teilerA ?? 0,
+        ringteilerB,
+        input.totalRingsB,
+        input.teilerB ?? 0
+      )
+    }
   }
 
   // Siege neu berechnen: bei Korrektur alten Outcome subtrahieren, neuen addieren
@@ -195,10 +249,17 @@ export async function savePlayoffDuelResult(
     const oldResultB = duel.results.find((r) => r.participantId === match.participantBId)
     if (oldResultA && oldResultB) {
       let oldOutcome: "A" | "B" | "DRAW"
-      if (isFinal) {
+      if (isFinal && !finaleNeedsTeiler(finalePrimary, finaleTiebreaker1, finaleTiebreaker2)) {
         oldOutcome = determineFinaleRoundWinner(
           oldResultA.totalRings.toNumber(),
-          oldResultB.totalRings.toNumber()
+          oldResultB.totalRings.toNumber(),
+          finalePrimary,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          finaleTiebreaker1,
+          finaleTiebreaker2
         )
       } else {
         oldOutcome = determinePlayoffDuelWinner(
@@ -218,12 +279,13 @@ export async function savePlayoffDuelResult(
   else if (outcome === "B") newWinsB++
 
   const matchComplete =
-    outcome !== "DRAW" && isPlayoffMatchComplete(newWinsA, newWinsB, match.round)
+    outcome !== "DRAW" && isPlayoffMatchComplete(newWinsA, newWinsB, match.round, requiredWins)
+  const saveTeiler = !isFinal || finaleTeilerNeeded
 
   try {
     await db.$transaction(async (tx) => {
       // Ergebnisse für beide Teilnehmer upserten
-      // Finale: teiler + ringteiler bleiben null (Einzelschüsse ohne Teiler-Erfassung)
+      // Finale ohne Teiler: teiler + ringteiler bleiben null
       await tx.playoffDuelResult.upsert({
         where: {
           duelId_participantId: { duelId: input.duelId, participantId: match.participantAId },
@@ -232,14 +294,14 @@ export async function savePlayoffDuelResult(
           duelId: input.duelId,
           participantId: match.participantAId,
           totalRings: input.totalRingsA,
-          teiler: isFinal ? null : (input.teilerA ?? null),
+          teiler: saveTeiler ? (input.teilerA ?? null) : null,
           ringteiler: ringteilerA,
           importSource: "MANUAL",
           recordedByUserId: session.user.id,
         },
         update: {
           totalRings: input.totalRingsA,
-          teiler: isFinal ? null : (input.teilerA ?? null),
+          teiler: saveTeiler ? (input.teilerA ?? null) : null,
           ringteiler: ringteilerA,
           recordedByUserId: session.user.id,
         },
@@ -253,14 +315,14 @@ export async function savePlayoffDuelResult(
           duelId: input.duelId,
           participantId: match.participantBId,
           totalRings: input.totalRingsB,
-          teiler: isFinal ? null : (input.teilerB ?? null),
+          teiler: saveTeiler ? (input.teilerB ?? null) : null,
           ringteiler: ringteilerB,
           importSource: "MANUAL",
           recordedByUserId: session.user.id,
         },
         update: {
           totalRings: input.totalRingsB,
-          teiler: isFinal ? null : (input.teilerB ?? null),
+          teiler: saveTeiler ? (input.teilerB ?? null) : null,
           ringteiler: ringteilerB,
           recordedByUserId: session.user.id,
         },
@@ -302,9 +364,9 @@ export async function savePlayoffDuelResult(
         nameA: `${match.participantA.firstName} ${match.participantA.lastName}`,
         nameB: `${match.participantB.firstName} ${match.participantB.lastName}`,
         totalRingsA: input.totalRingsA,
-        teilerA: isFinal ? null : (input.teilerA ?? null),
+        teilerA: saveTeiler ? (input.teilerA ?? null) : null,
         totalRingsB: input.totalRingsB,
-        teilerB: isFinal ? null : (input.teilerB ?? null),
+        teilerB: saveTeiler ? (input.teilerB ?? null) : null,
       },
     },
   })
@@ -312,8 +374,10 @@ export async function savePlayoffDuelResult(
   // Nach der Transaktion: Folge-Aktionen
   if (outcome === "DRAW" && !isCorrection) {
     if (isFinal) {
-      // Finale-Gleichstand → Sudden-Death-Duell anlegen
-      await addExtraDuel(match.id, true)
+      // Finale-Gleichstand → Sudden-Death-Duell anlegen (wenn finaleHasSuddenDeath)
+      if (finaleHasSuddenDeath) {
+        await addExtraDuel(match.id, true)
+      }
     } else {
       // VF/HF-Unentschieden → nächstes Duell automatisch anlegen
       await addExtraDuel(match.id, false)
@@ -384,7 +448,7 @@ export async function deleteLastPlayoffDuel(duelId: string): Promise<ActionResul
 
   // Löschen nur erlaubt wenn Folge-Runde noch keine Duelle hat
   if (!isFinal) {
-    const nextRound = match.round === "QUARTER_FINAL" ? "SEMI_FINAL" : "FINAL"
+    const nextRound = getNextRound(match.round)!
     const nextMatchWithDuels = await db.playoffMatch.findFirst({
       where: {
         competitionId: match.competitionId,
@@ -432,6 +496,7 @@ export async function deleteLastPlayoffDuel(duelId: string): Promise<ActionResul
       else if (oldOutcome === "B") deltaWinsB = -1
     }
   }
+  // Note: deleteLastPlayoffDuel loads no competition ruleset — finale scoring mode fallback is fine
 
   await db.$transaction(async (tx) => {
     await tx.playoffDuelResult.deleteMany({ where: { duelId: duel.id } })
@@ -447,7 +512,7 @@ export async function deleteLastPlayoffDuel(duelId: string): Promise<ActionResul
 
     // Leere Folge-Runden-Matches kaskadenweise löschen
     if (!isFinal) {
-      const nextRound = match.round === "QUARTER_FINAL" ? "SEMI_FINAL" : "FINAL"
+      const nextRound = getNextRound(match.round)!
       const emptyNextMatches = await tx.playoffMatch.findMany({
         where: {
           competitionId: match.competitionId,
@@ -502,13 +567,13 @@ export async function deleteLastPlayoffDuel(duelId: string): Promise<ActionResul
  * Löscht leere Folge-Runden-Matches (ohne Duelle) nach Ergebnis-Revert.
  */
 async function cascadeDeleteEmptyNextRound(match: {
-  round: "QUARTER_FINAL" | "SEMI_FINAL" | "FINAL"
+  round: PlayoffRound
   competitionId: string
   participantAId: string
   participantBId: string
 }): Promise<void> {
   if (match.round === "FINAL") return
-  const nextRound = match.round === "QUARTER_FINAL" ? "SEMI_FINAL" : "FINAL"
+  const nextRound = getNextRound(match.round)!
   const emptyNextMatches = await db.playoffMatch.findMany({
     where: {
       competitionId: match.competitionId,
@@ -553,14 +618,18 @@ export async function advanceRound(competitionId: string): Promise<ActionResult>
   if (matches.length === 0) return { error: "Keine Playoffs gefunden." }
 
   // Höchste Runde ohne Folge-Runde ermitteln
+  const hasEF = matches.some((m) => m.round === "EIGHTH_FINAL")
+  const hasQF = matches.some((m) => m.round === "QUARTER_FINAL")
   const hasSF = matches.some((m) => m.round === "SEMI_FINAL")
   const hasFinal = matches.some((m) => m.round === "FINAL")
 
-  let roundToAdvance: "QUARTER_FINAL" | "SEMI_FINAL" | null = null
-  if (hasSF && !hasFinal) {
-    roundToAdvance = "SEMI_FINAL"
-  } else if (!hasSF) {
+  let roundToAdvance: PlayoffRound | null = null
+  if (hasEF && !hasQF) {
+    roundToAdvance = "EIGHTH_FINAL"
+  } else if (hasQF && !hasSF) {
     roundToAdvance = "QUARTER_FINAL"
+  } else if (hasSF && !hasFinal) {
+    roundToAdvance = "SEMI_FINAL"
   }
 
   if (!roundToAdvance) return { error: "Keine Runde zum Anlegen der nächsten Runde." }
@@ -584,11 +653,10 @@ export async function advanceRound(competitionId: string): Promise<ActionResult>
 async function handleMatchCompletion(
   matchId: string,
   competitionId: string,
-  round: "QUARTER_FINAL" | "SEMI_FINAL" | "FINAL"
+  round: PlayoffRound
 ): Promise<void> {
   if (round === "FINAL") return
 
-  // Alle Matches der aktuellen Runde laden
   const allMatchesInRound = await db.playoffMatch.findMany({
     where: { competitionId, round },
     select: {
@@ -604,16 +672,13 @@ async function handleMatchCompletion(
   const allComplete = allMatchesInRound.every((m) => m.status === "COMPLETED")
   if (!allComplete) return
 
-  // Gewinner der aktuellen Runde bestimmen
   const winners = allMatchesInRound.map((m) =>
     m.winsA > m.winsB ? m.participantAId : m.participantBId
   )
 
-  const nextRound: "SEMI_FINAL" | "FINAL" = round === "QUARTER_FINAL" ? "SEMI_FINAL" : "FINAL"
+  const nextRound = getNextRound(round)!
 
   if (nextRound === "FINAL") {
-    // Finale: die beiden HF-Gewinner spielen gegeneinander
-    // Reihenfolge: erster Match-Gewinner vs. zweiter Match-Gewinner
     await db.playoffMatch.create({
       data: {
         competitionId,
@@ -625,7 +690,7 @@ async function handleMatchCompletion(
     return
   }
 
-  // SEMI_FINAL: Re-Seeding nach Original-Gruppenrang
+  // Re-Seeding nach Original-Gruppenrang
   const standings = await getStandingsForCompetition(competitionId)
   const rankMap = new Map(standings.map((s) => [s.participantId, s.rank]))
   const nextMatchups = createNextRoundMatchups(winners, rankMap)

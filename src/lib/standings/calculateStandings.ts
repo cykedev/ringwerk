@@ -1,3 +1,4 @@
+import type { ScoringMode } from "@/generated/prisma/client"
 import { determineOutcome } from "@/lib/results/calculateResult"
 
 export interface StandingsParticipant {
@@ -36,6 +37,8 @@ export interface StandingRow {
   points: number
   /** Niedrigster Ringteiler aus allen gewerteten Duellen. null wenn noch keine. */
   bestRingteiler: number | null
+  /** Höchste Seriensumme aus allen gewerteten Duellen. null wenn noch keine. */
+  bestRings: number | null
   rank: number
 }
 
@@ -46,6 +49,7 @@ interface ParticipantStats {
   byes: number
   played: number
   ringteilers: number[]
+  ringsValues: number[]
 }
 
 /**
@@ -61,13 +65,22 @@ interface ParticipantStats {
  */
 export function calculateStandings(
   participants: StandingsParticipant[],
-  matchups: StandingsMatchup[]
+  matchups: StandingsMatchup[],
+  scoringMode: ScoringMode = "RINGTEILER"
 ): StandingRow[] {
   const withdrawnIds = new Set(participants.filter((p) => p.withdrawn).map((p) => p.id))
 
   const statsMap = new Map<string, ParticipantStats>()
   for (const p of participants) {
-    statsMap.set(p.id, { wins: 0, draws: 0, losses: 0, byes: 0, played: 0, ringteilers: [] })
+    statsMap.set(p.id, {
+      wins: 0,
+      draws: 0,
+      losses: 0,
+      byes: 0,
+      played: 0,
+      ringteilers: [],
+      ringsValues: [],
+    })
   }
 
   for (const matchup of matchups) {
@@ -94,7 +107,8 @@ export function calculateStandings(
 
     const outcome = determineOutcome(
       { rings: homeResult.rings, teiler: homeResult.teiler, ringteiler: homeResult.ringteiler },
-      { rings: awayResult.rings, teiler: awayResult.teiler, ringteiler: awayResult.ringteiler }
+      { rings: awayResult.rings, teiler: awayResult.teiler, ringteiler: awayResult.ringteiler },
+      scoringMode
     )
 
     const homeStats = statsMap.get(matchup.homeParticipantId)!
@@ -104,6 +118,8 @@ export function calculateStandings(
     awayStats.played++
     homeStats.ringteilers.push(homeResult.ringteiler)
     awayStats.ringteilers.push(awayResult.ringteiler)
+    homeStats.ringsValues.push(homeResult.rings)
+    awayStats.ringsValues.push(awayResult.rings)
 
     if (outcome === "HOME_WIN") {
       homeStats.wins++
@@ -121,6 +137,7 @@ export function calculateStandings(
     const s = statsMap.get(p.id)!
     const points = s.wins * 2 + s.draws + s.byes * 2
     const bestRingteiler = s.ringteilers.length > 0 ? Math.min(...s.ringteilers) : null
+    const bestRings = s.ringsValues.length > 0 ? Math.max(...s.ringsValues) : null
     return {
       participantId: p.id,
       firstName: p.firstName,
@@ -133,6 +150,7 @@ export function calculateStandings(
       byes: s.byes,
       points,
       bestRingteiler,
+      bestRings,
       rank: 0,
     }
   })
@@ -140,7 +158,7 @@ export function calculateStandings(
   const active = rows.filter((r) => !r.withdrawn)
   const withdrawn = rows.filter((r) => r.withdrawn)
 
-  const sorted = sortWithDirectComparison(active, matchups, withdrawnIds)
+  const sorted = sortWithDirectComparison(active, matchups, withdrawnIds, scoringMode)
 
   sorted.forEach((r, i) => {
     r.rank = i + 1
@@ -159,7 +177,8 @@ export function calculateStandings(
 function sortWithDirectComparison(
   rows: StandingRow[],
   matchups: StandingsMatchup[],
-  withdrawnIds: Set<string>
+  withdrawnIds: Set<string>,
+  scoringMode: ScoringMode = "RINGTEILER"
 ): StandingRow[] {
   // Gruppen mit gleicher Punktzahl bilden
   const pointGroups = new Map<number, StandingRow[]>()
@@ -202,7 +221,8 @@ function sortWithDirectComparison(
 
         const outcome = determineOutcome(
           { rings: homeResult.rings, teiler: homeResult.teiler, ringteiler: homeResult.ringteiler },
-          { rings: awayResult.rings, teiler: awayResult.teiler, ringteiler: awayResult.ringteiler }
+          { rings: awayResult.rings, teiler: awayResult.teiler, ringteiler: awayResult.ringteiler },
+          scoringMode
         )
         if (outcome === "DRAW") {
           dp += 1
@@ -218,9 +238,17 @@ function sortWithDirectComparison(
         (directPoints.get(b.participantId) ?? 0) - (directPoints.get(a.participantId) ?? 0)
       if (dpDiff !== 0) return dpDiff
 
-      const rtA = a.bestRingteiler ?? Infinity
-      const rtB = b.bestRingteiler ?? Infinity
-      if (rtA !== rtB) return rtA - rtB
+      if (scoringMode === "RINGS" || scoringMode === "RINGS_DECIMAL") {
+        // Höhere Ringe gewinnen (absteigend)
+        const ringsA = a.bestRings ?? -Infinity
+        const ringsB = b.bestRings ?? -Infinity
+        if (ringsA !== ringsB) return ringsB - ringsA
+      } else {
+        // Niedrigerer Ringteiler gewinnt (aufsteigend)
+        const rtA = a.bestRingteiler ?? Infinity
+        const rtB = b.bestRingteiler ?? Infinity
+        if (rtA !== rtB) return rtA - rtB
+      }
 
       return a.lastName.localeCompare(b.lastName, "de")
     })

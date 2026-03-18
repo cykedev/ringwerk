@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -22,6 +23,7 @@ interface Props {
   disciplines: SerializableDiscipline[]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   action: (prevState: ActionResult<any> | null, formData: FormData) => Promise<ActionResult<any>>
+  hasMatchups?: boolean
 }
 
 const SCORING_MODE_LABELS: Record<string, string> = {
@@ -57,7 +59,7 @@ function toDateInputValue(date: Date | null | undefined): string {
   return new Date(date).toISOString().slice(0, 10)
 }
 
-export function CompetitionForm({ competition, disciplines, action }: Props) {
+export function CompetitionForm({ competition, disciplines, action, hasMatchups = false }: Props) {
   const router = useRouter()
   const [state, formAction, isPending] = useActionState(action, null)
   const isEdit = !!competition
@@ -65,6 +67,16 @@ export function CompetitionForm({ competition, disciplines, action }: Props) {
   const [type, setType] = useState<string>(competition?.type ?? "LEAGUE")
   const [scoringMode, setScoringMode] = useState<string>(competition?.scoringMode ?? "RINGTEILER")
   const [allowGuests, setAllowGuests] = useState<boolean>(competition?.allowGuests ?? false)
+  const [finalePrimary, setFinalePrimary] = useState<string>(competition?.finalePrimary ?? "RINGS")
+  const [finaleTiebreaker1, setFinaleTiebreaker1] = useState<string>(
+    competition?.finaleTiebreaker1 ?? "none"
+  )
+  const [finaleTiebreaker2, setFinaleTiebreaker2] = useState<string>(
+    competition?.finaleTiebreaker2 ?? "none"
+  )
+  const [finaleHasSuddenDeath, setFinaleHasSuddenDeath] = useState<boolean>(
+    competition?.finaleHasSuddenDeath ?? true
+  )
 
   useEffect(() => {
     if (state && "success" in state && state.success) {
@@ -129,18 +141,18 @@ export function CompetitionForm({ competition, disciplines, action }: Props) {
           name="scoringMode"
           value={scoringMode}
           onValueChange={setScoringMode}
-          disabled={isPending}
+          disabled={
+            isPending || (hasMatchups && (type === "LEAGUE" || competition?.type === "LEAGUE"))
+          }
         >
           <SelectTrigger id="scoringMode">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {Object.entries(
-              type === "LEAGUE"
-                ? SCORING_MODE_LABELS
-                : type === "SEASON"
-                  ? SEASON_SCORING_MODE_LABELS
-                  : EVENT_SCORING_MODE_LABELS
+              type === "SEASON" || type === "LEAGUE"
+                ? SEASON_SCORING_MODE_LABELS
+                : EVENT_SCORING_MODE_LABELS
             ).map(([value, label]) => (
               <SelectItem key={value} value={value}>
                 {label}
@@ -150,19 +162,21 @@ export function CompetitionForm({ competition, disciplines, action }: Props) {
         </Select>
       </div>
 
-      {/* Schusszahl */}
-      <div className="space-y-2">
-        <Label htmlFor="shotsPerSeries">Schuss pro Serie</Label>
-        <Input
-          id="shotsPerSeries"
-          name="shotsPerSeries"
-          type="number"
-          min={1}
-          max={100}
-          defaultValue={competition?.shotsPerSeries ?? 10}
-          disabled={isPending}
-        />
-      </div>
+      {/* Schusszahl (nur für Event/Saison — Liga hat es im Regelset) */}
+      {type !== "LEAGUE" && !(isEdit && competition?.type === "LEAGUE") && (
+        <div className="space-y-2">
+          <Label htmlFor="shotsPerSeries">Schuss pro Serie</Label>
+          <Input
+            id="shotsPerSeries"
+            name="shotsPerSeries"
+            type="number"
+            min={1}
+            max={100}
+            defaultValue={competition?.shotsPerSeries ?? 10}
+            disabled={isPending}
+          />
+        </div>
+      )}
 
       {/* Disziplin */}
       <div className="space-y-2">
@@ -258,6 +272,156 @@ export function CompetitionForm({ competition, disciplines, action }: Props) {
               defaultValue={toDateInputValue(competition?.rueckrundeDeadline)}
               disabled={isPending}
             />
+          </div>
+
+          {/* ── Regelset ──────────────────────────────────────────── */}
+          <div className="rounded-lg border bg-card p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <p className="text-sm font-medium">Regelset (Playoffs)</p>
+              {hasMatchups && (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Lock className="h-3 w-3" />
+                  Gesperrt — Paarungen existieren bereits
+                </span>
+              )}
+            </div>
+            <fieldset disabled={hasMatchups || isPending} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="playoffBestOf">Best-of (VF/HF)</Label>
+                  <Input
+                    id="playoffBestOf"
+                    name="playoffBestOf"
+                    type="number"
+                    min={1}
+                    max={9}
+                    step={2}
+                    defaultValue={competition?.playoffBestOf ?? 5}
+                    placeholder="5"
+                  />
+                  <p className="text-xs text-muted-foreground">z.B. 5 = Best-of-5 (3 Siege)</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="shotsPerSeriesLeague">Schuss/Serie</Label>
+                  <Input
+                    id="shotsPerSeriesLeague"
+                    name="shotsPerSeries"
+                    type="number"
+                    min={1}
+                    max={100}
+                    defaultValue={competition?.shotsPerSeries ?? 10}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-2">
+                  <input
+                    id="playoffHasViertelfinale"
+                    name="playoffHasViertelfinale"
+                    type="checkbox"
+                    value="true"
+                    defaultChecked={competition?.playoffHasViertelfinale ?? true}
+                  />
+                  <Label htmlFor="playoffHasViertelfinale">Viertelfinale (8 TN)</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="playoffHasAchtelfinale"
+                    name="playoffHasAchtelfinale"
+                    type="checkbox"
+                    value="true"
+                    defaultChecked={competition?.playoffHasAchtelfinale ?? false}
+                  />
+                  <Label htmlFor="playoffHasAchtelfinale">Achtelfinale (16 TN)</Label>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="finalePrimary">Finale – Hauptkriterium</Label>
+                <Select name="finalePrimary" value={finalePrimary} onValueChange={setFinalePrimary}>
+                  <SelectTrigger id="finalePrimary">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(SEASON_SCORING_MODE_LABELS).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Primäres Wertungskriterium im Finale (immer aktiv).
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="finaleTiebreaker1">Finale – Tiebreaker 1</Label>
+                <Select
+                  name="finaleTiebreaker1"
+                  value={finaleTiebreaker1}
+                  onValueChange={(v) => {
+                    setFinaleTiebreaker1(v)
+                    if (v === "none") setFinaleTiebreaker2("none")
+                  }}
+                >
+                  <SelectTrigger id="finaleTiebreaker1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Kein Tiebreaker</SelectItem>
+                    {Object.entries(SEASON_SCORING_MODE_LABELS).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Bei Gleichstand nach Hauptkriterium (optional).
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="finaleTiebreaker2">Finale – Tiebreaker 2</Label>
+                <Select
+                  name="finaleTiebreaker2"
+                  value={finaleTiebreaker2}
+                  onValueChange={setFinaleTiebreaker2}
+                  disabled={finaleTiebreaker1 === "none"}
+                >
+                  <SelectTrigger id="finaleTiebreaker2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Kein Tiebreaker</SelectItem>
+                    {Object.entries(SEASON_SCORING_MODE_LABELS).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Bei Gleichstand nach Tiebreaker 1 (nur wenn TB1 gesetzt).
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="finaleHasSuddenDeath"
+                  name="finaleHasSuddenDeath"
+                  checked={finaleHasSuddenDeath}
+                  onCheckedChange={(checked: boolean | "indeterminate") =>
+                    setFinaleHasSuddenDeath(checked === true)
+                  }
+                />
+                <Label htmlFor="finaleHasSuddenDeath" className="cursor-pointer">
+                  Sudden Death bei Finale-Gleichstand
+                </Label>
+              </div>
+              <input
+                type="hidden"
+                name="finaleHasSuddenDeath"
+                value={finaleHasSuddenDeath ? "true" : "false"}
+              />
+            </fieldset>
           </div>
         </>
       )}

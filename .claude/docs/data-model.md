@@ -31,17 +31,21 @@
 
 #### Liga-spezifisch (LEAGUE)
 
-| Feld                 | Typ          | Default    | Beschreibung                                    |
-| -------------------- | ------------ | ---------- | ----------------------------------------------- |
-| roundDeadlineHin     | DateTime?    | null       | Stichtag Hinrunde                               |
-| roundDeadlineRueck   | DateTime?    | null       | Stichtag Rückrunde                              |
-| groupScoringMode     | ScoringMode? | RINGTEILER | Wertungsmodus Gruppenphase (= scoringMode)      |
-| playoffBestOf        | Int?         | 3          | Siege zum Weiterkommen VF/HF (3 = Best-of-Five) |
-| playoffQualThreshold | Int?         | 8          | Ab dieser TN-Zahl → Viertelfinale               |
-| playoffQualTopN1     | Int?         | 4          | Qualifikanten für HF bei Direkteinstieg         |
-| playoffQualTopN2     | Int?         | 8          | Qualifikanten für VF                            |
-| finaleScoringMode    | ScoringMode? | RINGS      | Wertungsmodus Finale                            |
-| finaleHasSuddenDeath | Boolean?     | true       | Sudden Death bei Finale-Gleichstand             |
+| Feld                    | Typ          | Default    | Beschreibung                                                         |
+| ----------------------- | ------------ | ---------- | -------------------------------------------------------------------- |
+| roundDeadlineHin        | DateTime?    | null       | Stichtag Hinrunde                                                    |
+| roundDeadlineRueck      | DateTime?    | null       | Stichtag Rückrunde                                                   |
+| groupScoringMode        | ScoringMode? | RINGTEILER | Wertungsmodus Gruppenphase (= scoringMode)                           |
+| playoffBestOf           | Int?         | 3          | Siege zum Weiterkommen VF/HF (3 = Best-of-Five)                      |
+| playoffHasViertelfinale | Boolean      | true       | Viertelfinale aktiv (Top 8, 4 Paarungen)                             |
+| playoffHasAchtelfinale  | Boolean      | false      | Achtelfinale aktiv (Top 16, 8 Paarungen); überschreibt VF-Flag       |
+| playoffQualThreshold    | Int?         | 8          | Ab dieser TN-Zahl → Viertelfinale                                    |
+| playoffQualTopN1        | Int?         | 4          | Qualifikanten für HF bei Direkteinstieg                              |
+| playoffQualTopN2        | Int?         | 8          | Qualifikanten für VF                                                 |
+| finalePrimary           | ScoringMode  | RINGS      | Hauptkriterium Finale (Pflicht); Default: nur Ringe, höchste gewinnt |
+| finaleTiebreaker1       | ScoringMode? | null       | Tiebreaker-Kriterium 1 bei Gleichstand (optional)                    |
+| finaleTiebreaker2       | ScoringMode? | null       | Tiebreaker-Kriterium 2 bei weiterem Gleichstand (optional)           |
+| finaleHasSuddenDeath    | Boolean?     | true       | Sudden Death nach allen Kriterien noch Gleichstand                   |
 
 #### Event-spezifisch (EVENT)
 
@@ -155,7 +159,7 @@ ARCHIVED    – archiviert
 - ScoringType: WHOLE | DECIMAL (Disziplin-Wertungsart)
 - ParticipantStatus: ACTIVE | WITHDRAWN
 - MatchupStatus: PENDING | COMPLETED | BYE | WALKOVER
-- PlayoffRound: QUARTER_FINAL | SEMI_FINAL | FINAL
+- PlayoffRound: EIGHTH_FINAL | QUARTER_FINAL | SEMI_FINAL | FINAL
 - Role: ADMIN | MANAGER | USER
 - ImportSource: MANUAL | URL | PDF
 
@@ -301,7 +305,7 @@ Nur Teilnehmer mit ≥ minSeries Serien werden gewertet.
 | Freilos                     | Kampfloser Sieg bei ungerader Teilnehmerzahl (2 Punkte); nur Liga                                              |
 | Rückzug                     | Vorzeitiges Ausscheiden; alle Ergebnisse rückwirkend gestrichen                                                |
 | Best-of-Five                | VF/HF-Format: wer zuerst 3 Duelle gewinnt, kommt weiter; konfigurierbar                                        |
-| Finale-Modus                | Sondermodus im Liga-Finale; Wertung konfigurierbar (Default: nur Ringe)                                        |
+| Finale-Modus                | Sondermodus im Liga-Finale; Wertung als Kriterien-Kette (Primary + optional 2 Tiebreaker); Default: nur Ringe |
 | Gastteilnehmer              | Nicht-Vereinsmitglied; kann an Events teilnehmen; isGuest-Flag                                                 |
 | Mindestserien               | Saison: Anzahl Serien die ein Teilnehmer mindestens geschossen haben muss                                      |
 | Meyton-Import               | Ergebnisübernahme aus Meyton-System via URL oder PDF                                                           |

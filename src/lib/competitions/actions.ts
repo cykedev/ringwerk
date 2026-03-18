@@ -22,65 +22,108 @@ function revalidateCompetitionPaths(): void {
 
 // ─── Schemas ───────────────────────────────────────────────────────────────
 
-const BaseSchema = z.object({
-  name: z.string().min(1, "Name ist erforderlich").max(100, "Name zu lang"),
-  scoringMode: z.enum(
-    [
-      "RINGTEILER",
-      "RINGS",
-      "RINGS_DECIMAL",
-      "TEILER",
-      "DECIMAL_REST",
-      "TARGET_ABSOLUTE",
-      "TARGET_UNDER",
-    ],
-    { message: "Ungültiger Wertungsmodus" }
-  ),
-  shotsPerSeries: z
-    .string()
-    .nullable()
-    .optional()
-    .transform((v) => (v ? parseInt(v, 10) : 10))
-    .pipe(z.number().min(1).max(100)),
-  disciplineId: z
-    .string()
-    .nullable()
-    .optional()
-    .transform((v) => (v && v !== "mixed" ? v : null)),
-  // Liga
-  hinrundeDeadline: z.string().nullable().optional(),
-  rueckrundeDeadline: z.string().nullable().optional(),
-  // Event
-  eventDate: z.string().nullable().optional(),
-  allowGuests: z
-    .string()
-    .nullable()
-    .optional()
-    .transform((v) => v === "true" || v === "on"),
-  teamSize: z
-    .string()
-    .nullable()
-    .optional()
-    .transform((v) => (v && v.trim() !== "" ? parseInt(v, 10) : null)),
-  targetValue: z
-    .string()
-    .nullable()
-    .optional()
-    .transform((v) => (v && v.trim() !== "" ? parseFloat(v.replace(",", ".")) : null)),
-  targetValueType: z
-    .enum(["TEILER", "RINGS", "RINGS_DECIMAL"])
-    .nullable()
-    .optional()
-    .transform((v) => v || null),
-  // Saison
-  minSeries: z
-    .string()
-    .nullable()
-    .optional()
-    .transform((v) => (v && v.trim() !== "" ? parseInt(v, 10) : null)),
-  seasonStart: z.string().nullable().optional(),
-  seasonEnd: z.string().nullable().optional(),
-})
+const BaseSchema = z
+  .object({
+    name: z.string().min(1, "Name ist erforderlich").max(100, "Name zu lang"),
+    scoringMode: z.enum(
+      [
+        "RINGTEILER",
+        "RINGS",
+        "RINGS_DECIMAL",
+        "TEILER",
+        "DECIMAL_REST",
+        "TARGET_ABSOLUTE",
+        "TARGET_UNDER",
+      ],
+      { message: "Ungültiger Wertungsmodus" }
+    ),
+    shotsPerSeries: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => (v ? parseInt(v, 10) : 10))
+      .pipe(z.number().min(1).max(100)),
+    disciplineId: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => (v && v !== "mixed" ? v : null)),
+    // Liga
+    hinrundeDeadline: z.string().nullable().optional(),
+    rueckrundeDeadline: z.string().nullable().optional(),
+    // Event
+    eventDate: z.string().nullable().optional(),
+    allowGuests: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => v === "true" || v === "on"),
+    teamSize: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => (v && v.trim() !== "" ? parseInt(v, 10) : null)),
+    targetValue: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => (v && v.trim() !== "" ? parseFloat(v.replace(",", ".")) : null)),
+    targetValueType: z
+      .enum(["TEILER", "RINGS", "RINGS_DECIMAL"])
+      .nullable()
+      .optional()
+      .transform((v) => v || null),
+    // Saison
+    minSeries: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => (v && v.trim() !== "" ? parseInt(v, 10) : null)),
+    seasonStart: z.string().nullable().optional(),
+    seasonEnd: z.string().nullable().optional(),
+    // Liga – Regelset
+    playoffBestOf: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => (v && v.trim() !== "" ? parseInt(v, 10) : null)),
+    playoffHasViertelfinale: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => v === "true" || v === "on"),
+    playoffHasAchtelfinale: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => v === "true" || v === "on"),
+    finalePrimary: z.preprocess(
+      (v) => (!v || v === "" ? "RINGS" : v),
+      z.enum(["RINGTEILER", "RINGS", "RINGS_DECIMAL", "TEILER"])
+    ),
+    finaleTiebreaker1: z.preprocess(
+      (v) => (v === "none" || v === "" || !v ? null : v),
+      z.enum(["RINGTEILER", "RINGS", "RINGS_DECIMAL", "TEILER"]).nullable()
+    ),
+    finaleTiebreaker2: z.preprocess(
+      (v) => (v === "none" || v === "" || !v ? null : v),
+      z.enum(["RINGTEILER", "RINGS", "RINGS_DECIMAL", "TEILER"]).nullable()
+    ),
+    finaleHasSuddenDeath: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => v === "true" || v === "on"),
+  })
+  .superRefine((data, ctx) => {
+    if (data.finaleTiebreaker2 && !data.finaleTiebreaker1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Tiebreaker 2 setzt Tiebreaker 1 voraus",
+        path: ["finaleTiebreaker2"],
+      })
+    }
+  })
 
 const CreateSchema = BaseSchema.extend({
   type: z.enum(["LEAGUE", "EVENT", "SEASON"], { message: "Ungültiger Wettbewerbstyp" }),
@@ -114,6 +157,13 @@ export async function createCompetition(
     minSeries: formData.get("minSeries"),
     seasonStart: formData.get("seasonStart"),
     seasonEnd: formData.get("seasonEnd"),
+    playoffBestOf: formData.get("playoffBestOf"),
+    playoffHasViertelfinale: formData.get("playoffHasViertelfinale"),
+    playoffHasAchtelfinale: formData.get("playoffHasAchtelfinale"),
+    finalePrimary: formData.get("finalePrimary"),
+    finaleTiebreaker1: formData.get("finaleTiebreaker1"),
+    finaleTiebreaker2: formData.get("finaleTiebreaker2"),
+    finaleHasSuddenDeath: formData.get("finaleHasSuddenDeath"),
   })
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
 
@@ -144,6 +194,13 @@ export async function createCompetition(
       minSeries: type === "SEASON" ? (parsed.data.minSeries ?? null) : null,
       seasonStart: type === "SEASON" ? parseDate(parsed.data.seasonStart) : null,
       seasonEnd: type === "SEASON" ? parseDate(parsed.data.seasonEnd) : null,
+      playoffBestOf: type === "LEAGUE" ? (parsed.data.playoffBestOf ?? null) : null,
+      playoffHasViertelfinale: type === "LEAGUE" ? parsed.data.playoffHasViertelfinale : undefined,
+      playoffHasAchtelfinale: type === "LEAGUE" ? parsed.data.playoffHasAchtelfinale : undefined,
+      finalePrimary: type === "LEAGUE" ? parsed.data.finalePrimary : undefined,
+      finaleTiebreaker1: type === "LEAGUE" ? (parsed.data.finaleTiebreaker1 ?? null) : null,
+      finaleTiebreaker2: type === "LEAGUE" ? (parsed.data.finaleTiebreaker2 ?? null) : null,
+      finaleHasSuddenDeath: type === "LEAGUE" ? parsed.data.finaleHasSuddenDeath : null,
       createdByUserId: session.user.id,
     },
     select: { id: true },
@@ -166,11 +223,13 @@ export async function updateCompetition(
   if (!session) return { error: "Nicht angemeldet" }
   if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
 
-  const competition = await db.competition.findUnique({
-    where: { id },
-    select: { id: true, type: true },
-  })
+  const [competition, matchupCount] = await Promise.all([
+    db.competition.findUnique({ where: { id }, select: { id: true, type: true } }),
+    db.matchup.count({ where: { competitionId: id } }),
+  ])
   if (!competition) return { error: "Wettbewerb nicht gefunden." }
+
+  const rulesetLocked = matchupCount > 0
 
   const parsed = BaseSchema.safeParse({
     name: formData.get("name"),
@@ -187,6 +246,13 @@ export async function updateCompetition(
     minSeries: formData.get("minSeries"),
     seasonStart: formData.get("seasonStart"),
     seasonEnd: formData.get("seasonEnd"),
+    playoffBestOf: formData.get("playoffBestOf"),
+    playoffHasViertelfinale: formData.get("playoffHasViertelfinale"),
+    playoffHasAchtelfinale: formData.get("playoffHasAchtelfinale"),
+    finalePrimary: formData.get("finalePrimary"),
+    finaleTiebreaker1: formData.get("finaleTiebreaker1"),
+    finaleTiebreaker2: formData.get("finaleTiebreaker2"),
+    finaleHasSuddenDeath: formData.get("finaleHasSuddenDeath"),
   })
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
 
@@ -196,8 +262,8 @@ export async function updateCompetition(
     where: { id },
     data: {
       name: parsed.data.name,
-      scoringMode: parsed.data.scoringMode,
-      shotsPerSeries: parsed.data.shotsPerSeries,
+      scoringMode: rulesetLocked ? undefined : parsed.data.scoringMode,
+      shotsPerSeries: rulesetLocked ? undefined : parsed.data.shotsPerSeries,
       hinrundeDeadline: parseDate(parsed.data.hinrundeDeadline),
       rueckrundeDeadline: parseDate(parsed.data.rueckrundeDeadline),
       eventDate: type === "EVENT" ? parseDate(parsed.data.eventDate) : undefined,
@@ -208,6 +274,19 @@ export async function updateCompetition(
       minSeries: type === "SEASON" ? (parsed.data.minSeries ?? null) : undefined,
       seasonStart: type === "SEASON" ? parseDate(parsed.data.seasonStart) : undefined,
       seasonEnd: type === "SEASON" ? parseDate(parsed.data.seasonEnd) : undefined,
+      playoffBestOf:
+        type === "LEAGUE" && !rulesetLocked ? (parsed.data.playoffBestOf ?? null) : undefined,
+      playoffHasViertelfinale:
+        type === "LEAGUE" && !rulesetLocked ? parsed.data.playoffHasViertelfinale : undefined,
+      playoffHasAchtelfinale:
+        type === "LEAGUE" && !rulesetLocked ? parsed.data.playoffHasAchtelfinale : undefined,
+      finalePrimary: type === "LEAGUE" && !rulesetLocked ? parsed.data.finalePrimary : undefined,
+      finaleTiebreaker1:
+        type === "LEAGUE" && !rulesetLocked ? (parsed.data.finaleTiebreaker1 ?? null) : undefined,
+      finaleTiebreaker2:
+        type === "LEAGUE" && !rulesetLocked ? (parsed.data.finaleTiebreaker2 ?? null) : undefined,
+      finaleHasSuddenDeath:
+        type === "LEAGUE" && !rulesetLocked ? parsed.data.finaleHasSuddenDeath : undefined,
     },
   })
 

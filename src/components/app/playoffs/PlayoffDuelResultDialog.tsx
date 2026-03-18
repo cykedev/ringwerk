@@ -14,7 +14,9 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { savePlayoffDuelResult } from "@/lib/playoffs/actions"
+import { finaleNeedsTeiler } from "@/lib/playoffs/calculatePlayoffs"
 import type { PlayoffDuelItem, PlayoffParticipant } from "@/lib/playoffs/types"
+import type { ScoringMode } from "@/generated/prisma/client"
 
 interface Props {
   duel: PlayoffDuelItem
@@ -22,6 +24,10 @@ interface Props {
   participantB: PlayoffParticipant
   isCorrection: boolean
   isFinalMatch: boolean
+  shotsPerSeries: number
+  finalePrimary: ScoringMode
+  finaleTiebreaker1: ScoringMode | null
+  finaleTiebreaker2: ScoringMode | null
 }
 
 interface ResultFields {
@@ -35,7 +41,14 @@ export function PlayoffDuelResultDialog({
   participantB,
   isCorrection,
   isFinalMatch,
+  shotsPerSeries,
+  finalePrimary,
+  finaleTiebreaker1,
+  finaleTiebreaker2,
 }: Props) {
+  // Teiler anzeigen: immer bei VF/HF; im Finale nur wenn ein Kriterium Teiler erfordert
+  const showTeiler =
+    !isFinalMatch || finaleNeedsTeiler(finalePrimary, finaleTiebreaker1, finaleTiebreaker2)
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -80,7 +93,7 @@ export function PlayoffDuelResultDialog({
     let teilerA: number | undefined
     let teilerB: number | undefined
 
-    if (!isFinalMatch) {
+    if (showTeiler) {
       teilerA = parseFloat(fieldA.teiler.replace(",", "."))
       teilerB = parseFloat(fieldB.teiler.replace(",", "."))
       if (isNaN(teilerA) || isNaN(teilerB)) {
@@ -112,12 +125,13 @@ export function PlayoffDuelResultDialog({
     })
   }
 
+  const shotLabel = `${shotsPerSeries} Schüsse`
   const title = isFinalMatch
     ? duel.isSuddenDeath
       ? "Verlängerung eintragen"
       : isCorrection
-        ? "10 Schüsse korrigieren"
-        : "10 Schüsse eintragen"
+        ? `${shotLabel} korrigieren`
+        : `${shotLabel} eintragen`
     : duel.isSuddenDeath
       ? "Entscheidungsduell eintragen"
       : isCorrection
@@ -150,7 +164,7 @@ export function PlayoffDuelResultDialog({
             <p className="text-sm font-medium">
               {participantA.firstName} {participantA.lastName}
             </p>
-            <div className={isFinalMatch ? "max-w-[160px]" : "grid grid-cols-2 gap-3"}>
+            <div className={showTeiler ? "grid grid-cols-2 gap-3" : "max-w-[160px]"}>
               <div className="space-y-1">
                 <Label htmlFor="a-rings" className="text-xs text-muted-foreground">
                   Gesamtringe
@@ -166,7 +180,7 @@ export function PlayoffDuelResultDialog({
                   disabled={isPending}
                 />
               </div>
-              {!isFinalMatch && (
+              {showTeiler && (
                 <div className="space-y-1">
                   <Label htmlFor="a-teiler" className="text-xs text-muted-foreground">
                     Bester Teiler
@@ -197,7 +211,7 @@ export function PlayoffDuelResultDialog({
             <p className="text-sm font-medium">
               {participantB.firstName} {participantB.lastName}
             </p>
-            <div className={isFinalMatch ? "max-w-[160px]" : "grid grid-cols-2 gap-3"}>
+            <div className={showTeiler ? "grid grid-cols-2 gap-3" : "max-w-[160px]"}>
               <div className="space-y-1">
                 <Label htmlFor="b-rings" className="text-xs text-muted-foreground">
                   Gesamtringe
@@ -213,7 +227,7 @@ export function PlayoffDuelResultDialog({
                   disabled={isPending}
                 />
               </div>
-              {!isFinalMatch && (
+              {showTeiler && (
                 <div className="space-y-1">
                   <Label htmlFor="b-teiler" className="text-xs text-muted-foreground">
                     Bester Teiler

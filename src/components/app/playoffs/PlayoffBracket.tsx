@@ -1,3 +1,6 @@
+"use client"
+
+import type { ScoringMode } from "@/generated/prisma/client"
 import type { PlayoffBracketData, PlayoffMatchItem } from "@/lib/playoffs/types"
 import { cn } from "@/lib/utils"
 import { PlayoffMatchCard } from "./PlayoffMatchCard"
@@ -7,7 +10,7 @@ const SLOT_W = 176 // px – w-44
 const CONN_W = 28 // px – SVG-Connector-Breite
 const PAIR_GAP = 32 // px – Abstand zwischen den Paarungen
 
-// Gold / Silber / Bronze je nach Runde
+// Gold / Silber / Bronze / Blau je nach Runde
 const WINNER_STYLE: Record<string, { row: string; text: string; badge: string }> = {
   FINAL: {
     row: "bg-yellow-400/5",
@@ -23,6 +26,11 @@ const WINNER_STYLE: Record<string, { row: string; text: string; badge: string }>
     row: "bg-orange-500/5",
     text: "text-orange-600 dark:text-orange-400",
     badge: "bg-orange-500/15 text-orange-600 ring-1 ring-orange-500 dark:text-orange-400",
+  },
+  EIGHTH_FINAL: {
+    row: "bg-blue-500/5",
+    text: "text-blue-600 dark:text-blue-400",
+    badge: "bg-blue-500/15 text-blue-600 ring-1 ring-blue-500 dark:text-blue-400",
   },
 }
 
@@ -159,10 +167,20 @@ function RoundDetail({
   title,
   matches,
   isAdmin,
+  shotsPerSeries,
+  playoffBestOf,
+  finalePrimary,
+  finaleTiebreaker1,
+  finaleTiebreaker2,
 }: {
   title: string
   matches: PlayoffMatchItem[]
   isAdmin: boolean
+  shotsPerSeries: number
+  playoffBestOf: number | null
+  finalePrimary: ScoringMode
+  finaleTiebreaker1: ScoringMode | null
+  finaleTiebreaker2: ScoringMode | null
 }) {
   return (
     <div className="space-y-3">
@@ -170,16 +188,43 @@ function RoundDetail({
       <div
         className={cn(
           "grid gap-4",
-          matches.length > 1 && "sm:grid-cols-2",
+          matches.length > 2 && "sm:grid-cols-2",
           matches.length === 1 && "max-w-xs mx-auto sm:max-w-sm"
         )}
       >
         {matches.map((m) => (
-          <PlayoffMatchCard key={m.id} match={m} isAdmin={isAdmin} />
+          <PlayoffMatchCard
+            key={m.id}
+            match={m}
+            isAdmin={isAdmin}
+            shotsPerSeries={shotsPerSeries}
+            playoffBestOf={playoffBestOf}
+            finalePrimary={finalePrimary}
+            finaleTiebreaker1={finaleTiebreaker1}
+            finaleTiebreaker2={finaleTiebreaker2}
+          />
         ))}
       </div>
     </div>
   )
+}
+
+// ─── Geometrie-Hilfsfunktion ──────────────────────────────────────────────────
+
+/**
+ * Berechnet die Y-Mittelpunkte eines Slots-Arrays.
+ * tops[i] ist die obere Kante, Mittelpunkt = tops[i] + SLOT_H/2.
+ */
+function mids(tops: number[]): number[] {
+  return tops.map((t) => t + SLOT_H / 2)
+}
+
+/**
+ * Berechnet den zentrierten Top-Wert zwischen zwei Y-Mittelpunkten.
+ * center = (mid1 + mid2) / 2 → top = center - SLOT_H/2
+ */
+function centeredTop(mid1: number, mid2: number): number {
+  return (mid1 + mid2) / 2 - SLOT_H / 2
 }
 
 // ─── PlayoffBracket ──────────────────────────────────────────────────────────
@@ -189,13 +234,28 @@ interface Props {
   isAdmin: boolean
   /** Nur visuelles Bracket, keine Detail-Karten */
   compact?: boolean
+  shotsPerSeries?: number
+  playoffBestOf?: number | null
+  finalePrimary?: ScoringMode
+  finaleTiebreaker1?: ScoringMode | null
+  finaleTiebreaker2?: ScoringMode | null
 }
 
-export function PlayoffBracket({ bracket, isAdmin, compact = false }: Props) {
-  const { quarterFinals: qf, semiFinals: hf, final: fin } = bracket
-  const isVF = qf.length > 0
+export function PlayoffBracket({
+  bracket,
+  isAdmin,
+  compact = false,
+  shotsPerSeries = 10,
+  playoffBestOf = null,
+  finalePrimary = "RINGS",
+  finaleTiebreaker1 = null,
+  finaleTiebreaker2 = null,
+}: Props) {
+  const { eighthFinals: af, quarterFinals: qf, semiFinals: hf, final: fin } = bracket
+  const isAF = af.length > 0
+  const isVF = !isAF && qf.length > 0
 
-  if (!isVF && hf.length === 0) {
+  if (!isAF && !isVF && hf.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
         Die Playoff-Paarungen werden nach dem Start angezeigt.
@@ -205,46 +265,118 @@ export function PlayoffBracket({ bracket, isAdmin, compact = false }: Props) {
 
   // ── Positionen berechnen ─────────────────────────────────────────────────
   //
-  // PAIR_GAP trennt die Gruppen, die in dieselbe nächste Runde einfließen:
-  //   HF-only:  HF1 | GAP | HF2  →  Finale (mittig zw. HF1 und HF2)
-  //   VF:       (QF1+QF2) | GAP | (QF3+QF4)  →  HF1 + HF2  →  Finale
+  // Für jede Struktur (AF / VF / HF-only) werden die Slot-Tops und
+  // Connector-Pairs separat berechnet.
   //
-  const totalH = isVF ? 4 * SLOT_H + PAIR_GAP : 2 * SLOT_H + PAIR_GAP
+  // AF-Layout (8 AF → 4 QF → 2 HF → 1 Final):
+  //   AF[0,1] → QF[0]; AF[2,3] → QF[1] (beide → HF[0])
+  //   AF[4,5] → QF[2]; AF[6,7] → QF[3] (beide → HF[1])
+  //   HF[0]+HF[1] → Final
+  //
+  //   PAIR_GAP trennt die Paare innerhalb einer Gruppe (AF[0,1] / AF[2,3]).
+  //   Ein weiterer PAIR_GAP trennt die beiden Gruppen voneinander.
 
-  // QF-Tops: erste Gruppe direkt oben, zweite Gruppe nach GAP
-  const qfTops = [0, SLOT_H, 2 * SLOT_H + PAIR_GAP, 3 * SLOT_H + PAIR_GAP]
+  let totalH: number
+  let afTops: number[]
+  let qfTops: number[]
+  let hfTops: number[]
+  let finalTop: number
+  let afQfPairs: ConnectorPair[]
+  let qfHfPairs: ConnectorPair[]
+  let hfFinalPairs: ConnectorPair[]
 
-  // HF-Tops: zentriert zwischen ihren QF-Paaren (oder ganz oben bei HF-only)
-  const hfTops = isVF ? [SLOT_H / 2, 2.5 * SLOT_H + PAIR_GAP] : [0, SLOT_H + PAIR_GAP]
+  const half = SLOT_H / 2
 
-  const finalTop = isVF ? 1.5 * SLOT_H + PAIR_GAP / 2 : SLOT_H / 2 + PAIR_GAP / 2
+  if (isAF) {
+    // 8 AF-Slots: je 2 Slots pro QF, getrennt durch PAIR_GAP zwischen den Paaren
+    // und einem zweiten PAIR_GAP zwischen den beiden HF-Gruppen
+    afTops = [
+      0,
+      SLOT_H,
+      2 * SLOT_H + PAIR_GAP,
+      3 * SLOT_H + PAIR_GAP,
+      4 * SLOT_H + 2 * PAIR_GAP,
+      5 * SLOT_H + 2 * PAIR_GAP,
+      6 * SLOT_H + 3 * PAIR_GAP,
+      7 * SLOT_H + 3 * PAIR_GAP,
+    ]
+    totalH = 8 * SLOT_H + 3 * PAIR_GAP
 
-  // QF → HF Connector-Paare (nur bei VF)
-  const qfHfPairs: ConnectorPair[] = [
-    { in1: SLOT_H * 0.5, in2: SLOT_H * 1.5, out: SLOT_H },
-    {
-      in1: 2.5 * SLOT_H + PAIR_GAP,
-      in2: 3.5 * SLOT_H + PAIR_GAP,
-      out: 3 * SLOT_H + PAIR_GAP,
-    },
-  ]
+    const afM = mids(afTops)
 
-  // HF → Finale Connector-Paare
-  const hfFinalPairs: ConnectorPair[] = isVF
-    ? [
-        {
-          in1: SLOT_H,
-          in2: 3 * SLOT_H + PAIR_GAP,
-          out: 2 * SLOT_H + PAIR_GAP / 2,
-        },
-      ]
-    : [
-        {
-          in1: SLOT_H / 2,
-          in2: 1.5 * SLOT_H + PAIR_GAP,
-          out: SLOT_H + PAIR_GAP / 2, // finalTop(=SLOT_H/2+PAIR_GAP/2) + SLOT_H/2
-        },
-      ]
+    // QF-Tops: zentriert zwischen je 2 AF-Paaren
+    qfTops = [
+      centeredTop(afM[0], afM[1]),
+      centeredTop(afM[2], afM[3]),
+      centeredTop(afM[4], afM[5]),
+      centeredTop(afM[6], afM[7]),
+    ]
+    const qfM = mids(qfTops)
+
+    // HF-Tops: zentriert zwischen je 2 QF-Paaren
+    hfTops = [centeredTop(qfM[0], qfM[1]), centeredTop(qfM[2], qfM[3])]
+    const hfM = mids(hfTops)
+
+    // Final-Top: zentriert zwischen HF-Paar
+    finalTop = centeredTop(hfM[0], hfM[1])
+    const finM = finalTop + half
+
+    // Connector-Pairs
+    afQfPairs = [
+      { in1: afM[0], in2: afM[1], out: qfM[0] },
+      { in1: afM[2], in2: afM[3], out: qfM[1] },
+      { in1: afM[4], in2: afM[5], out: qfM[2] },
+      { in1: afM[6], in2: afM[7], out: qfM[3] },
+    ]
+    qfHfPairs = [
+      { in1: qfM[0], in2: qfM[1], out: hfM[0] },
+      { in1: qfM[2], in2: qfM[3], out: hfM[1] },
+    ]
+    hfFinalPairs = [{ in1: hfM[0], in2: hfM[1], out: finM }]
+  } else if (isVF) {
+    // 4 QF-Slots: je 2 Slots pro HF, getrennt durch PAIR_GAP
+    afTops = []
+    qfTops = [0, SLOT_H, 2 * SLOT_H + PAIR_GAP, 3 * SLOT_H + PAIR_GAP]
+    totalH = 4 * SLOT_H + PAIR_GAP
+
+    hfTops = [half, 2.5 * SLOT_H + PAIR_GAP]
+    finalTop = 1.5 * SLOT_H + PAIR_GAP / 2
+
+    afQfPairs = []
+    qfHfPairs = [
+      { in1: SLOT_H * 0.5, in2: SLOT_H * 1.5, out: SLOT_H },
+      {
+        in1: 2.5 * SLOT_H + PAIR_GAP,
+        in2: 3.5 * SLOT_H + PAIR_GAP,
+        out: 3 * SLOT_H + PAIR_GAP,
+      },
+    ]
+    hfFinalPairs = [
+      {
+        in1: SLOT_H,
+        in2: 3 * SLOT_H + PAIR_GAP,
+        out: 2 * SLOT_H + PAIR_GAP / 2,
+      },
+    ]
+  } else {
+    // HF-only
+    afTops = []
+    qfTops = []
+    totalH = 2 * SLOT_H + PAIR_GAP
+
+    hfTops = [0, SLOT_H + PAIR_GAP]
+    finalTop = half + PAIR_GAP / 2
+
+    afQfPairs = []
+    qfHfPairs = []
+    hfFinalPairs = [
+      {
+        in1: half,
+        in2: 1.5 * SLOT_H + PAIR_GAP,
+        out: SLOT_H + PAIR_GAP / 2,
+      },
+    ]
+  }
 
   const labelClass =
     "text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
@@ -257,7 +389,15 @@ export function PlayoffBracket({ bracket, isAdmin, compact = false }: Props) {
           <div className="min-w-max">
             {/* Spaltenüberschriften */}
             <div className="mb-2 flex items-center">
-              {isVF && (
+              {isAF && (
+                <>
+                  <div style={{ width: SLOT_W }} className={labelClass}>
+                    Achtelfinale
+                  </div>
+                  <div style={{ width: CONN_W }} />
+                </>
+              )}
+              {(isAF || isVF) && (
                 <>
                   <div style={{ width: SLOT_W }} className={labelClass}>
                     Viertelfinale
@@ -276,10 +416,20 @@ export function PlayoffBracket({ bracket, isAdmin, compact = false }: Props) {
 
             {/* Bracket-Zeilen */}
             <div className="flex items-start">
-              {isVF && (
+              {isAF && (
                 <>
                   <RoundCol
-                    matches={[qf.at(0), qf.at(1), qf.at(2), qf.at(3)]}
+                    matches={Array.from({ length: 8 }, (_, i) => af[i])}
+                    tops={afTops}
+                    totalH={totalH}
+                  />
+                  <Connector height={totalH} pairs={afQfPairs} />
+                </>
+              )}
+              {(isAF || isVF) && (
+                <>
+                  <RoundCol
+                    matches={Array.from({ length: isAF ? 4 : 4 }, (_, i) => qf[i])}
                     tops={qfTops}
                     totalH={totalH}
                   />
@@ -299,11 +449,54 @@ export function PlayoffBracket({ bracket, isAdmin, compact = false }: Props) {
       {/* ── Detailkarten ───────────────────────────────────────────────── */}
       {!compact && (
         <div className="space-y-6">
-          {isVF && qf.length > 0 && (
-            <RoundDetail title="Viertelfinale" matches={qf} isAdmin={isAdmin} />
+          {isAF && af.length > 0 && (
+            <RoundDetail
+              title="Achtelfinale"
+              matches={af}
+              isAdmin={isAdmin}
+              shotsPerSeries={shotsPerSeries}
+              playoffBestOf={playoffBestOf}
+              finalePrimary={finalePrimary}
+              finaleTiebreaker1={finaleTiebreaker1}
+              finaleTiebreaker2={finaleTiebreaker2}
+            />
           )}
-          {hf.length > 0 && <RoundDetail title="Halbfinale" matches={hf} isAdmin={isAdmin} />}
-          {fin && <RoundDetail title="Finale" matches={[fin]} isAdmin={isAdmin} />}
+          {(isAF || isVF) && qf.length > 0 && (
+            <RoundDetail
+              title="Viertelfinale"
+              matches={qf}
+              isAdmin={isAdmin}
+              shotsPerSeries={shotsPerSeries}
+              playoffBestOf={playoffBestOf}
+              finalePrimary={finalePrimary}
+              finaleTiebreaker1={finaleTiebreaker1}
+              finaleTiebreaker2={finaleTiebreaker2}
+            />
+          )}
+          {hf.length > 0 && (
+            <RoundDetail
+              title="Halbfinale"
+              matches={hf}
+              isAdmin={isAdmin}
+              shotsPerSeries={shotsPerSeries}
+              playoffBestOf={playoffBestOf}
+              finalePrimary={finalePrimary}
+              finaleTiebreaker1={finaleTiebreaker1}
+              finaleTiebreaker2={finaleTiebreaker2}
+            />
+          )}
+          {fin && (
+            <RoundDetail
+              title="Finale"
+              matches={[fin]}
+              isAdmin={isAdmin}
+              shotsPerSeries={shotsPerSeries}
+              playoffBestOf={playoffBestOf}
+              finalePrimary={finalePrimary}
+              finaleTiebreaker1={finaleTiebreaker1}
+              finaleTiebreaker2={finaleTiebreaker2}
+            />
+          )}
         </div>
       )}
     </div>

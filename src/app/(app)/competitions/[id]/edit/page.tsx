@@ -23,6 +23,8 @@ export default async function EditCompetitionPage({ params }: Props) {
   if (session?.user.role !== "ADMIN") redirect("/")
   if (!competition) notFound()
 
+  const hasMatchups = competition._count.matchups > 0
+
   const action = async (prevState: ActionResult | null, formData: FormData) => {
     "use server"
     return updateCompetition(id, prevState, formData)
@@ -31,7 +33,12 @@ export default async function EditCompetitionPage({ params }: Props) {
   return (
     <div className="mx-auto max-w-lg px-4 py-8">
       <h1 className="mb-6 text-2xl font-semibold">Wettbewerb bearbeiten</h1>
-      <CompetitionForm competition={competition} disciplines={disciplines} action={action} />
+      <CompetitionForm
+        competition={competition}
+        disciplines={disciplines}
+        action={action}
+        hasMatchups={hasMatchups}
+      />
       <div className="mt-12">
         <ForceDeleteCompetitionSection competitionId={id} competitionName={competition.name} />
       </div>

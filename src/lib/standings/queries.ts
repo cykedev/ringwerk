@@ -6,6 +6,12 @@ export type { StandingRow }
 
 /** Berechnet und gibt die aktuelle Tabelle einer Meisterschaft zurück. */
 export async function getStandingsForCompetition(competitionId: string): Promise<StandingRow[]> {
+  const competition = await db.competition.findUnique({
+    where: { id: competitionId },
+    select: { scoringMode: true },
+  })
+  const scoringMode = competition?.scoringMode ?? "RINGTEILER"
+
   const [enrollments, rawMatchups] = await Promise.all([
     db.competitionParticipant.findMany({
       where: { competitionId },
@@ -57,5 +63,5 @@ export async function getStandingsForCompetition(competitionId: string): Promise
     })),
   }))
 
-  return calculateStandings(participants, matchups)
+  return calculateStandings(participants, matchups, scoringMode)
 }

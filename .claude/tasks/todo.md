@@ -281,7 +281,7 @@ Iterativer Umbau von "1-gegen-1 Liga-App" zu "Ringwerk" — universelle Wettbewe
 
 ---
 
-### Phase 6: Liga-Ausbau (Konfigurierbare Regelsets)
+### Phase 6: Liga-Ausbau (Konfigurierbare Regelsets) ✓ ABGESCHLOSSEN [2026-03-18]
 
 **Ziel:** Volles konfigurierbares Regelset fuer Ligen innerhalb des Competition-Rahmens.
 **Abhaengigkeiten:** Phase 2 abgeschlossen (Competition-Abstraktion). Kann parallel zu Phase 4/5.
@@ -292,40 +292,173 @@ Phase 6 implementiert die Logik und UI dafuer.
 
 #### Actions
 
-- [ ] `src/lib/competitions/actions.ts` — Zod-Schema um Regelset-Felder erweitern + Lock-Logik (wenn Matchups existieren → Regelset gesperrt)
-- [ ] `src/lib/results/actions.ts` — `scoringMode` aus Competition laden + an `determineOutcome()` uebergeben
-- [ ] `src/lib/playoffs/actions.ts` — `playoffBestOf`, `playoffQualThreshold`, `finaleScoringMode`, `finaleHasSuddenDeath` aus Competition laden + verwenden
+- [x] `src/lib/competitions/actions.ts` — Zod-Schema um Regelset-Felder erweitern + Lock-Logik (wenn Matchups existieren → Regelset gesperrt)
+- [x] `src/lib/results/actions.ts` — `scoringMode` aus Competition laden + an `determineOutcome()` uebergeben
+- [x] `src/lib/playoffs/actions.ts` — `playoffBestOf`, `playoffQualThreshold`, `finaleScoringMode`, `finaleHasSuddenDeath` aus Competition laden + verwenden
 
 #### Calculate
 
-- [ ] `src/lib/results/calculateResult.ts` — `determineOutcome()` um `scoringMode` Parameter erweitern
-- [ ] `src/lib/playoffs/calculatePlayoffs.ts`:
+- [x] `src/lib/results/calculateResult.ts` — `determineOutcome()` um `scoringMode` Parameter erweitern
+- [x] `src/lib/playoffs/calculatePlayoffs.ts`:
   - `isPlayoffMatchComplete(match, requiredWins)` — hardkodierte 3 durch Parameter
   - `createFirstRoundMatchups(standings, ruleset)` — Qual-Parameter
   - Finale: `finaleScoringMode` nutzen
-- [ ] `src/lib/standings/calculateStandings.ts` — `scoringMode` durchreichen; Sortierung bei RINGS umkehren
+- [x] `src/lib/standings/calculateStandings.ts` — `scoringMode` durchreichen; Sortierung bei RINGS umkehren
 
 #### Components
 
-- [ ] Competition-Formular — "Regelset"-Sektion mit `<fieldset disabled={hasMatchups}>` + Sperrhinweis
-- [ ] `PlayoffMatchCard.tsx` — dynamische Labels (Best-of-N, Schusszahl)
-- [ ] `PlayoffDuelResultDialog.tsx` — Titel mit `shotsPerSeries`
-- [ ] `ScheduleView.tsx` — `scoringMode` fuer Ergebnis-Farbmarkierung
+- [x] Competition-Formular — "Regelset"-Sektion mit `<fieldset disabled={hasMatchups}>` + Sperrhinweis
+- [x] `PlayoffMatchCard.tsx` — dynamische Labels (Best-of-N, Schusszahl)
+- [x] `PlayoffDuelResultDialog.tsx` — Titel mit `shotsPerSeries`
+- [x] `ScheduleView.tsx` — `scoringMode` fuer Ergebnis-Farbmarkierung
 
 #### Tests & Qualitaet
 
-- [ ] `calculateResult.test.ts` — neuer Parameter + RINGS-Modus Tests
-- [ ] `calculatePlayoffs.test.ts` — parametrisierte Tests (bestOf, qualThreshold)
-- [ ] `calculateStandings.test.ts` — scoringMode-Parameter
-- [ ] `/check` — alle Gates gruen
+- [x] `calculateResult.test.ts` — neuer Parameter + RINGS-Modus Tests
+- [x] `calculatePlayoffs.test.ts` — parametrisierte Tests (bestOf, qualThreshold)
+- [x] `calculateStandings.test.ts` — scoringMode-Parameter
+- [x] `/check` — alle Gates gruen
 
 #### Finalisierung
 
-- [ ] `docs/` — Regelset dokumentieren
+- [x] `docs/` — Regelset dokumentieren
+
+---
+
+---
+
+### Playoff-Achtelfinale (EIGHTH_FINAL) [2026-03-18]
+
+**Ziel:** Playoff-Konfiguration auf zwei Boolean-Flags umstellen (`playoffHasViertelfinale`, `playoffHasAchtelfinale`). EIGHTH_FINAL-Runde implementieren, Bracket auf 4 Spalten erweitern.
+**Status:** Implementiert, Commit ausstehend.
+
+#### Schema & Migration
+
+- [x] `playoffQualTopN1`, `playoffQualTopN2`, `playoffQualThreshold` entfernt
+- [x] `playoffHasViertelfinale Boolean @default(true)`, `playoffHasAchtelfinale Boolean @default(false)` hinzugefügt
+- [x] `PlayoffRound` Enum um `EIGHTH_FINAL` erweitert
+- [x] Migration `playoff-boolean-rounds`
+
+#### Core
+
+- [x] `calculatePlayoffs.ts` — `getNextRound()`, `createFirstRoundMatchups()` (3 Pfade: AF/VF/HF), `createNextRoundMatchups()` generalisiert
+- [x] `calculatePlayoffs.test.ts` — Boolean-basierte Tests inkl. EIGHTH_FINAL
+
+#### Types / Queries / Actions
+
+- [x] `competitions/types.ts` — TopN-Felder raus, boolean flags rein
+- [x] `competitions/queries.ts` — Select aktualisiert
+- [x] `competitions/actions.ts` — Zod-Schema, Lock-Logik, `.nullable()` für Boolean-Checkboxen
+- [x] `playoffs/types.ts` — `eighthFinals: PlayoffMatchItem[]` in `PlayoffBracketData`
+- [x] `playoffs/queries.ts` — eighthFinals in Abfrage
+- [x] `playoffs/actions.ts` — `getNextRound()` überall genutzt, `startPlayoffs` mit dynamischem `minRequired`
+- [x] `auditLog/types.ts` — `EIGHTH_FINAL: "Achtelfinale"`
+
+#### UI / Bracket / PDF
+
+- [x] `CompetitionForm.tsx` — Checkboxen statt TopN-Inputs
+- [x] `PlayoffMatchCard.tsx` — `EIGHTH_FINAL` in `ROUND_LABEL` und `WINNER_BADGE`
+- [x] `PlayoffBracket.tsx` — 4-Spalten-Layout (AF + VF + HF + F), Geometrie-Berechnung
+- [x] `PlayoffsPdf.tsx` — AF-Spalte, Connector-Overlay, Detailabschnitt
+- [x] `playoffs/page.tsx` — `playoffsStarted`, `advanceLabel`, `canStart`/`disabledReason`, Infotext dynamisch
+- [x] `pdf/playoffs/route.ts` — `playoffsStarted` mit eighthFinals
+
+#### Qualität
+
+- [x] `/check` — alle Gates grün (203 Tests)
+- [ ] Commit erstellen
+
+---
+
+### Refactor: Finale-Scoring-Konfiguration — GEPLANT
+
+**Ziel:** `finaleScoringMode: ScoringMode | null` durch drei explizite Felder ersetzen. Kein impliziertes Verhalten mehr — jedes Kriterium klar und unabhängig konfigurierbar.
+
+**Neues Datenmodell:**
+
+| Feld                   | Typ           | Default | Nullable            |
+| ---------------------- | ------------- | ------- | ------------------- |
+| `finalePrimary`        | `ScoringMode` | `RINGS` | Nein                |
+| `finaleTiebreaker1`    | `ScoringMode` | —       | Ja                  |
+| `finaleTiebreaker2`    | `ScoringMode` | —       | Ja                  |
+| `finaleHasSuddenDeath` | Boolean       | `true`  | Nein (unveraendert) |
+
+Gueltige Werte: `RINGS`, `RINGS_DECIMAL`, `RINGTEILER`, `TEILER`.
+Validierungsregel: `finaleTiebreaker2` darf nur gesetzt sein wenn `finaleTiebreaker1` gesetzt ist.
+`finaleNeedsTeiler` = true wenn irgendein Kriterium `RINGTEILER` oder `TEILER` ist.
+
+#### Schema & Migration
+
+- [ ] `prisma/schema.prisma` — `finaleScoringMode ScoringMode?` entfernen
+- [ ] `prisma/schema.prisma` — `finalePrimary ScoringMode @default(RINGS)` hinzufuegen
+- [ ] `prisma/schema.prisma` — `finaleTiebreaker1 ScoringMode?` hinzufuegen
+- [ ] `prisma/schema.prisma` — `finaleTiebreaker2 ScoringMode?` hinzufuegen
+- [ ] `/migrate finale-scoring-refactor` — inkl. Datenmigration: `finaleScoringMode` → `finalePrimary` (NULL → RINGS)
+
+#### Calculate (`calculatePlayoffs.ts`)
+
+- [ ] `PlayoffRuleset` — `finaleScoringMode` ersetzen durch `finalePrimary`, `finaleTiebreaker1`, `finaleTiebreaker2`
+- [ ] `finaleNeedsTeiler(primary, tb1, tb2)` — true wenn any === "RINGTEILER" || "TEILER"
+- [ ] `compareByFinale(criterion, ringsA, ringsB, teilerA?, ringteilerA?, teilerB?, ringteilerB?)` — interner Helfer
+- [ ] `determineFinaleRoundWinner(...)` — Kette: primary → tb1 → tb2 → DRAW; Signatur anpassen
+
+#### Types / Queries / Actions
+
+- [ ] `competitions/types.ts` — `CompetitionDetail`: `finaleScoringMode` durch 3 Felder ersetzen
+- [ ] `competitions/queries.ts` — Select: `finaleScoringMode` durch 3 Felder ersetzen
+- [ ] `competitions/actions.ts` — Zod `BaseSchema`:
+  - `finaleScoringMode` entfernen
+  - `finalePrimary: z.enum(FINALE_CRITERIA).default("RINGS")`
+  - `finaleTiebreaker1: z.preprocess(...nullable)`, `finaleTiebreaker2: z.preprocess(...nullable)`
+  - `.refine()`: tb2 gesetzt ohne tb1 → Fehler "Tiebreaker 2 setzt Tiebreaker 1 voraus"
+  - Create/Update-Mapping aktualisieren
+- [ ] `playoffs/actions.ts` — Select und alle Aufrufe von `determineFinaleRoundWinner` / `finaleNeedsTeiler` anpassen
+
+#### Components
+
+- [ ] `CompetitionForm.tsx` — `finaleScoringMode`-Select ersetzen durch:
+  - `finalePrimary` (required, default RINGS, beschriftet "Hauptkriterium")
+  - `finaleTiebreaker1` (optional, "Kein Tiebreaker" als Default-Option)
+  - `finaleTiebreaker2` (optional, disabled wenn tb1 nicht gesetzt)
+  - Erklaerungstext je Feld (was bedeutet das Kriterium)
+- [ ] `PlayoffDuelResultDialog.tsx` — Prop `finaleScoringMode` durch 3 Felder ersetzen; `finaleNeedsTeiler`-Aufruf anpassen
+- [ ] `PlayoffMatchCard.tsx` — Prop ersetzen; Hinweistext zeigt Kriterienkette an (z.B. "Primär: Ringe · TB: Teiler")
+- [ ] `PlayoffBracket.tsx` — Props durchreichen (3 statt 1 Feld)
+- [ ] `playoffs/page.tsx` — 3 Felder aus `competition` an `PlayoffBracket` weitergeben
+
+#### Tests
+
+- [ ] `calculatePlayoffs.test.ts` — neue Tests fuer `determineFinaleRoundWinner`:
+  - Alle Kombinationen: primary only, primary + tb1, primary + tb1 + tb2
+  - Kriterien: RINGS, RINGTEILER, TEILER, RINGS_DECIMAL
+  - `finaleNeedsTeiler` mit verschiedenen Konfigurationen
+- [ ] `competitions/actions.test.ts` — neue Felder + Validierungsregel tb2-ohne-tb1
+
+#### Qualitaet & Finalisierung
+
+- [ ] `/check` — alle Gates gruen
+- [ ] `docs/features.md` — Finale-Scoring-Abschnitt aktualisieren
+- [ ] Commit
 
 ---
 
 ## Abgeschlossen
+
+### [2026-03-18] Phase 6: Liga-Ausbau (Konfigurierbare Regelsets)
+
+**Status:** Implementiert und dokumentiert. Alle Regelset-Felder funktional, Lock-Logik aktiv, Scoring-Engine integriert.
+
+- [x] 6 neue Liga-spezifische Felder im Schema (Phase 2 vorbereitet, Phase 6 aktiviert)
+- [x] Zod-Validierung + Lock-Logik bei bestehenden Matchups
+- [x] `scoringMode` integriert in Standings-Sortierung und MatchResult-Auswertung (bestOf, Qual-Parameter, Finale-Scoring)
+- [x] `determineOutcome()` mit dynamischer Wertung (RINGS, RINGS_DECIMAL, TEILER, RINGTEILER)
+- [x] `bestRings` zur StandingsRow hinzugefügt
+- [x] Dynamische Labels in PlayoffMatchCard/PlayoffDuelResultDialog basierend auf Regelset
+- [x] finaleNeedsTeiler + requiredWinsFromBestOf parametrisiert
+- [x] Features.md dokumentiert (Liga-Sektion: Konfiguration, Regelsets, Playoff-Parameter)
+- [x] Docs-Sync durchgeführt
+
+---
 
 ### [2026-03-16] Ringwerk-Planung
 

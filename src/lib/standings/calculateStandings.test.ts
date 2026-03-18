@@ -211,3 +211,76 @@ describe("calculateStandings – Bester Ringteiler", () => {
     expect(rows[0].bestRingteiler).toBeNull()
   })
 })
+
+describe("calculateStandings – scoringMode RINGS", () => {
+  it("höhere Seriensumme gewinnt (RINGS-Modus)", () => {
+    const matchups: StandingsMatchup[] = [
+      {
+        id: "m1",
+        status: "COMPLETED",
+        homeParticipantId: "A",
+        awayParticipantId: "B",
+        results: [
+          makeResult("A", 97, 3.0, 6.0), // höhere Ringe → gewinnt
+          makeResult("B", 94, 2.0, 8.0),
+        ],
+      },
+    ]
+    const rows = calculateStandings([pA, pB], matchups, "RINGS")
+    const rowA = rows.find((r) => r.participantId === "A")!
+    expect(rowA.wins).toBe(1)
+    expect(rowA.rank).toBe(1)
+  })
+
+  it("bestRings = höchste Seriensumme aller Duelle", () => {
+    const matchups: StandingsMatchup[] = [
+      {
+        id: "m1",
+        status: "COMPLETED",
+        homeParticipantId: "A",
+        awayParticipantId: "B",
+        results: [makeResult("A", 96, 3.0, 7.0), makeResult("B", 94, 5.0, 11.0)],
+      },
+      {
+        id: "m2",
+        status: "COMPLETED",
+        homeParticipantId: "A",
+        awayParticipantId: "C",
+        results: [makeResult("A", 99, 1.5, 4.5), makeResult("C", 90, 8.0, 18.0)],
+      },
+    ]
+    const rows = calculateStandings([pA, pB, pC], matchups, "RINGS")
+    const rowA = rows.find((r) => r.participantId === "A")!
+    expect(rowA.bestRings).toBe(99)
+  })
+
+  it("bestRings ist null wenn keine Duelle gespielt", () => {
+    const rows = calculateStandings([pA], [], "RINGS")
+    expect(rows[0].bestRings).toBeNull()
+  })
+
+  it("Tiebreak bei Punktgleichstand: höhere bestRings gewinnt (RINGS-Modus)", () => {
+    // A und B haben je 2 Punkte (je 1 Sieg gegen C)
+    // A hat höhere bestRings → A vor B
+    const matchups: StandingsMatchup[] = [
+      {
+        id: "m-AC",
+        status: "COMPLETED",
+        homeParticipantId: "A",
+        awayParticipantId: "C",
+        results: [makeResult("A", 98, 3.0, 5.0), makeResult("C", 90, 5.0, 15.0)],
+      },
+      {
+        id: "m-BC",
+        status: "COMPLETED",
+        homeParticipantId: "B",
+        awayParticipantId: "C",
+        results: [makeResult("B", 95, 3.0, 8.0), makeResult("C", 90, 5.0, 15.0)],
+      },
+    ]
+    // A: 2pts, bestRings=98 | B: 2pts, bestRings=95 | C: 0pts
+    const rows = calculateStandings([pA, pB, pC], matchups, "RINGS")
+    expect(rows[0].participantId).toBe("A")
+    expect(rows[1].participantId).toBe("B")
+  })
+})

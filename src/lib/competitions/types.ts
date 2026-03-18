@@ -45,7 +45,15 @@ export type CompetitionDetail = {
     scoringType: ScoringType
     teilerFaktor: number
   } | null
-  // Liga
+  // Liga – Regelset
+  playoffBestOf: number | null
+  playoffHasViertelfinale: boolean
+  playoffHasAchtelfinale: boolean
+  finalePrimary: ScoringMode
+  finaleTiebreaker1: ScoringMode | null
+  finaleTiebreaker2: ScoringMode | null
+  finaleHasSuddenDeath: boolean | null
+  // Liga – Deadlines
   hinrundeDeadline: Date | null
   rueckrundeDeadline: Date | null
   // Event
@@ -59,4 +67,5 @@ export type CompetitionDetail = {
   seasonStart: Date | null
   seasonEnd: Date | null
   createdAt: Date
+  _count: { matchups: number }
 }

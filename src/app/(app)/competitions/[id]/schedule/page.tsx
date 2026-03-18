@@ -91,6 +91,7 @@ export default async function CompetitionSchedulePage({ params }: Props) {
         competitionId={id}
         isAdmin={isAdmin}
         playoffsStarted={playoffsStarted}
+        scoringMode={competition.scoringMode}
       />
 
       {/* Tabelle */}

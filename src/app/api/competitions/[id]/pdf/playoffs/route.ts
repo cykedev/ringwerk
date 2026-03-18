@@ -24,7 +24,8 @@ export async function GET(
   }
 
   const playoffsStarted =
-    bracket.quarterFinals.length + bracket.semiFinals.length > 0 || bracket.final !== null
+    bracket.eighthFinals.length + bracket.quarterFinals.length + bracket.semiFinals.length > 0 ||
+    bracket.final !== null
 
   if (!playoffsStarted) {
     return new NextResponse("Playoffs noch nicht gestartet", { status: 404 })
