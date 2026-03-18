@@ -211,7 +211,9 @@ async function SeasonSeriesPageContent({ id }: { id: string }) {
                   teiler: s.teiler,
                   ringteiler: s.ringteiler,
                   sessionDate: formatDateOnly(s.sessionDate, tz),
+                  sessionDateIso: s.sessionDate.toISOString().slice(0, 10),
                   disciplineName: isMixed ? s.discipline.name : undefined,
+                  disciplineId: s.disciplineId,
                 }))}
                 minSeries={competition.minSeries}
                 isMixed={isMixed}

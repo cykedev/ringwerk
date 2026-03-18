@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useActionState, useEffect } from "react"
-import { Plus } from "lucide-react"
+import { Pencil, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -20,8 +20,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { saveSeasonSeries } from "@/lib/series/actions"
+import { saveSeasonSeries, updateSeasonSeries } from "@/lib/series/actions"
 import type { ActionResult } from "@/lib/types"
+
+interface ExistingSeries {
+  id: string
+  rings: number
+  teiler: number
+  /** ISO-Datum (YYYY-MM-DD) */
+  sessionDate: string
+  disciplineId?: string | null
+}
 
 interface Props {
   competitionId: string
@@ -30,6 +39,8 @@ interface Props {
   /** Disziplinen für gemischte Saisons */
   disciplines?: { id: string; name: string }[]
   defaultDisciplineId?: string | null
+  /** Wenn gesetzt: Edit-Modus für diese bestehende Serie */
+  existingSeries?: ExistingSeries
 }
 
 export function SeasonSeriesDialog({
@@ -38,11 +49,16 @@ export function SeasonSeriesDialog({
   participantName,
   disciplines,
   defaultDisciplineId,
+  existingSeries,
 }: Props) {
   const [open, setOpen] = useState(false)
   const isMixed = disciplines && disciplines.length > 0
+  const isCorrection = !!existingSeries
 
-  const boundAction = saveSeasonSeries.bind(null, competitionId, participantId)
+  const boundAction = isCorrection
+    ? updateSeasonSeries.bind(null, competitionId, existingSeries.id)
+    : saveSeasonSeries.bind(null, competitionId, participantId)
+
   const [state, formAction, isPending] = useActionState(
     (prev: ActionResult | null, formData: FormData) => boundAction(prev, formData),
     null
@@ -53,7 +69,6 @@ export function SeasonSeriesDialog({
   const generalError =
     state && "error" in state && typeof state.error === "string" ? state.error : null
 
-  // Dialog nach Erfolg schließen — nur wenn state sich ändert, nicht beim Re-Öffnen
   useEffect(() => {
     if (state && "success" in state && state.success) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -64,13 +79,19 @@ export function SeasonSeriesDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-10 w-10" title="Serie hinzufügen">
-          <Plus className="h-4 w-4" />
-        </Button>
+        {isCorrection ? (
+          <Button variant="ghost" size="icon" className="h-10 w-10" title="Serie bearbeiten">
+            <Pencil className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button variant="ghost" size="icon" className="h-10 w-10" title="Serie hinzufügen">
+            <Plus className="h-4 w-4" />
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Serie hinzufügen</DialogTitle>
+          <DialogTitle>{isCorrection ? "Serie bearbeiten" : "Serie hinzufügen"}</DialogTitle>
           <p className="text-sm text-muted-foreground">{participantName}</p>
         </DialogHeader>
 
@@ -81,7 +102,7 @@ export function SeasonSeriesDialog({
               id="sessionDate"
               name="sessionDate"
               type="date"
-              defaultValue={new Date().toISOString().slice(0, 10)}
+              defaultValue={existingSeries?.sessionDate ?? new Date().toISOString().slice(0, 10)}
               disabled={isPending}
               autoFocus
             />
@@ -95,7 +116,9 @@ export function SeasonSeriesDialog({
               <Label htmlFor="disciplineId">Disziplin</Label>
               <Select
                 name="disciplineId"
-                defaultValue={defaultDisciplineId ?? disciplines[0]?.id}
+                defaultValue={
+                  existingSeries?.disciplineId ?? defaultDisciplineId ?? disciplines[0]?.id
+                }
                 disabled={isPending}
               >
                 <SelectTrigger id="disciplineId">
@@ -120,6 +143,7 @@ export function SeasonSeriesDialog({
               type="text"
               inputMode="decimal"
               placeholder="z.B. 96"
+              defaultValue={existingSeries?.rings ?? ""}
               disabled={isPending}
             />
             {fieldErrors?.rings && (
@@ -135,6 +159,7 @@ export function SeasonSeriesDialog({
               type="text"
               inputMode="decimal"
               placeholder="z.B. 3.7"
+              defaultValue={existingSeries?.teiler ?? ""}
               disabled={isPending}
             />
             {fieldErrors?.teiler && (

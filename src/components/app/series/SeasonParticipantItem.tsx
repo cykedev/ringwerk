@@ -11,8 +11,10 @@ interface Series {
   rings: number
   teiler: number
   ringteiler: number
-  sessionDate: string // formatiert vom Server
+  sessionDate: string // formatiert vom Server (Anzeigeformat)
+  sessionDateIso: string // YYYY-MM-DD für date-Input
   disciplineName?: string
+  disciplineId?: string | null
 }
 
 interface Props {
@@ -89,7 +91,7 @@ export function SeasonParticipantItem({
       {expanded && hasSeries && (
         <div className="border-t bg-muted/20">
           {series.map((s) => (
-            <div key={s.id} className="flex items-center justify-between pl-10 pr-4 py-2">
+            <div key={s.id} className="flex items-center justify-between pl-10 pr-2 py-2">
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-muted-foreground">
                   {s.sessionDate}
@@ -101,7 +103,22 @@ export function SeasonParticipantItem({
                   {s.rings} Ringe · Teiler {s.teiler.toFixed(1)} · RT {s.ringteiler.toFixed(1)}
                 </p>
               </div>
-              <DeleteSeasonSeriesButton seriesId={s.id} competitionId={competitionId} />
+              <div className="flex items-center gap-1">
+                <SeasonSeriesDialog
+                  competitionId={competitionId}
+                  participantId={participantId}
+                  participantName={`${firstName} ${lastName}`}
+                  disciplines={disciplines}
+                  existingSeries={{
+                    id: s.id,
+                    rings: s.rings,
+                    teiler: s.teiler,
+                    sessionDate: s.sessionDateIso,
+                    disciplineId: s.disciplineId,
+                  }}
+                />
+                <DeleteSeasonSeriesButton seriesId={s.id} competitionId={competitionId} />
+              </div>
             </div>
           ))}
         </div>

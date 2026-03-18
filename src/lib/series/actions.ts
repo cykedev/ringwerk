@@ -324,6 +324,119 @@ export async function saveSeasonSeries(
   return { success: true }
 }
 
+/**
+ * Korrigiert eine bestehende Saison-Serie (Update).
+ * Identifiziert die Serie über seriesId; validiert Zugehörigkeit zum Wettbewerb.
+ */
+export async function updateSeasonSeries(
+  competitionId: string,
+  seriesId: string,
+  _prevState: ActionResult | null,
+  formData: FormData
+): Promise<ActionResult> {
+  const session = await getAuthSession()
+  if (!session) return { error: "Nicht angemeldet." }
+  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung." }
+
+  const competition = await db.competition.findUnique({
+    where: { id: competitionId },
+    select: { id: true, type: true, status: true, shotsPerSeries: true, disciplineId: true },
+  })
+  if (!competition) return { error: "Wettbewerb nicht gefunden." }
+  if (competition.type !== "SEASON") return { error: "Nur für Saison-Wettbewerbe." }
+  if (competition.status === "ARCHIVED") return { error: "Archivierte Wettbewerbe sind gesperrt." }
+
+  const existingSeries = await db.series.findUnique({
+    where: { id: seriesId },
+    select: {
+      id: true,
+      competitionId: true,
+      participantId: true,
+      participant: { select: { firstName: true, lastName: true } },
+    },
+  })
+  if (!existingSeries) return { error: "Serie nicht gefunden." }
+  if (existingSeries.competitionId !== competitionId) return { error: "Ungültige Anfrage." }
+
+  const cp = await db.competitionParticipant.findUnique({
+    where: {
+      competitionId_participantId: {
+        competitionId,
+        participantId: existingSeries.participantId,
+      },
+    },
+    select: {
+      disciplineId: true,
+      discipline: { select: { id: true, name: true, scoringType: true, teilerFaktor: true } },
+    },
+  })
+  if (!cp) return { error: "Teilnehmer nicht in diesem Wettbewerb eingeschrieben." }
+
+  const parsed = SeasonSeriesSchema.safeParse({
+    rings: formData.get("rings"),
+    teiler: formData.get("teiler"),
+    sessionDate: formData.get("sessionDate"),
+    disciplineId: formData.get("disciplineId"),
+  })
+  if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
+
+  const resolvedDisciplineId =
+    parsed.data.disciplineId ?? cp.disciplineId ?? competition.disciplineId
+
+  let discipline = cp.discipline
+  if (!discipline || (parsed.data.disciplineId && parsed.data.disciplineId !== cp.disciplineId)) {
+    if (!resolvedDisciplineId) return { error: "Keine Disziplin konfiguriert." }
+    const found = await db.discipline.findUnique({
+      where: { id: resolvedDisciplineId },
+      select: { id: true, name: true, scoringType: true, teilerFaktor: true },
+    })
+    if (!found) return { error: "Disziplin nicht gefunden." }
+    discipline = found
+  }
+
+  if (!resolvedDisciplineId || !discipline) return { error: "Keine Disziplin konfiguriert." }
+
+  const { rings, teiler, sessionDate } = parsed.data
+  const teilerFaktor = discipline.teilerFaktor.toNumber()
+  const maxRings = MAX_RINGS[discipline.scoringType]
+  const ringteiler = calculateRingteiler(rings, teiler, teilerFaktor, maxRings)
+
+  await db.series.update({
+    where: { id: seriesId },
+    data: {
+      rings,
+      teiler,
+      ringteiler,
+      disciplineId: resolvedDisciplineId,
+      shotCount: competition.shotsPerSeries,
+      sessionDate,
+      recordedByUserId: session.user.id,
+    },
+  })
+
+  const participantName = `${existingSeries.participant.firstName} ${existingSeries.participant.lastName}`
+
+  await db.auditLog.create({
+    data: {
+      eventType: "SEASON_SERIES_CORRECTED",
+      entityType: "SERIES",
+      entityId: seriesId,
+      userId: session.user.id,
+      competitionId,
+      details: {
+        participantName,
+        sessionDate: sessionDate.toISOString().slice(0, 10),
+        rings,
+        teiler,
+        disciplineName: discipline.name,
+      },
+    },
+  })
+
+  revalidateSeasonPaths(competitionId)
+  return { success: true }
+}
+
 /** Löscht eine einzelne Saison-Serie. */
 export async function deleteSeasonSeries(
   seriesId: string,

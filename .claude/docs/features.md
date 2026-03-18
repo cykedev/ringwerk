@@ -65,6 +65,7 @@ Ringwerk kennt drei Wettbewerbstypen. Alle teilen dieselbe Scoring-Engine und de
 | **Saison** (SEASON) | Serien über Monate → Auswertung               | Mehrfach-Ranking (Ringe, Teiler, Ringteiler) |
 
 **Dashboard-Integration:** Das Dashboard unterteilt aktive Wettbewerbe nach Typ:
+
 - **Liga:** Interaktive Tabelle + K.O.-Bracket
 - **Event & Saison:** Separate Ranglisten mit Links zu den Detailseiten
 - **Saison:** Zeigt zusätzlich Saisonzeitraum und Serien-Fortschritt
@@ -294,14 +295,14 @@ Serien werden "gekauft" — jede geschossene Serie zählt als gekauft.
 
 ### Konfiguration
 
-| Parameter      | Beschreibung                                                           |
-| -------------- | ---------------------------------------------------------------------- |
+| Parameter      | Beschreibung                                                                                   |
+| -------------- | ---------------------------------------------------------------------------------------------- |
 | scoringMode    | Primärer Wertungsmodus (für die Hauptsortierung). Nur RINGS, RINGS_DECIMAL, TEILER, RINGTEILER |
-| shotsPerSeries | Schusszahl pro Serie                                                   |
-| disciplineId   | Immer null (gemischt) — Teilnehmer können Disziplin pro Serie wechseln |
-| minSeries      | Mindestanzahl Serien für Wertung (default 20)                          |
-| seasonStart    | Saisonbeginn                                                           |
-| seasonEnd      | Saisonende                                                             |
+| shotsPerSeries | Schusszahl pro Serie                                                                           |
+| disciplineId   | Immer null (gemischt) — Teilnehmer können Disziplin pro Serie wechseln                         |
+| minSeries      | Mindestanzahl Serien für Wertung (default 20)                                                  |
+| seasonStart    | Saisonbeginn                                                                                   |
+| seasonEnd      | Saisonende                                                                                     |
 
 ### Serien-Erfassung ✓
 
@@ -313,6 +314,7 @@ Serien werden "gekauft" — jede geschossene Serie zählt als gekauft.
   - **sessionDate** defaultet auf heute
   - **Disziplin-Vorauswahl** (defaultDisciplineId prop) wird unterstützt
   - Dialog kann jederzeit neu geöffnet werden (fix Reopening-Bug via useEffect Pattern)
+- **Edit-Modus:** Bearbeiten (Bearbeiten) bestehender Serien — Pencil-Icon pro Serienzeile öffnet Dialog im Edit-Modus, nutzt `updateSeasonSeries` Action, recalculates Ringteiler, logs `SEASON_SERIES_CORRECTED` audit event
 
 ### Mehrfach-Wertung ✓
 
@@ -378,6 +380,7 @@ Das Haupt-Dashboard unterteilt aktive Wettbewerbe nach Typ:
 ### Wettbewerbs-Listenansicht
 
 Die Seite `/competitions` zeigt Wettbewerbe in Karten mit:
+
 - **Wettbewerbstyp-Badge:** "Liga", "Event", "Saison"
 - **Saison-Typen:** zusätzlich Saisonzeitraum (seasonStart – seasonEnd)
 - **Navigation:** Links zu /series (Serien-Erfassung) und /standings (Saison-Rangliste) für Saison-Wettbewerbe

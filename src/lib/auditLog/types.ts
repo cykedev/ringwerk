@@ -11,6 +11,7 @@ export type AuditEventType =
   | "EVENT_SERIES_CORRECTED"
   | "EVENT_SERIES_DELETED"
   | "SEASON_SERIES_ENTERED"
+  | "SEASON_SERIES_CORRECTED"
   | "SEASON_SERIES_DELETED"
 
 export const AUDIT_EVENT_LABELS: Record<string, string> = {
@@ -26,6 +27,7 @@ export const AUDIT_EVENT_LABELS: Record<string, string> = {
   EVENT_SERIES_CORRECTED: "Serie korrigiert",
   EVENT_SERIES_DELETED: "Serie gelöscht",
   SEASON_SERIES_ENTERED: "Saison-Serie erfasst",
+  SEASON_SERIES_CORRECTED: "Saison-Serie korrigiert",
   SEASON_SERIES_DELETED: "Saison-Serie gelöscht",
 }
 
@@ -44,6 +46,7 @@ export const AUDIT_EVENT_CATEGORY: Record<string, AuditEventCategory> = {
   EVENT_SERIES_CORRECTED: "result",
   EVENT_SERIES_DELETED: "destructive",
   SEASON_SERIES_ENTERED: "result",
+  SEASON_SERIES_CORRECTED: "result",
   SEASON_SERIES_DELETED: "destructive",
 }
 
@@ -130,6 +133,7 @@ export function formatAuditDetails(eventType: string, details: unknown): DetailR
       break
 
     case "SEASON_SERIES_ENTERED":
+    case "SEASON_SERIES_CORRECTED":
       rows.push({ label: "Schütze", value: str(d.participantName) })
       rows.push({ label: "Datum", value: str(d.sessionDate) })
       rows.push({ label: "Ringe", value: rings(d.rings) })
@@ -182,6 +186,7 @@ export function getAuditDescription(eventType: string, details: unknown): string
     case "EVENT_SERIES_CORRECTED":
     case "EVENT_SERIES_DELETED":
     case "SEASON_SERIES_ENTERED":
+    case "SEASON_SERIES_CORRECTED":
     case "SEASON_SERIES_DELETED":
       return d.participantName ? s(d.participantName) : null
 
