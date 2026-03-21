@@ -49,6 +49,7 @@ export default async function CompetitionParticipantsPage({ params }: Props) {
   const withdrawnEntries = competitionParticipants.filter((cp) => cp.status === "WITHDRAWN")
 
   const isEvent = competition.type === "EVENT"
+  const isSeason = competition.type === "SEASON"
   const isMixed = !competition.disciplineId
 
   // Für gemischte Wettbewerbe: Disziplinen für Einschreibung bereitstellen
@@ -81,6 +82,19 @@ export default async function CompetitionParticipantsPage({ params }: Props) {
                 </Button>
                 <Button asChild variant="outline" size="icon" className="h-9 w-9">
                   <Link href={`/competitions/${id}/ranking`} title="Rangliste">
+                    <BarChart2 className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </>
+            ) : isSeason ? (
+              <>
+                <Button asChild variant="outline" size="icon" className="h-9 w-9">
+                  <Link href={`/competitions/${id}/series`} title="Serien erfassen">
+                    <ListOrdered className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="icon" className="h-9 w-9">
+                  <Link href={`/competitions/${id}/standings`} title="Rangliste">
                     <BarChart2 className="h-4 w-4" />
                   </Link>
                 </Button>
