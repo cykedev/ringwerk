@@ -233,7 +233,11 @@ function MatchupSection({
                 const rowBg = isAlt ? styles.tableRowAlt : {}
 
                 return (
-                  <View key={m.id} style={[styles.tableRow, rowBg, { alignItems: "center" }]}>
+                  <View
+                    key={m.id}
+                    wrap={false}
+                    style={[styles.tableRow, rowBg, { alignItems: "center" }]}
+                  >
                     <View style={{ width: SW.home }}>
                       <PlayerCell
                         name={homeName}

@@ -12,12 +12,13 @@ export interface PlayoffsPdfProps {
   generatedAt: Date
 }
 
-// ─── Bracket-Koordinaten (identisch zu PlayoffBracket.tsx) ────────────────────
+// ─── Bracket-Koordinaten (kompakt für A4 Landscape: 769pt Breite, ~446pt Höhe verfügbar) ──
+// AF-Modus: 4*SLOT_W + 3*CONN_W = 722pt, 8*SLOT_H + 3*PAIR_GAP = 420pt — passt auf die Seite.
 
-const SLOT_H = 80
-const SLOT_W = 176
-const CONN_W = 28
-const PAIR_GAP = 32
+const SLOT_H = 48
+const SLOT_W = 164
+const CONN_W = 22
+const PAIR_GAP = 12
 
 // ─── Hilfsfunktionen ──────────────────────────────────────────────────────────
 

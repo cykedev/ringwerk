@@ -8,7 +8,8 @@ import { PlayoffMatchCard } from "./PlayoffMatchCard"
 const SLOT_H = 80 // px – Kartenhöhe
 const SLOT_W = 176 // px – w-44
 const CONN_W = 28 // px – SVG-Connector-Breite
-const PAIR_GAP = 32 // px – Abstand zwischen den Paarungen
+const INNER_GAP = 8 // px – Abstand zwischen den zwei Karten einer Paarung
+const OUTER_GAP = 48 // px – Abstand zwischen den Paarungsgruppen
 
 // Gold / Silber / Bronze / Blau je nach Runde
 const WINNER_STYLE: Record<string, { row: string; text: string; badge: string }> = {
@@ -34,16 +35,48 @@ const WINNER_STYLE: Record<string, { row: string; text: string; badge: string }>
   },
 }
 
+// ─── Hilfsfunktionen ─────────────────────────────────────────────────────────
+
+/** Gibt den Siegernamen eines abgeschlossenen Matches zurück, sonst undefined. */
+function getWinnerName(match: PlayoffMatchItem | undefined): string | undefined {
+  if (!match || match.status !== "COMPLETED") return undefined
+  if (match.winsA > match.winsB)
+    return `${match.participantA.firstName} ${match.participantA.lastName}`
+  if (match.winsB > match.winsA)
+    return `${match.participantB.firstName} ${match.participantB.lastName}`
+  return undefined
+}
+
 // ─── BracketSlot ─────────────────────────────────────────────────────────────
 
-function BracketSlot({ match }: { match?: PlayoffMatchItem }) {
+interface SlotPreview {
+  nameA?: string
+  nameB?: string
+}
+
+function BracketSlot({ match, preview }: { match?: PlayoffMatchItem; preview?: SlotPreview }) {
   if (!match) {
+    const hasPreview = preview?.nameA || preview?.nameB
     return (
       <div
         style={{ height: SLOT_H, width: SLOT_W }}
-        className="flex items-center justify-center rounded-lg border border-dashed text-xs text-muted-foreground/50"
+        className={cn("rounded-lg border border-dashed", hasPreview && "bg-card/50")}
       >
-        Ausstehend
+        {hasPreview ? (
+          <div className="flex h-full flex-col divide-y divide-border/50">
+            {([preview.nameA, preview.nameB] as const).map((name, i) => (
+              <div key={i} className="flex flex-1 items-center px-2.5">
+                <span className="min-w-0 truncate text-xs text-muted-foreground/40 italic">
+                  {name ?? "—"}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex h-full items-center justify-center text-xs text-muted-foreground/50">
+            Ausstehend
+          </div>
+        )}
       </div>
     )
   }
@@ -141,10 +174,12 @@ function RoundCol({
   matches,
   tops,
   totalH,
+  previews,
 }: {
   matches: (PlayoffMatchItem | undefined)[]
   tops: number[]
   totalH: number
+  previews?: (SlotPreview | undefined)[]
 }) {
   return (
     <div className="relative shrink-0" style={{ width: SLOT_W, height: totalH }}>
@@ -154,7 +189,7 @@ function RoundCol({
           className="absolute left-0"
           style={{ top: tops[i] }}
         >
-          <BracketSlot match={match} />
+          <BracketSlot match={match} preview={previews?.[i]} />
         </div>
       ))}
     </div>
@@ -288,19 +323,20 @@ export function PlayoffBracket({
   const half = SLOT_H / 2
 
   if (isAF) {
-    // 8 AF-Slots: je 2 Slots pro QF, getrennt durch PAIR_GAP zwischen den Paaren
-    // und einem zweiten PAIR_GAP zwischen den beiden HF-Gruppen
+    // 8 AF-Slots: je 2 Slots pro QF.
+    // INNER_GAP trennt die zwei Karten innerhalb einer Paarung.
+    // OUTER_GAP trennt die Paarungen voneinander.
     afTops = [
       0,
-      SLOT_H,
-      2 * SLOT_H + PAIR_GAP,
-      3 * SLOT_H + PAIR_GAP,
-      4 * SLOT_H + 2 * PAIR_GAP,
-      5 * SLOT_H + 2 * PAIR_GAP,
-      6 * SLOT_H + 3 * PAIR_GAP,
-      7 * SLOT_H + 3 * PAIR_GAP,
+      SLOT_H + INNER_GAP,
+      2 * SLOT_H + INNER_GAP + OUTER_GAP,
+      3 * SLOT_H + 2 * INNER_GAP + OUTER_GAP,
+      4 * SLOT_H + 2 * INNER_GAP + 2 * OUTER_GAP,
+      5 * SLOT_H + 3 * INNER_GAP + 2 * OUTER_GAP,
+      6 * SLOT_H + 3 * INNER_GAP + 3 * OUTER_GAP,
+      7 * SLOT_H + 4 * INNER_GAP + 3 * OUTER_GAP,
     ]
-    totalH = 8 * SLOT_H + 3 * PAIR_GAP
+    totalH = 8 * SLOT_H + 4 * INNER_GAP + 3 * OUTER_GAP
 
     const afM = mids(afTops)
 
@@ -334,48 +370,66 @@ export function PlayoffBracket({
     ]
     hfFinalPairs = [{ in1: hfM[0], in2: hfM[1], out: finM }]
   } else if (isVF) {
-    // 4 QF-Slots: je 2 Slots pro HF, getrennt durch PAIR_GAP
+    // 4 QF-Slots: je 2 Slots pro HF.
     afTops = []
-    qfTops = [0, SLOT_H, 2 * SLOT_H + PAIR_GAP, 3 * SLOT_H + PAIR_GAP]
-    totalH = 4 * SLOT_H + PAIR_GAP
+    qfTops = [
+      0,
+      SLOT_H + INNER_GAP,
+      2 * SLOT_H + INNER_GAP + OUTER_GAP,
+      3 * SLOT_H + 2 * INNER_GAP + OUTER_GAP,
+    ]
+    totalH = 4 * SLOT_H + 2 * INNER_GAP + OUTER_GAP
 
-    hfTops = [half, 2.5 * SLOT_H + PAIR_GAP]
-    finalTop = 1.5 * SLOT_H + PAIR_GAP / 2
+    const qfM = mids(qfTops)
+    hfTops = [centeredTop(qfM[0], qfM[1]), centeredTop(qfM[2], qfM[3])]
+    const hfM = mids(hfTops)
+    finalTop = centeredTop(hfM[0], hfM[1])
+    const finM = finalTop + half
 
     afQfPairs = []
     qfHfPairs = [
-      { in1: SLOT_H * 0.5, in2: SLOT_H * 1.5, out: SLOT_H },
-      {
-        in1: 2.5 * SLOT_H + PAIR_GAP,
-        in2: 3.5 * SLOT_H + PAIR_GAP,
-        out: 3 * SLOT_H + PAIR_GAP,
-      },
+      { in1: qfM[0], in2: qfM[1], out: hfM[0] },
+      { in1: qfM[2], in2: qfM[3], out: hfM[1] },
     ]
-    hfFinalPairs = [
-      {
-        in1: SLOT_H,
-        in2: 3 * SLOT_H + PAIR_GAP,
-        out: 2 * SLOT_H + PAIR_GAP / 2,
-      },
-    ]
+    hfFinalPairs = [{ in1: hfM[0], in2: hfM[1], out: finM }]
   } else {
     // HF-only
     afTops = []
     qfTops = []
-    totalH = 2 * SLOT_H + PAIR_GAP
+    totalH = 2 * SLOT_H + INNER_GAP
 
-    hfTops = [0, SLOT_H + PAIR_GAP]
-    finalTop = half + PAIR_GAP / 2
+    hfTops = [0, SLOT_H + INNER_GAP]
+    const hfM = mids(hfTops)
+    finalTop = centeredTop(hfM[0], hfM[1])
+    const finM = finalTop + half
 
     afQfPairs = []
     qfHfPairs = []
-    hfFinalPairs = [
-      {
-        in1: half,
-        in2: 1.5 * SLOT_H + PAIR_GAP,
-        out: SLOT_H + PAIR_GAP / 2,
-      },
-    ]
+    hfFinalPairs = [{ in1: hfM[0], in2: hfM[1], out: finM }]
+  }
+
+  // ── Gewinner-Teaser: zeigt erwartete Teilnehmer in noch leeren Slots ────────
+
+  const qfPreviews: SlotPreview[] = isAF
+    ? [
+        { nameA: getWinnerName(af[0]), nameB: getWinnerName(af[1]) },
+        { nameA: getWinnerName(af[2]), nameB: getWinnerName(af[3]) },
+        { nameA: getWinnerName(af[4]), nameB: getWinnerName(af[5]) },
+        { nameA: getWinnerName(af[6]), nameB: getWinnerName(af[7]) },
+      ]
+    : []
+
+  const hfPreviews: SlotPreview[] =
+    isAF || isVF
+      ? [
+          { nameA: getWinnerName(qf[0]), nameB: getWinnerName(qf[1]) },
+          { nameA: getWinnerName(qf[2]), nameB: getWinnerName(qf[3]) },
+        ]
+      : []
+
+  const finalPreview: SlotPreview = {
+    nameA: getWinnerName(hf[0]),
+    nameB: getWinnerName(hf[1]),
   }
 
   const labelClass =
@@ -429,16 +483,27 @@ export function PlayoffBracket({
               {(isAF || isVF) && (
                 <>
                   <RoundCol
-                    matches={Array.from({ length: isAF ? 4 : 4 }, (_, i) => qf[i])}
+                    matches={Array.from({ length: 4 }, (_, i) => qf[i])}
                     tops={qfTops}
                     totalH={totalH}
+                    previews={qfPreviews}
                   />
                   <Connector height={totalH} pairs={qfHfPairs} />
                 </>
               )}
-              <RoundCol matches={[hf.at(0), hf.at(1)]} tops={hfTops} totalH={totalH} />
+              <RoundCol
+                matches={[hf.at(0), hf.at(1)]}
+                tops={hfTops}
+                totalH={totalH}
+                previews={hfPreviews}
+              />
               <Connector height={totalH} pairs={hfFinalPairs} />
-              <RoundCol matches={[fin ?? undefined]} tops={[finalTop]} totalH={totalH} />
+              <RoundCol
+                matches={[fin ?? undefined]}
+                tops={[finalTop]}
+                totalH={totalH}
+                previews={[finalPreview]}
+              />
             </div>
           </div>
         </div>

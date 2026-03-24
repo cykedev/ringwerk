@@ -95,11 +95,11 @@ export function PlayoffMatchCard({
   // Letztes Duell (für Delete-Button)
   const lastDuelId = match.duels.length > 0 ? match.duels[match.duels.length - 1].id : null
 
-  // Ob "Neues Duell"-Button angezeigt werden soll
-  // VF/HF: wenn kein pending Duell und Match nicht abgeschlossen
-  // Finale: kein manueller "Neues Duell"-Button (SD wird automatisch nach DRAW angelegt)
-  // Hinweis: bei Unentschieden wird das nächste Duell automatisch angelegt (kein Limit)
-  const canAddDuel = isAdmin && !isCompleted && !isFinal && nextPendingDuel === undefined
+  // Ob "Duell anlegen"-Button angezeigt werden soll:
+  // - Nicht-Finale: wenn kein offenes Duell vorhanden (deckt auch 0 Duelle ab)
+  // - Finale: nur wenn noch gar kein Duell angelegt wurde (Folge-Duelle via SD automatisch)
+  const canAddDuel =
+    isAdmin && !isCompleted && nextPendingDuel === undefined && (!isFinal || match.duels.length === 0)
 
   function handleAddDuel() {
     startTransition(async () => {
@@ -295,8 +295,8 @@ export function PlayoffMatchCard({
             </div>
           )}
 
-          {/* Erstes Duell anlegen (wenn noch keine Duels vorhanden) */}
-          {isAdmin && !isCompleted && match.duels.length === 0 && (
+          {/* Duell anlegen */}
+          {canAddDuel && (
             <Button
               variant="outline"
               size="sm"
@@ -309,21 +309,9 @@ export function PlayoffMatchCard({
                 ? "Anlegen…"
                 : isFinal
                   ? `${shotsPerSeries} Schüsse anlegen`
-                  : "Erstes Duell anlegen"}
-            </Button>
-          )}
-
-          {/* Weiteres Duell anlegen (VF/HF, kein pending) */}
-          {canAddDuel && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full text-xs"
-              onClick={handleAddDuel}
-              disabled={isPending}
-            >
-              <Plus className="mr-1 h-3 w-3" />
-              {isPending ? "Anlegen…" : "Nächstes Duell anlegen"}
+                  : match.duels.length === 0
+                    ? "Erstes Duell anlegen"
+                    : "Nächstes Duell anlegen"}
             </Button>
           )}
 

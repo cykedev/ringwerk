@@ -86,7 +86,10 @@ export default async function DashboardPage() {
           {/* Liga-Wettbewerbe: Tabelle / Playoffs */}
           {leagueData.map(({ competition, standings, bracket }) => {
             const playoffsStarted =
-              bracket.quarterFinals.length + bracket.semiFinals.length > 0 || bracket.final !== null
+              bracket.eighthFinals.length +
+                bracket.quarterFinals.length +
+                bracket.semiFinals.length >
+                0 || bracket.final !== null
 
             return (
               <div key={competition.id} className="space-y-3">
