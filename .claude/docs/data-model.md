@@ -79,7 +79,8 @@
 - Name, Vorname, Kontaktmoeglichkeit (E-Mail oder Telefon, optional)
 - Status: aktiv | inaktiv
 - Kann in mehreren Wettbewerben eingeschrieben sein
-- Gaeste werden ebenfalls als Participant angelegt (wiederverwendbar)
+- **isGuestRecord: Boolean (default false)** — Markiert stille Gast-Datensätze; nicht sichtbar in der Teilnehmerverwaltung
+- Gast-Datensätze werden automatisch gelöscht, wenn der Gast aus einem Event abgemeldet wird
 
 ### Serie (Series) — ersetzt MatchResult
 
@@ -305,7 +306,7 @@ Nur Teilnehmer mit ≥ minSeries Serien werden gewertet.
 | Freilos                     | Kampfloser Sieg bei ungerader Teilnehmerzahl (2 Punkte); nur Liga                                              |
 | Rückzug                     | Vorzeitiges Ausscheiden; alle Ergebnisse rückwirkend gestrichen                                                |
 | Best-of-Five                | VF/HF-Format: wer zuerst 3 Duelle gewinnt, kommt weiter; konfigurierbar                                        |
-| Finale-Modus                | Sondermodus im Liga-Finale; Wertung als Kriterien-Kette (Primary + optional 2 Tiebreaker); Default: nur Ringe |
+| Finale-Modus                | Sondermodus im Liga-Finale; Wertung als Kriterien-Kette (Primary + optional 2 Tiebreaker); Default: nur Ringe  |
 | Gastteilnehmer              | Nicht-Vereinsmitglied; kann an Events teilnehmen; isGuest-Flag                                                 |
 | Mindestserien               | Saison: Anzahl Serien die ein Teilnehmer mindestens geschossen haben muss                                      |
 | Meyton-Import               | Ergebnisübernahme aus Meyton-System via URL oder PDF                                                           |

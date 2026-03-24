@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -47,7 +48,10 @@ export function EnrollParticipantForm({
   const generalError =
     state && "error" in state && typeof state.error === "string" ? state.error : null
 
-  if (availableParticipants.length === 0) {
+  const noRegularParticipants = availableParticipants.length === 0
+
+  // Formular nur ausblenden wenn keine Teilnehmer verfügbar UND keine Gäste erlaubt
+  if (noRegularParticipants && !allowGuests) {
     return (
       <p className="text-sm text-muted-foreground">
         Alle aktiven Teilnehmer sind bereits in diesem Wettbewerb eingeschrieben.
@@ -57,27 +61,68 @@ export function EnrollParticipantForm({
 
   return (
     <form action={formAction} className="space-y-3">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-        <div className="flex-1 flex flex-col gap-2">
-          <Label htmlFor="participantId" className="sm:sr-only">
-            Teilnehmer
+      {allowGuests && (
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="isGuest"
+            checked={isGuest}
+            onCheckedChange={(checked: boolean | "indeterminate") => setIsGuest(checked === true)}
+            disabled={isPending}
+          />
+          <Label htmlFor="isGuest" className="cursor-pointer text-sm">
+            Gast-Schütze
           </Label>
-          <Select name="participantId" disabled={isPending}>
-            <SelectTrigger id="participantId" className="w-full">
-              <SelectValue placeholder="Teilnehmer wählen…" />
-            </SelectTrigger>
-            <SelectContent>
-              {availableParticipants.map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  {p.lastName}, {p.firstName}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {fieldErrors?.participantId && (
-            <p className="text-xs text-destructive">{fieldErrors.participantId[0]}</p>
-          )}
+          <input type="hidden" name="isGuest" value={isGuest ? "true" : "false"} />
         </div>
+      )}
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+        {isGuest ? (
+          <div className="flex-1 flex flex-col gap-2">
+            <Label htmlFor="guestName" className="sm:sr-only">
+              Name des Gastes
+            </Label>
+            <Input
+              id="guestName"
+              name="guestName"
+              placeholder="Name des Gastes…"
+              disabled={isPending}
+              autoComplete="off"
+            />
+            {fieldErrors?.guestName && (
+              <p className="text-xs text-destructive">{fieldErrors.guestName[0]}</p>
+            )}
+          </div>
+        ) : (
+          <>
+            {noRegularParticipants ? (
+              <p className="flex-1 text-sm text-muted-foreground self-center">
+                Alle aktiven Teilnehmer sind bereits eingeschrieben.
+              </p>
+            ) : (
+              <div className="flex-1 flex flex-col gap-2">
+                <Label htmlFor="participantId" className="sm:sr-only">
+                  Teilnehmer
+                </Label>
+                <Select name="participantId" disabled={isPending}>
+                  <SelectTrigger id="participantId" className="w-full">
+                    <SelectValue placeholder="Teilnehmer wählen…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableParticipants.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.lastName}, {p.firstName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {fieldErrors?.participantId && (
+                  <p className="text-xs text-destructive">{fieldErrors.participantId[0]}</p>
+                )}
+              </div>
+            )}
+          </>
+        )}
 
         {isMixed && (
           <div className="flex-1 flex flex-col gap-1">
@@ -102,25 +147,12 @@ export function EnrollParticipantForm({
           </div>
         )}
 
-        <Button type="submit" disabled={isPending} className="w-full sm:w-auto sm:shrink-0">
-          {isPending ? "Lädt…" : "Einschreiben"}
-        </Button>
+        {(isGuest || !noRegularParticipants) && (
+          <Button type="submit" disabled={isPending} className="w-full sm:w-auto sm:shrink-0">
+            {isPending ? "Lädt…" : "Einschreiben"}
+          </Button>
+        )}
       </div>
-
-      {allowGuests && (
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="isGuest"
-            checked={isGuest}
-            onCheckedChange={(checked: boolean | "indeterminate") => setIsGuest(checked === true)}
-            disabled={isPending}
-          />
-          <Label htmlFor="isGuest" className="cursor-pointer text-sm">
-            Gast-Schütze
-          </Label>
-          <input type="hidden" name="isGuest" value={isGuest ? "true" : "false"} />
-        </div>
-      )}
 
       {generalError && <p className="text-sm text-destructive">{generalError}</p>}
     </form>

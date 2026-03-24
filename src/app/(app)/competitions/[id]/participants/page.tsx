@@ -143,7 +143,9 @@ export default async function CompetitionParticipantsPage({ params }: Props) {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-medium">
-                        {cp.participant.lastName}, {cp.participant.firstName}
+                        {cp.isGuest
+                          ? cp.participant.firstName
+                          : `${cp.participant.lastName}, ${cp.participant.firstName}`}
                       </span>
                       {cp.isGuest && (
                         <Badge variant="outline" className="text-xs">
@@ -156,7 +158,9 @@ export default async function CompetitionParticipantsPage({ params }: Props) {
                         </Badge>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground">{cp.participant.contact}</p>
+                    {!cp.isGuest && (
+                      <p className="text-xs text-muted-foreground">{cp.participant.contact}</p>
+                    )}
                   </div>
                   <CompetitionParticipantActions entry={cp} playoffsStarted={playoffsStarted} />
                 </div>
@@ -180,13 +184,17 @@ export default async function CompetitionParticipantsPage({ params }: Props) {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-sm line-through text-muted-foreground">
-                        {cp.participant.lastName}, {cp.participant.firstName}
+                        {cp.isGuest
+                          ? cp.participant.firstName
+                          : `${cp.participant.lastName}, ${cp.participant.firstName}`}
                       </span>
                       <Badge variant="outline" className="text-xs">
                         Zurückgezogen
                       </Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground">{cp.participant.contact}</p>
+                    {!cp.isGuest && (
+                      <p className="text-xs text-muted-foreground">{cp.participant.contact}</p>
+                    )}
                   </div>
                   <CompetitionParticipantActions entry={cp} playoffsStarted={playoffsStarted} />
                 </div>

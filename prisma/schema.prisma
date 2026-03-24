@@ -235,7 +235,9 @@ model Participant {
   createdByUserId String
   createdBy       User     @relation(fields: [createdByUserId], references: [id])
   // Deaktiviert statt gelöscht (falls Teilnehmer den Verein verlässt)
-  isActive  Boolean  @default(true)
+  isActive      Boolean  @default(true)
+  // Stiller Datensatz für Gast-Schützen — nicht in der Teilnehmerverwaltung sichtbar
+  isGuestRecord Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

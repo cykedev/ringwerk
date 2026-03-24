@@ -5,16 +5,17 @@ import type {
   ParticipantOption,
 } from "@/lib/participants/types"
 
-/** Alle aktiven Teilnehmer — für allgemeine Ansicht. */
+/** Alle aktiven Teilnehmer — für allgemeine Ansicht. Gast-Datensätze werden ausgeblendet. */
 export async function getParticipants(): Promise<ParticipantListItem[]> {
   return db.participant.findMany({
-    where: { isActive: true },
+    where: { isActive: true, isGuestRecord: false },
     select: {
       id: true,
       firstName: true,
       lastName: true,
       contact: true,
       isActive: true,
+      isGuestRecord: true,
       createdAt: true,
       _count: { select: { competitions: true } },
     },
@@ -22,15 +23,17 @@ export async function getParticipants(): Promise<ParticipantListItem[]> {
   })
 }
 
-/** Alle Teilnehmer (aktiv + inaktiv) — für Admin-Verwaltungsansicht. */
+/** Alle Teilnehmer (aktiv + inaktiv) — für Admin-Verwaltungsansicht. Gast-Datensätze werden ausgeblendet. */
 export async function getParticipantsForManagement(): Promise<ParticipantListItem[]> {
   return db.participant.findMany({
+    where: { isGuestRecord: false },
     select: {
       id: true,
       firstName: true,
       lastName: true,
       contact: true,
       isActive: true,
+      isGuestRecord: true,
       createdAt: true,
       _count: { select: { competitions: true } },
     },
@@ -48,18 +51,20 @@ export async function getParticipantById(id: string): Promise<ParticipantDetail 
       lastName: true,
       contact: true,
       isActive: true,
+      isGuestRecord: true,
       createdAt: true,
     },
   })
 }
 
-/** Aktive Teilnehmer, die noch nicht in der angegebenen Meisterschaft eingeschrieben sind. */
+/** Aktive Vereinsmitglieder, die noch nicht in der angegebenen Meisterschaft eingeschrieben sind. */
 export async function getParticipantsNotInCompetition(
   competitionId: string
 ): Promise<ParticipantOption[]> {
   return db.participant.findMany({
     where: {
       isActive: true,
+      isGuestRecord: false,
       competitions: { none: { competitionId } },
     },
     select: { id: true, firstName: true, lastName: true, contact: true },

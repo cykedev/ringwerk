@@ -15,28 +15,57 @@ function revalidateCompetitionParticipantPaths(competitionId: string): void {
 // ENROLL
 // ─────────────────────────────────────────────────────────────
 
-const EnrollSchema = z.object({
-  participantId: z.string().min(1, "Teilnehmer ist erforderlich"),
-  startNumber: z
-    .string()
-    .nullable()
-    .optional()
-    .transform((v) => {
-      if (!v || v.trim() === "") return null
-      const n = parseInt(v, 10)
-      return isNaN(n) ? null : n
-    }),
-  isGuest: z
-    .string()
-    .nullable()
-    .optional()
-    .transform((v) => v === "true" || v === "on"),
-  disciplineId: z
-    .string()
-    .nullable()
-    .optional()
-    .transform((v) => v || null),
-})
+const EnrollSchema = z
+  .object({
+    participantId: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => v || null),
+    guestName: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => v?.trim() || null),
+    startNumber: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => {
+        if (!v || v.trim() === "") return null
+        const n = parseInt(v, 10)
+        return isNaN(n) ? null : n
+      }),
+    isGuest: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => v === "true" || v === "on"),
+    disciplineId: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => v || null),
+  })
+  .superRefine((data, ctx) => {
+    if (data.isGuest) {
+      if (!data.guestName) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Gastname ist erforderlich",
+          path: ["guestName"],
+        })
+      }
+    } else {
+      if (!data.participantId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Teilnehmer ist erforderlich",
+          path: ["participantId"],
+        })
+      }
+    }
+  })
 
 export async function enrollParticipant(
   competitionId: string,
@@ -58,6 +87,7 @@ export async function enrollParticipant(
 
   const parsed = EnrollSchema.safeParse({
     participantId: formData.get("participantId"),
+    guestName: formData.get("guestName"),
     startNumber: formData.get("startNumber"),
     isGuest: formData.get("isGuest"),
     disciplineId: formData.get("disciplineId"),
@@ -69,26 +99,51 @@ export async function enrollParticipant(
     return { error: "Bei gemischten Wettbewerben muss eine Disziplin gewählt werden." }
   }
 
-  const existing = await db.competitionParticipant.findUnique({
-    where: {
-      competitionId_participantId: {
-        competitionId,
-        participantId: parsed.data.participantId,
+  if (parsed.data.isGuest) {
+    // Gast-Pfad: stiller Participant-Record + Einschreibung in einer Transaktion
+    await db.$transaction(async (tx) => {
+      const guestParticipant = await tx.participant.create({
+        data: {
+          firstName: parsed.data.guestName!,
+          lastName: "",
+          contact: null,
+          isActive: true,
+          isGuestRecord: true,
+          createdByUserId: session.user.id,
+        },
+      })
+      await tx.competitionParticipant.create({
+        data: {
+          competitionId,
+          participantId: guestParticipant.id,
+          startNumber: parsed.data.startNumber,
+          isGuest: true,
+          disciplineId: parsed.data.disciplineId,
+        },
+      })
+    })
+  } else {
+    const existing = await db.competitionParticipant.findUnique({
+      where: {
+        competitionId_participantId: {
+          competitionId,
+          participantId: parsed.data.participantId!,
+        },
       },
-    },
-    select: { id: true },
-  })
-  if (existing) return { error: "Teilnehmer ist bereits in diesem Wettbewerb eingeschrieben." }
+      select: { id: true },
+    })
+    if (existing) return { error: "Teilnehmer ist bereits in diesem Wettbewerb eingeschrieben." }
 
-  await db.competitionParticipant.create({
-    data: {
-      competitionId,
-      participantId: parsed.data.participantId,
-      startNumber: parsed.data.startNumber,
-      isGuest: parsed.data.isGuest,
-      disciplineId: parsed.data.disciplineId,
-    },
-  })
+    await db.competitionParticipant.create({
+      data: {
+        competitionId,
+        participantId: parsed.data.participantId!,
+        startNumber: parsed.data.startNumber,
+        isGuest: false,
+        disciplineId: parsed.data.disciplineId,
+      },
+    })
+  }
 
   revalidateCompetitionParticipantPaths(competitionId)
   return { success: true }
@@ -105,7 +160,12 @@ export async function unenrollParticipant(competitionParticipantId: string): Pro
 
   const cp = await db.competitionParticipant.findUnique({
     where: { id: competitionParticipantId },
-    select: { id: true, competitionId: true, participantId: true },
+    select: {
+      id: true,
+      competitionId: true,
+      participantId: true,
+      isGuest: true,
+    },
   })
   if (!cp) return { error: "Einschreibung nicht gefunden." }
 
@@ -122,7 +182,19 @@ export async function unenrollParticipant(competitionParticipantId: string): Pro
     }
   }
 
-  await db.competitionParticipant.delete({ where: { id: competitionParticipantId } })
+  if (cp.isGuest) {
+    // Gast: Serien + Einschreibung + stiller Participant-Record löschen
+    await db.$transaction(async (tx) => {
+      await tx.series.deleteMany({
+        where: { participantId: cp.participantId, competitionId: cp.competitionId },
+      })
+      await tx.competitionParticipant.delete({ where: { id: competitionParticipantId } })
+      await tx.participant.delete({ where: { id: cp.participantId } })
+    })
+  } else {
+    await db.competitionParticipant.delete({ where: { id: competitionParticipantId } })
+  }
+
   revalidateCompetitionParticipantPaths(cp.competitionId)
   return { success: true }
 }
@@ -181,7 +253,7 @@ export async function withdrawParticipant(
         competitionId: cp.competitionId,
         details: {
           participantId: cp.participantId,
-          name: `${cp.participant.firstName} ${cp.participant.lastName}`,
+          name: [cp.participant.firstName, cp.participant.lastName].filter(Boolean).join(" "),
           reason: parsed.data.reason ?? null,
           withdrawnAt: now.toISOString(),
         },
@@ -236,7 +308,7 @@ export async function revokeWithdrawal(competitionParticipantId: string): Promis
         competitionId: cp.competitionId,
         details: {
           participantId: cp.participantId,
-          name: `${cp.participant.firstName} ${cp.participant.lastName}`,
+          name: [cp.participant.firstName, cp.participant.lastName].filter(Boolean).join(" "),
         },
       },
     }),

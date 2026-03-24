@@ -41,7 +41,9 @@ export function CompetitionParticipantActions({ entry, playoffsStarted }: Props)
   const [withdrawOpen, setWithdrawOpen] = useState(false)
   const [reason, setReason] = useState("")
 
-  const fullName = `${entry.participant.lastName}, ${entry.participant.firstName}`
+  const fullName = entry.isGuest
+    ? entry.participant.firstName
+    : `${entry.participant.lastName}, ${entry.participant.firstName}`
 
   if (playoffsStarted) return null
 

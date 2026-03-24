@@ -98,7 +98,9 @@ export default async function SeriesPage({ params }: Props) {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-medium">
-                        {cp.participant.lastName}, {cp.participant.firstName}
+                        {cp.isGuest
+                          ? cp.participant.firstName
+                          : `${cp.participant.lastName}, ${cp.participant.firstName}`}
                       </span>
                       {cp.isGuest && (
                         <Badge variant="outline" className="text-xs">
@@ -123,7 +125,11 @@ export default async function SeriesPage({ params }: Props) {
                     <EventSeriesDialog
                       competitionId={id}
                       participantId={cp.participant.id}
-                      participantName={`${cp.participant.firstName} ${cp.participant.lastName}`}
+                      participantName={
+                        cp.isGuest
+                          ? cp.participant.firstName
+                          : `${cp.participant.firstName} ${cp.participant.lastName}`
+                      }
                       existingSeries={series}
                     />
                     {series && <DeleteEventSeriesButton seriesId={series.id} competitionId={id} />}

@@ -49,7 +49,12 @@ async function loadFailedMigrations(client) {
 
 // Bekannte Recovery-Handler für fehlgeschlagene Migrationen.
 // Bei neuen fehlgeschlagenen Migrationen hier einen Handler eintragen.
-const KNOWN_RECOVERY_HANDLERS = {}
+const KNOWN_RECOVERY_HANDLERS = {
+  // Spalte existierte bereits in der DB — Migration als angewandt markieren
+  "20260324000000_participant_guest_record": (_client, migrationName) => {
+    runPrismaResolve("--applied", migrationName)
+  },
+}
 
 async function main() {
   const databaseUrl = process.env.DATABASE_URL

@@ -4,6 +4,7 @@ export type ParticipantListItem = {
   lastName: string
   contact: string | null
   isActive: boolean
+  isGuestRecord: boolean
   createdAt: Date
   _count: { competitions: number }
 }
@@ -14,6 +15,7 @@ export type ParticipantDetail = {
   lastName: string
   contact: string | null
   isActive: boolean
+  isGuestRecord: boolean
   createdAt: Date
 }
 

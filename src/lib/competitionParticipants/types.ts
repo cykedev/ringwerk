@@ -18,6 +18,6 @@ export type CompetitionParticipantListItem = {
     id: string
     firstName: string
     lastName: string
-    contact: string
+    contact: string | null
   }
 }

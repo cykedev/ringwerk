@@ -104,18 +104,18 @@ Formeln und Details: siehe `data-model.md` → Berechnungsregeln.
 Eine Liga ist an **eine Disziplin gebunden** (oder gemischt mit Faktor-Korrektur).
 Konfigurierbare Regelsets pro Liga:
 
-| Parameter             | Default    | Beschreibung                                                          |
-| --------------------- | ---------- | --------------------------------------------------------------------- |
-| scoringMode           | RINGTEILER | Wertung Gruppenphase                                                  |
-| shotsPerSeries        | 10         | Schuss pro Seite                                                      |
-| playoffBestOf         | 3          | Siege zum Weiterkommen (3 = Best-of-Five)                             |
-| playoffQualThreshold  | 8          | Ab dieser TN-Zahl → VF statt HF                                       |
-| playoffQualTopN1      | 4          | Qualifikanten für HF                                                  |
-| playoffQualTopN2      | 8          | Qualifikanten für VF                                                  |
-| finalePrimary         | RINGS      | Hauptkriterium Finale (Pflicht)                                       |
-| finaleTiebreaker1     | —          | Erstes Tiebreaker-Kriterium bei Gleichstand (optional)                |
-| finaleTiebreaker2     | —          | Zweites Tiebreaker-Kriterium bei weiterem Gleichstand (optional)      |
-| finaleHasSuddenDeath  | true       | Sudden Death bei verbleibendem Gleichstand nach allen Kriterien       |
+| Parameter            | Default    | Beschreibung                                                     |
+| -------------------- | ---------- | ---------------------------------------------------------------- |
+| scoringMode          | RINGTEILER | Wertung Gruppenphase                                             |
+| shotsPerSeries       | 10         | Schuss pro Seite                                                 |
+| playoffBestOf        | 3          | Siege zum Weiterkommen (3 = Best-of-Five)                        |
+| playoffQualThreshold | 8          | Ab dieser TN-Zahl → VF statt HF                                  |
+| playoffQualTopN1     | 4          | Qualifikanten für HF                                             |
+| playoffQualTopN2     | 8          | Qualifikanten für VF                                             |
+| finalePrimary        | RINGS      | Hauptkriterium Finale (Pflicht)                                  |
+| finaleTiebreaker1    | —          | Erstes Tiebreaker-Kriterium bei Gleichstand (optional)           |
+| finaleTiebreaker2    | —          | Zweites Tiebreaker-Kriterium bei weiterem Gleichstand (optional) |
+| finaleHasSuddenDeath | true       | Sudden Death bei verbleibendem Gleichstand nach allen Kriterien  |
 
 Regelset ist **nach Spielplan-Generierung gesperrt** — Änderungen nur vor dem ersten Spieltag.
 
@@ -167,11 +167,11 @@ Zurückgezogene Teilnehmer → Tabellenende mit Vermerk
 
 #### Qualifikation
 
-| Teilnehmer | Qualifikanten       | Einstieg      |
-| ---------- | ------------------- | ------------- |
-| 4–7        | Top N1 (default 4)  | Halbfinale    |
-| 8–15       | Top N2 (default 8)  | Viertelfinale |
-| 16+        | Top 16              | Achtelfinale  |
+| Teilnehmer | Qualifikanten      | Einstieg      |
+| ---------- | ------------------ | ------------- |
+| 4–7        | Top N1 (default 4) | Halbfinale    |
+| 8–15       | Top N2 (default 8) | Viertelfinale |
+| 16+        | Top 16             | Achtelfinale  |
 
 `playoffHasAchtelfinale` (default: false) aktiviert das Achtelfinale (16 TN, 8 Paarungen, Seeding 1 vs. 16, 2 vs. 15 usw.).
 
@@ -198,14 +198,14 @@ Seeding: 1 vs. letzter, 2 vs. vorletzter, usw.
 
 #### Finale (Sondermodus)
 
-| Regel            | Beschreibung                                                                                          |
-| ---------------- | ----------------------------------------------------------------------------------------------------- |
+| Regel            | Beschreibung                                                                                             |
+| ---------------- | -------------------------------------------------------------------------------------------------------- |
 | Wertung          | Kette: `finalePrimary` → `finaleTiebreaker1` → `finaleTiebreaker2` (default: nur Ringe, höchste gewinnt) |
-| Gleichstand      | Wenn nach allen Kriterien noch Gleichstand und `finaleHasSuddenDeath`: weiteres Duell bis Entscheid   |
-| Einrichtungszeit | 3 Minuten                                                                                             |
-| Probeschuss      | Keiner                                                                                                |
-| Ansage           | Jeder Schuss einzeln                                                                                  |
-| Zeit pro Schuss  | 75 Sekunden                                                                                           |
+| Gleichstand      | Wenn nach allen Kriterien noch Gleichstand und `finaleHasSuddenDeath`: weiteres Duell bis Entscheid      |
+| Einrichtungszeit | 3 Minuten                                                                                                |
+| Probeschuss      | Keiner                                                                                                   |
+| Ansage           | Jeder Schuss einzeln                                                                                     |
+| Zeit pro Schuss  | 75 Sekunden                                                                                              |
 
 App-Umfang: **nur Ergebniserfassung** (keine Zeitnahme oder Ansage-Unterstützung)
 
@@ -357,9 +357,13 @@ Ringteiler muss aus **derselben Serie** stammen (Ringe und Teiler gehören zusam
 
 ### Gastschützen
 
-- Können an Events teilnehmen (wenn `allowGuests` aktiviert)
-- Werden als Participant im System angelegt (wiederverwendbar für zukünftige Events)
-- Markierung via `isGuest` auf CompetitionParticipant
+- Können an EVENT-Wettbewerben teilnehmen (wenn `allowGuests` aktiviert); **nicht** bei LEAGUE oder SEASON
+- Treten **ad hoc nur mit Namen** an — keine vorherige Anmeldung erforderlich
+- Ein stilles Participant-Datensatz wird mit `isGuestRecord: true` erstellt — **nicht sichtbar** in der Teilnehmerverwaltung
+- Gäste erscheinen **nicht** in der Teilnehmerliste (/participants-Seite)
+- Gäste erhalten in der Event-Rangliste Badge "Gast" neben dem Namen
+- **Keine Speicherung zwischen Events** — jeder Gast ist ephemär
+- **Auto-Cleanup**: Wenn Gast abgemeldet wird, werden stiller Datensatz und Serien automatisch gelöscht
 - Kein Login erforderlich — Ergebnisse werden vom Admin erfasst
 
 ### Rückzug (nur Liga)
