@@ -12,11 +12,11 @@
 
 ---
 
-#### Teil 1: Event-Rangliste PDF
+#### Teil 1: Event-Rangliste PDF ✓ ABGESCHLOSSEN [2026-03-25]
 
 **Neues PDF-Komponente**
 
-- [ ] `src/lib/pdf/EventRankingPdf.tsx` — React-PDF Document
+- [x] `src/lib/pdf/EventRankingPdf.tsx` — React-PDF Document
   - Props: `competitionName`, `disciplineName` (string | null für Gemischt), `eventDate` (Date | null), `scoringMode`, `shotsPerSeries`, `targetValue` (number | null), `isMixed`, `entries: EventRankedEntry[]`, `generatedAt: Date`
   - Header-Sektion: Competition-Name, Disziplin (oder "Gemischt"), Event-Datum (falls vorhanden), Erstellungsdatum — analog zu `PdfHeader` in `styles.ts`
   - Config-Zeile: Wertungsmodus (Label aus SCORING_MODE_LABELS), Schusszahl, Zielwert (falls vorhanden)
@@ -28,61 +28,24 @@
 
 **Neue API-Route**
 
-- [ ] `src/app/api/competitions/[id]/pdf/ranking/route.ts`
-  - Auth-Check (401 wenn kein Session)
-  - Fetch: `getEventWithSeries(id)` → liefert `{ competition, series }`
-  - 404 wenn Competition nicht gefunden
-  - `rankEventParticipants(series, { scoringMode, targetValue, targetValueType, discipline })` aufrufen
-  - `createElement(EventRankingPdf, {...})` + `renderToBuffer`
-  - Filename: `rangliste-{slug}.pdf`
-
-**UI-Integration**
-
-- [ ] `src/app/(app)/competitions/[id]/ranking/page.tsx` — `PdfDownloadButton` in Header-Button-Gruppe ergänzen
-  - Immer sichtbar (kein Guard nötig — Rangliste existiert immer sobald Event existiert)
-  - `href={/api/competitions/${id}/pdf/ranking}`, `title="PDF exportieren"`
-  - Position: in der `shrink-0 items-center gap-2`-Div, neben den anderen Icon-Buttons
+- [x] `src/app/api/competitions/[id]/pdf/ranking/route.ts`
+- [x] `src/app/(app)/competitions/[id]/ranking/page.tsx` — `PdfDownloadButton` ergänzt
 
 ---
 
-#### Teil 2: Saison-Standings PDF
+#### Teil 2: Saison-Standings PDF ✓ ABGESCHLOSSEN [2026-03-25]
 
-**Neues PDF-Komponente**
-
-- [ ] `src/lib/pdf/SeasonStandingsPdf.tsx` — React-PDF Document
-  - Props: `competitionName`, `disciplineName` (string | null), `seasonStart` (Date | null), `seasonEnd` (Date | null), `scoringMode`, `shotsPerSeries`, `minSeries` (number | null), `isMixed`, `entries: SeasonStandingsEntry[]`, `generatedAt: Date`
-  - Header-Sektion: Competition-Name, Disziplin, Saison-Zeitraum (falls vorhanden)
-  - Config-Zeile: Wertungsmodus, Schusszahl, Mindestserien (falls vorhanden)
-  - Standings-Tabelle (Portrait A4):
-    - Spalten: Name | Serien (x/min, falls minSeries gesetzt) | Beste Ringe (+Rang) | Best. Teiler (+Rang, Label "korr." wenn isMixed) | Best. Ringteiler (+Rang)
-    - Sortierung: nach `scoringMode` (Ringe → rings, Teiler → teiler, sonst ringteiler) — gleiche Default-Logik wie `defaultSortCol()` in `SeasonStandingsTable`
-    - Nicht-qualifizierte Teilnehmer (`meetsMinSeries=false`): Opacity-Reduktion / Kursiv, Serien-Fortschritt anzeigen (x/min)
-    - Leere Werte als „–" darstellen
-  - Footer: Competition-Name + Seitenzahl
-
-**Neue API-Route**
-
-- [ ] `src/app/api/competitions/[id]/pdf/standings/route.ts`
-  - Auth-Check (401)
-  - Fetch: `getSeasonWithSeries(id)` → liefert `{ competition, seriesByParticipant }`
-  - 404 wenn Competition nicht gefunden
-  - `calculateSeasonStandings(seriesByParticipant, { scoringMode, minSeries, discipline })` aufrufen
-  - `createElement(SeasonStandingsPdf, {...})` + `renderToBuffer`
-  - Filename: `saison-{slug}.pdf`
-
-**UI-Integration**
-
-- [ ] `src/app/(app)/competitions/[id]/standings/page.tsx` — `PdfDownloadButton` in Header-Button-Gruppe ergänzen
-  - Immer sichtbar
-  - `href={/api/competitions/${id}/pdf/standings}`, `title="PDF exportieren"`
+- [x] `src/lib/pdf/SeasonStandingsPdf.tsx` — React-PDF Document
+- [x] `src/app/api/competitions/[id]/pdf/standings/route.ts`
+- [x] `src/app/(app)/competitions/[id]/standings/page.tsx` — `PdfDownloadButton` ergänzt
 
 ---
 
 #### Qualität & Finalisierung
 
-- [ ] Prettier auf alle neuen Dateien
-- [ ] `/check` — alle Gates grün
-- [ ] Docs-Sync
+- [x] Prettier auf alle neuen Dateien
+- [x] `/check` — alle Gates grün
+- [x] Docs-Sync
 - [ ] Commit
 
 ---

@@ -400,7 +400,7 @@ Die Seite `/competitions` zeigt Wettbewerbe in Karten mit:
 - **Event:** Rangliste mit Disziplin, Ergebniswert und Faktor-Korrektur (bei gemischt: "Teiler korr." angezeigt)
 - **Saison:** Mehrfach-Tabelle (Ringe, Teiler, Ringteiler) mit sortierbaren Spalten und Serien-Expansion, Serien-Erfassungsdialog mit Disziplin-Vorauswahl, Fortschrittsanzeige
 - **Alle:** Paarungsplan/Serienliste, Profil-Seite je Teilnehmer
-- **Export:** Spielplan + Tabelle als druckoptimiertes PDF (Liga); Rangliste als PDF (Event)
+- **Export:** Spielplan + Tabelle als druckoptimiertes PDF (Liga); Rangliste als PDF (Event); Saison-Standings als PDF (Saison)
 
 ---
 

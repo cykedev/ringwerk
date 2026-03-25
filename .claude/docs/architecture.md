@@ -39,8 +39,10 @@ Verbindlich gleichrangig mit `.claude/docs/technical.md`. Neue Dateien immer gem
 /admin/audit-log                    ← Globales Protokoll (nur Admin)
 /account                            ← Passwort ändern (eingeloggt)
 /api/auth/[...nextauth]             ← NextAuth-Handler
-/api/competitions/[id]/pdf/schedule ← PDF-Export: Spielplan + Tabelle
-/api/competitions/[id]/pdf/playoffs ← PDF-Export: Playoff-Bracket
+/api/competitions/[id]/pdf/schedule  ← PDF-Export: Spielplan + Tabelle
+/api/competitions/[id]/pdf/playoffs  ← PDF-Export: Playoff-Bracket
+/api/competitions/[id]/pdf/ranking   ← PDF-Export: Event-Rangliste
+/api/competitions/[id]/pdf/standings ← PDF-Export: Saison-Standings
 ```
 
 ---
@@ -213,6 +215,8 @@ src/
       styles.ts               ← Gemeinsames StyleSheet + Farbkonstanten (react-pdf)
       SchedulePdf.tsx         ← PDF: Spielplan (Hin-/Rückrunde) + Tabelle
       PlayoffsPdf.tsx         ← PDF: Playoff-Bracket-Ausdruck
+      EventRankingPdf.tsx     ← PDF: Event-Rangliste (Kranzlschiessen)
+      SeasonStandingsPdf.tsx  ← PDF: Saison-Standings (Bestwerte: Ringe, Teiler, Ringteiler)
   types/
     next-auth.d.ts            ← NextAuth Module Augmentation
   generated/

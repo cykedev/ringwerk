@@ -7,6 +7,7 @@ import { calculateSeasonStandings } from "@/lib/scoring/calculateSeasonStandings
 import { SeasonStandingsTable } from "@/components/app/series/SeasonStandingsTable"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { PdfDownloadButton } from "@/components/app/shared/PdfDownloadButton"
 import { formatDateOnly, getDisplayTimeZone } from "@/lib/dateTime"
 
 interface Props {
@@ -87,6 +88,10 @@ export default async function SeasonStandingsPage({ params }: Props) {
                 </Button>
               </>
             )}
+            <PdfDownloadButton
+              href={`/api/competitions/${id}/pdf/standings`}
+              label="PDF exportieren"
+            />
           </div>
         </div>
       </div>
