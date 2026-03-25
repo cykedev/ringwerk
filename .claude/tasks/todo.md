@@ -4,51 +4,52 @@
 
 ## Aktuell
 
-### PDF: Event-Rangliste & Saison-Standings — GEPLANT [2026-03-25]
+### Rang-Badge-Konsistenz — GEPLANT [2026-03-25]
 
-**Ziel:** PDF-Export für Kranzlschiessen (Event-Rangliste) und Jahrespreisschiessen (Saison-Standings) ergänzen. Beide Typen haben bisher keinen PDF-Button. Muster: exakt wie bestehende SchedulePdf / PlayoffsPdf.
+**Ziel:** Einheitlicher Rang-Badge-Style (rechteckige Pill, gold/silber/bronze/grau) in allen Tabellen und PDFs der App. Liga-Tabelle hat aktuell runde Badges, Event-Rangliste hat gar keine.
 
-**Klasssifikation:** NEW_PLANNED · MEDIUM
+**Klassifikation:** MAINTENANCE · SMALL
 
----
-
-#### Teil 1: Event-Rangliste PDF ✓ ABGESCHLOSSEN [2026-03-25]
-
-**Neues PDF-Komponente**
-
-- [x] `src/lib/pdf/EventRankingPdf.tsx` — React-PDF Document
-  - Props: `competitionName`, `disciplineName` (string | null für Gemischt), `eventDate` (Date | null), `scoringMode`, `shotsPerSeries`, `targetValue` (number | null), `isMixed`, `entries: EventRankedEntry[]`, `generatedAt: Date`
-  - Header-Sektion: Competition-Name, Disziplin (oder "Gemischt"), Event-Datum (falls vorhanden), Erstellungsdatum — analog zu `PdfHeader` in `styles.ts`
-  - Config-Zeile: Wertungsmodus (Label aus SCORING_MODE_LABELS), Schusszahl, Zielwert (falls vorhanden)
-  - Ranglisten-Tabelle (Portrait A4):
-    - Spalten: Pl. | Name (+Gast-Hinweis) | Disziplin (nur wenn `isMixed`) | Ringe | Teiler (korrigiert wenn `isMixed`) | Score (Label dynamisch aus `scoringMode`)
-    - Rang-Badges: Gold (#1), Silber (#2), Bronze (#3) — analog zu SchedulePdf Standings
-    - Formatierung von Score: analog zu `formatScore()` aus `EventRankingTable.tsx` (MODE-abhängig toFixed(0) oder toFixed(1))
-  - Footer: Competition-Name + Seitenzahl
-
-**Neue API-Route**
-
-- [x] `src/app/api/competitions/[id]/pdf/ranking/route.ts`
-- [x] `src/app/(app)/competitions/[id]/ranking/page.tsx` — `PdfDownloadButton` ergänzt
+**Wichtige Einschränkung:** Event-Tabelle bekommt **nur** den Gesamtrang-Badge in der Pl.-Spalte — **keine** per-Metrik-Badges, da der Score fix nach Regelset bestimmt wird.
 
 ---
 
-#### Teil 2: Saison-Standings PDF ✓ ABGESCHLOSSEN [2026-03-25]
+#### Schritt 1: Gemeinsame RankBadge-Komponente extrahieren
 
-- [x] `src/lib/pdf/SeasonStandingsPdf.tsx` — React-PDF Document
-- [x] `src/app/api/competitions/[id]/pdf/standings/route.ts`
-- [x] `src/app/(app)/competitions/[id]/standings/page.tsx` — `PdfDownloadButton` ergänzt
+- [ ] `src/components/ui/rank-badge.tsx` — Neue gemeinsame Komponente
+  - Props: `rank: number`
+  - Style: rechteckige Pill, feste Breite `w-5`, `rounded`, `tabular-nums`
+  - Farben: gold (1), silber (2), bronze/orange (3), muted (4+)
+  - `SeasonStandingsTable.tsx` — lokale `RankBadge`-Definition entfernen, neue Komponente importieren
+
+#### Schritt 2: StandingsTable (Liga-Tabelle)
+
+- [ ] `src/components/app/standings/StandingsTable.tsx`
+  - Runde `rounded-full`-Badges durch gemeinsame `RankBadge`-Komponente ersetzen
+  - Ausrichtung: Badge links in der Pl.-Spalte (wie bisher), oder Name-Zelle (wie SeasonStandingsTable)
+  - Zellen-Layout angleichen (flex, tabular-nums)
+
+#### Schritt 3: EventRankingTable (Event-Rangliste)
+
+- [ ] `src/components/app/series/EventRankingTable.tsx`
+  - Plain-Text-Rang in der Pl.-Spalte durch gemeinsame `RankBadge`-Komponente ersetzen
+  - **Keine** per-Metrik-Badges (Ringe, Teiler, Score — sind fix pro Regelset)
+  - Alignment: wie StandingsTable
+
+#### Schritt 4: EventRankingPdf (PDF Event-Rangliste)
+
+- [ ] `src/lib/pdf/EventRankingPdf.tsx`
+  - Muted-Farbe für Ränge 4+ angleichen: `#374151` → `#9ca3af` (wie SeasonStandingsPdf)
+  - Badge-Layout prüfen (bereits rechteckig, nur Farbkorrektur)
+
+#### Schritt 5: Qualität
+
+- [ ] Prettier auf alle geänderten Dateien
+- [ ] `/check` — alle Gates grün
+- [ ] Preview: Liga-Tabelle + Event-Rangliste + PDF
 
 ---
 
-#### Qualität & Finalisierung
-
-- [x] Prettier auf alle neuen Dateien
-- [x] `/check` — alle Gates grün
-- [x] Docs-Sync
-- [ ] Commit
-
----
 
 ### Ringwerk-Umbau: Uebersicht
 
@@ -374,6 +375,17 @@ Phase 6 implementiert die Logik und UI dafuer.
 ---
 
 ## Abgeschlossen
+
+### [2026-03-25] PDF: Event-Rangliste & Saison-Standings + Badge-Verfeinerungen
+
+- EventRankingPdf + API-Route + PdfDownloadButton in ranking/page.tsx
+- SeasonStandingsPdf + API-Route + PdfDownloadButton in standings/page.tsx
+- Rang-Badges (gold/silber/bronze) in allen Metrik-Zellen und Name-Spalte
+- Per-Metrik-Ränge für alle Einträge (auch nicht qualifizierte) in calculateSeasonStandings
+- Badge rechts vom Wert für korrektes Column-Alignment
+- Serien-Spalte grün (qualifiziert) / rot (noch nicht qualifiziert)
+
+---
 
 ### [2026-03-18] Playoff-Achtelfinale (EIGHTH_FINAL)
 
