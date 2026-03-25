@@ -4,6 +4,89 @@
 
 ## Aktuell
 
+### PDF: Event-Rangliste & Saison-Standings — GEPLANT [2026-03-25]
+
+**Ziel:** PDF-Export für Kranzlschiessen (Event-Rangliste) und Jahrespreisschiessen (Saison-Standings) ergänzen. Beide Typen haben bisher keinen PDF-Button. Muster: exakt wie bestehende SchedulePdf / PlayoffsPdf.
+
+**Klasssifikation:** NEW_PLANNED · MEDIUM
+
+---
+
+#### Teil 1: Event-Rangliste PDF
+
+**Neues PDF-Komponente**
+
+- [ ] `src/lib/pdf/EventRankingPdf.tsx` — React-PDF Document
+  - Props: `competitionName`, `disciplineName` (string | null für Gemischt), `eventDate` (Date | null), `scoringMode`, `shotsPerSeries`, `targetValue` (number | null), `isMixed`, `entries: EventRankedEntry[]`, `generatedAt: Date`
+  - Header-Sektion: Competition-Name, Disziplin (oder "Gemischt"), Event-Datum (falls vorhanden), Erstellungsdatum — analog zu `PdfHeader` in `styles.ts`
+  - Config-Zeile: Wertungsmodus (Label aus SCORING_MODE_LABELS), Schusszahl, Zielwert (falls vorhanden)
+  - Ranglisten-Tabelle (Portrait A4):
+    - Spalten: Pl. | Name (+Gast-Hinweis) | Disziplin (nur wenn `isMixed`) | Ringe | Teiler (korrigiert wenn `isMixed`) | Score (Label dynamisch aus `scoringMode`)
+    - Rang-Badges: Gold (#1), Silber (#2), Bronze (#3) — analog zu SchedulePdf Standings
+    - Formatierung von Score: analog zu `formatScore()` aus `EventRankingTable.tsx` (MODE-abhängig toFixed(0) oder toFixed(1))
+  - Footer: Competition-Name + Seitenzahl
+
+**Neue API-Route**
+
+- [ ] `src/app/api/competitions/[id]/pdf/ranking/route.ts`
+  - Auth-Check (401 wenn kein Session)
+  - Fetch: `getEventWithSeries(id)` → liefert `{ competition, series }`
+  - 404 wenn Competition nicht gefunden
+  - `rankEventParticipants(series, { scoringMode, targetValue, targetValueType, discipline })` aufrufen
+  - `createElement(EventRankingPdf, {...})` + `renderToBuffer`
+  - Filename: `rangliste-{slug}.pdf`
+
+**UI-Integration**
+
+- [ ] `src/app/(app)/competitions/[id]/ranking/page.tsx` — `PdfDownloadButton` in Header-Button-Gruppe ergänzen
+  - Immer sichtbar (kein Guard nötig — Rangliste existiert immer sobald Event existiert)
+  - `href={/api/competitions/${id}/pdf/ranking}`, `title="PDF exportieren"`
+  - Position: in der `shrink-0 items-center gap-2`-Div, neben den anderen Icon-Buttons
+
+---
+
+#### Teil 2: Saison-Standings PDF
+
+**Neues PDF-Komponente**
+
+- [ ] `src/lib/pdf/SeasonStandingsPdf.tsx` — React-PDF Document
+  - Props: `competitionName`, `disciplineName` (string | null), `seasonStart` (Date | null), `seasonEnd` (Date | null), `scoringMode`, `shotsPerSeries`, `minSeries` (number | null), `isMixed`, `entries: SeasonStandingsEntry[]`, `generatedAt: Date`
+  - Header-Sektion: Competition-Name, Disziplin, Saison-Zeitraum (falls vorhanden)
+  - Config-Zeile: Wertungsmodus, Schusszahl, Mindestserien (falls vorhanden)
+  - Standings-Tabelle (Portrait A4):
+    - Spalten: Name | Serien (x/min, falls minSeries gesetzt) | Beste Ringe (+Rang) | Best. Teiler (+Rang, Label "korr." wenn isMixed) | Best. Ringteiler (+Rang)
+    - Sortierung: nach `scoringMode` (Ringe → rings, Teiler → teiler, sonst ringteiler) — gleiche Default-Logik wie `defaultSortCol()` in `SeasonStandingsTable`
+    - Nicht-qualifizierte Teilnehmer (`meetsMinSeries=false`): Opacity-Reduktion / Kursiv, Serien-Fortschritt anzeigen (x/min)
+    - Leere Werte als „–" darstellen
+  - Footer: Competition-Name + Seitenzahl
+
+**Neue API-Route**
+
+- [ ] `src/app/api/competitions/[id]/pdf/standings/route.ts`
+  - Auth-Check (401)
+  - Fetch: `getSeasonWithSeries(id)` → liefert `{ competition, seriesByParticipant }`
+  - 404 wenn Competition nicht gefunden
+  - `calculateSeasonStandings(seriesByParticipant, { scoringMode, minSeries, discipline })` aufrufen
+  - `createElement(SeasonStandingsPdf, {...})` + `renderToBuffer`
+  - Filename: `saison-{slug}.pdf`
+
+**UI-Integration**
+
+- [ ] `src/app/(app)/competitions/[id]/standings/page.tsx` — `PdfDownloadButton` in Header-Button-Gruppe ergänzen
+  - Immer sichtbar
+  - `href={/api/competitions/${id}/pdf/standings}`, `title="PDF exportieren"`
+
+---
+
+#### Qualität & Finalisierung
+
+- [ ] Prettier auf alle neuen Dateien
+- [ ] `/check` — alle Gates grün
+- [ ] Docs-Sync
+- [ ] Commit
+
+---
+
 ### Ringwerk-Umbau: Uebersicht
 
 Iterativer Umbau von "1-gegen-1 Liga-App" zu "Ringwerk" — universelle Wettbewerbs-Plattform.
@@ -327,122 +410,31 @@ Phase 6 implementiert die Logik und UI dafuer.
 
 ---
 
-### Playoff-Achtelfinale (EIGHTH_FINAL) [2026-03-18]
-
-**Ziel:** Playoff-Konfiguration auf zwei Boolean-Flags umstellen (`playoffHasViertelfinale`, `playoffHasAchtelfinale`). EIGHTH_FINAL-Runde implementieren, Bracket auf 4 Spalten erweitern.
-**Status:** Implementiert, Commit ausstehend.
-
-#### Schema & Migration
-
-- [x] `playoffQualTopN1`, `playoffQualTopN2`, `playoffQualThreshold` entfernt
-- [x] `playoffHasViertelfinale Boolean @default(true)`, `playoffHasAchtelfinale Boolean @default(false)` hinzugefügt
-- [x] `PlayoffRound` Enum um `EIGHTH_FINAL` erweitert
-- [x] Migration `playoff-boolean-rounds`
-
-#### Core
-
-- [x] `calculatePlayoffs.ts` — `getNextRound()`, `createFirstRoundMatchups()` (3 Pfade: AF/VF/HF), `createNextRoundMatchups()` generalisiert
-- [x] `calculatePlayoffs.test.ts` — Boolean-basierte Tests inkl. EIGHTH_FINAL
-
-#### Types / Queries / Actions
-
-- [x] `competitions/types.ts` — TopN-Felder raus, boolean flags rein
-- [x] `competitions/queries.ts` — Select aktualisiert
-- [x] `competitions/actions.ts` — Zod-Schema, Lock-Logik, `.nullable()` für Boolean-Checkboxen
-- [x] `playoffs/types.ts` — `eighthFinals: PlayoffMatchItem[]` in `PlayoffBracketData`
-- [x] `playoffs/queries.ts` — eighthFinals in Abfrage
-- [x] `playoffs/actions.ts` — `getNextRound()` überall genutzt, `startPlayoffs` mit dynamischem `minRequired`
-- [x] `auditLog/types.ts` — `EIGHTH_FINAL: "Achtelfinale"`
-
-#### UI / Bracket / PDF
-
-- [x] `CompetitionForm.tsx` — Checkboxen statt TopN-Inputs
-- [x] `PlayoffMatchCard.tsx` — `EIGHTH_FINAL` in `ROUND_LABEL` und `WINNER_BADGE`
-- [x] `PlayoffBracket.tsx` — 4-Spalten-Layout (AF + VF + HF + F), Geometrie-Berechnung
-- [x] `PlayoffsPdf.tsx` — AF-Spalte, Connector-Overlay, Detailabschnitt
-- [x] `playoffs/page.tsx` — `playoffsStarted`, `advanceLabel`, `canStart`/`disabledReason`, Infotext dynamisch
-- [x] `pdf/playoffs/route.ts` — `playoffsStarted` mit eighthFinals
-
-#### Qualität
-
-- [x] `/check` — alle Gates grün (203 Tests)
-- [ ] Commit erstellen
-
----
-
-### Refactor: Finale-Scoring-Konfiguration — GEPLANT
-
-**Ziel:** `finaleScoringMode: ScoringMode | null` durch drei explizite Felder ersetzen. Kein impliziertes Verhalten mehr — jedes Kriterium klar und unabhängig konfigurierbar.
-
-**Neues Datenmodell:**
-
-| Feld                   | Typ           | Default | Nullable            |
-| ---------------------- | ------------- | ------- | ------------------- |
-| `finalePrimary`        | `ScoringMode` | `RINGS` | Nein                |
-| `finaleTiebreaker1`    | `ScoringMode` | —       | Ja                  |
-| `finaleTiebreaker2`    | `ScoringMode` | —       | Ja                  |
-| `finaleHasSuddenDeath` | Boolean       | `true`  | Nein (unveraendert) |
-
-Gueltige Werte: `RINGS`, `RINGS_DECIMAL`, `RINGTEILER`, `TEILER`.
-Validierungsregel: `finaleTiebreaker2` darf nur gesetzt sein wenn `finaleTiebreaker1` gesetzt ist.
-`finaleNeedsTeiler` = true wenn irgendein Kriterium `RINGTEILER` oder `TEILER` ist.
-
-#### Schema & Migration
-
-- [ ] `prisma/schema.prisma` — `finaleScoringMode ScoringMode?` entfernen
-- [ ] `prisma/schema.prisma` — `finalePrimary ScoringMode @default(RINGS)` hinzufuegen
-- [ ] `prisma/schema.prisma` — `finaleTiebreaker1 ScoringMode?` hinzufuegen
-- [ ] `prisma/schema.prisma` — `finaleTiebreaker2 ScoringMode?` hinzufuegen
-- [ ] `/migrate finale-scoring-refactor` — inkl. Datenmigration: `finaleScoringMode` → `finalePrimary` (NULL → RINGS)
-
-#### Calculate (`calculatePlayoffs.ts`)
-
-- [ ] `PlayoffRuleset` — `finaleScoringMode` ersetzen durch `finalePrimary`, `finaleTiebreaker1`, `finaleTiebreaker2`
-- [ ] `finaleNeedsTeiler(primary, tb1, tb2)` — true wenn any === "RINGTEILER" || "TEILER"
-- [ ] `compareByFinale(criterion, ringsA, ringsB, teilerA?, ringteilerA?, teilerB?, ringteilerB?)` — interner Helfer
-- [ ] `determineFinaleRoundWinner(...)` — Kette: primary → tb1 → tb2 → DRAW; Signatur anpassen
-
-#### Types / Queries / Actions
-
-- [ ] `competitions/types.ts` — `CompetitionDetail`: `finaleScoringMode` durch 3 Felder ersetzen
-- [ ] `competitions/queries.ts` — Select: `finaleScoringMode` durch 3 Felder ersetzen
-- [ ] `competitions/actions.ts` — Zod `BaseSchema`:
-  - `finaleScoringMode` entfernen
-  - `finalePrimary: z.enum(FINALE_CRITERIA).default("RINGS")`
-  - `finaleTiebreaker1: z.preprocess(...nullable)`, `finaleTiebreaker2: z.preprocess(...nullable)`
-  - `.refine()`: tb2 gesetzt ohne tb1 → Fehler "Tiebreaker 2 setzt Tiebreaker 1 voraus"
-  - Create/Update-Mapping aktualisieren
-- [ ] `playoffs/actions.ts` — Select und alle Aufrufe von `determineFinaleRoundWinner` / `finaleNeedsTeiler` anpassen
-
-#### Components
-
-- [ ] `CompetitionForm.tsx` — `finaleScoringMode`-Select ersetzen durch:
-  - `finalePrimary` (required, default RINGS, beschriftet "Hauptkriterium")
-  - `finaleTiebreaker1` (optional, "Kein Tiebreaker" als Default-Option)
-  - `finaleTiebreaker2` (optional, disabled wenn tb1 nicht gesetzt)
-  - Erklaerungstext je Feld (was bedeutet das Kriterium)
-- [ ] `PlayoffDuelResultDialog.tsx` — Prop `finaleScoringMode` durch 3 Felder ersetzen; `finaleNeedsTeiler`-Aufruf anpassen
-- [ ] `PlayoffMatchCard.tsx` — Prop ersetzen; Hinweistext zeigt Kriterienkette an (z.B. "Primär: Ringe · TB: Teiler")
-- [ ] `PlayoffBracket.tsx` — Props durchreichen (3 statt 1 Feld)
-- [ ] `playoffs/page.tsx` — 3 Felder aus `competition` an `PlayoffBracket` weitergeben
-
-#### Tests
-
-- [ ] `calculatePlayoffs.test.ts` — neue Tests fuer `determineFinaleRoundWinner`:
-  - Alle Kombinationen: primary only, primary + tb1, primary + tb1 + tb2
-  - Kriterien: RINGS, RINGTEILER, TEILER, RINGS_DECIMAL
-  - `finaleNeedsTeiler` mit verschiedenen Konfigurationen
-- [ ] `competitions/actions.test.ts` — neue Felder + Validierungsregel tb2-ohne-tb1
-
-#### Qualitaet & Finalisierung
-
-- [ ] `/check` — alle Gates gruen
-- [ ] `docs/features.md` — Finale-Scoring-Abschnitt aktualisieren
-- [ ] Commit
-
----
-
 ## Abgeschlossen
+
+### [2026-03-18] Playoff-Achtelfinale (EIGHTH_FINAL)
+
+**Commit:** `24afef0 feat: add Achtelfinale bracket support and refactor finale scoring config`
+
+- [x] Schema: TopN-Felder entfernt, `playoffHasViertelfinale` / `playoffHasAchtelfinale` Boolean-Flags, `EIGHTH_FINAL` Enum
+- [x] Migration `playoff-boolean-rounds`
+- [x] `calculatePlayoffs.ts` — 3-Pfad-Routing (AF/VF/HF), `getNextRound()` generalisiert
+- [x] Types, Queries, Actions — Boolean-Flags, `eighthFinals` in BracketData
+- [x] `PlayoffBracket.tsx` — 4-Spalten-Layout; `PlayoffsPdf.tsx` — AF-Spalte
+- [x] 203 Tests grün
+
+### [2026-03-18] Refactor: Finale-Scoring-Konfiguration
+
+**Status:** Vollständig implementiert — war als GEPLANT markiert, war aber bereits umgesetzt.
+
+- [x] Schema: `finaleScoringMode` entfernt, `finalePrimary / finaleTiebreaker1 / finaleTiebreaker2` hinzugefügt
+- [x] Migration `finale-scoring-refactor` inkl. Datenmigration
+- [x] `calculatePlayoffs.ts` — `determineFinaleRoundWinner()` mit Kriterien-Kette, `finaleNeedsTeiler()`
+- [x] `competitions/types.ts`, `queries.ts`, `actions.ts` — 3 Felder, Zod-Validierung inkl. tb2-ohne-tb1-Refine
+- [x] `playoffs/actions.ts` — alle Aufrufe angepasst
+- [x] `CompetitionForm.tsx` — 3 separate Felder (Hauptkriterium + 2 Tiebreaker)
+- [x] `PlayoffDuelResultDialog.tsx`, `PlayoffMatchCard.tsx`, `PlayoffBracket.tsx` — Props aktualisiert
+- [x] Tests aktualisiert
 
 ### [2026-03-18] Phase 6: Liga-Ausbau (Konfigurierbare Regelsets)
 

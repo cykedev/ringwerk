@@ -108,11 +108,10 @@ Konfigurierbare Regelsets pro Liga:
 | -------------------- | ---------- | ---------------------------------------------------------------- |
 | scoringMode          | RINGTEILER | Wertung Gruppenphase                                             |
 | shotsPerSeries       | 10         | Schuss pro Seite                                                 |
-| playoffBestOf        | 3          | Siege zum Weiterkommen (3 = Best-of-Five)                        |
-| playoffQualThreshold | 8          | Ab dieser TN-Zahl → VF statt HF                                  |
-| playoffQualTopN1     | 4          | Qualifikanten für HF                                             |
-| playoffQualTopN2     | 8          | Qualifikanten für VF                                             |
-| finalePrimary        | RINGS      | Hauptkriterium Finale (Pflicht)                                  |
+| playoffBestOf           | 3     | Siege zum Weiterkommen (3 = Best-of-Five)                           |
+| playoffHasViertelfinale | true  | VF aktiviert (8 Qualifikanten); false = direkt HF (4 Qualifikanten) |
+| playoffHasAchtelfinale  | false | AF aktiviert (16 Qualifikanten)                                     |
+| finalePrimary           | RINGS | Hauptkriterium Finale (Pflicht)                                     |
 | finaleTiebreaker1    | —          | Erstes Tiebreaker-Kriterium bei Gleichstand (optional)           |
 | finaleTiebreaker2    | —          | Zweites Tiebreaker-Kriterium bei weiterem Gleichstand (optional) |
 | finaleHasSuddenDeath | true       | Sudden Death bei verbleibendem Gleichstand nach allen Kriterien  |
@@ -443,6 +442,7 @@ Die Seite `/competitions` zeigt Wettbewerbe in Karten mit:
 | EVENT_SERIES_CORRECTED   | Serie bei Event korrigiert         |
 | EVENT_SERIES_DELETED     | Serie bei Event gelöscht           |
 | SEASON_SERIES_ENTERED    | Serie bei Saison eingetragen       |
+| SEASON_SERIES_CORRECTED  | Serie bei Saison korrigiert        |
 | SEASON_SERIES_DELETED    | Serie bei Saison gelöscht          |
 
 - Details-JSON als Snapshot (denormalisiert, kein Verweis)
