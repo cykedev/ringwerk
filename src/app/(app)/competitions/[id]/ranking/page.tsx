@@ -7,6 +7,7 @@ import { rankEventParticipants } from "@/lib/scoring/rankEventParticipants"
 import { EventRankingTable } from "@/components/app/series/EventRankingTable"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { PdfDownloadButton } from "@/components/app/shared/PdfDownloadButton"
 import { formatDateOnly, getDisplayTimeZone } from "@/lib/dateTime"
 
 interface Props {
@@ -74,6 +75,10 @@ export default async function EventRankingPage({ params }: Props) {
                 </Button>
               </>
             )}
+            <PdfDownloadButton
+              href={`/api/competitions/${id}/pdf/ranking`}
+              label="PDF exportieren"
+            />
           </div>
         </div>
       </div>

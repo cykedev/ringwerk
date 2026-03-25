@@ -104,17 +104,17 @@ Formeln und Details: siehe `data-model.md` → Berechnungsregeln.
 Eine Liga ist an **eine Disziplin gebunden** (oder gemischt mit Faktor-Korrektur).
 Konfigurierbare Regelsets pro Liga:
 
-| Parameter            | Default    | Beschreibung                                                     |
-| -------------------- | ---------- | ---------------------------------------------------------------- |
-| scoringMode          | RINGTEILER | Wertung Gruppenphase                                             |
-| shotsPerSeries       | 10         | Schuss pro Seite                                                 |
-| playoffBestOf           | 3     | Siege zum Weiterkommen (3 = Best-of-Five)                           |
-| playoffHasViertelfinale | true  | VF aktiviert (8 Qualifikanten); false = direkt HF (4 Qualifikanten) |
-| playoffHasAchtelfinale  | false | AF aktiviert (16 Qualifikanten)                                     |
-| finalePrimary           | RINGS | Hauptkriterium Finale (Pflicht)                                     |
-| finaleTiebreaker1    | —          | Erstes Tiebreaker-Kriterium bei Gleichstand (optional)           |
-| finaleTiebreaker2    | —          | Zweites Tiebreaker-Kriterium bei weiterem Gleichstand (optional) |
-| finaleHasSuddenDeath | true       | Sudden Death bei verbleibendem Gleichstand nach allen Kriterien  |
+| Parameter               | Default    | Beschreibung                                                        |
+| ----------------------- | ---------- | ------------------------------------------------------------------- |
+| scoringMode             | RINGTEILER | Wertung Gruppenphase                                                |
+| shotsPerSeries          | 10         | Schuss pro Seite                                                    |
+| playoffBestOf           | 3          | Siege zum Weiterkommen (3 = Best-of-Five)                           |
+| playoffHasViertelfinale | true       | VF aktiviert (8 Qualifikanten); false = direkt HF (4 Qualifikanten) |
+| playoffHasAchtelfinale  | false      | AF aktiviert (16 Qualifikanten)                                     |
+| finalePrimary           | RINGS      | Hauptkriterium Finale (Pflicht)                                     |
+| finaleTiebreaker1       | —          | Erstes Tiebreaker-Kriterium bei Gleichstand (optional)              |
+| finaleTiebreaker2       | —          | Zweites Tiebreaker-Kriterium bei weiterem Gleichstand (optional)    |
+| finaleHasSuddenDeath    | true       | Sudden Death bei verbleibendem Gleichstand nach allen Kriterien     |
 
 Regelset ist **nach Spielplan-Generierung gesperrt** — Änderungen nur vor dem ersten Spieltag.
 
@@ -265,6 +265,7 @@ Alle Teilnehmer schiessen, eine Rangliste wird erstellt.
 - Anzeige: Platzierung, Name, Disziplin, Ringe, Teiler (korrigiert), Ergebniswert
 - Bei gemischten Wettbewerben: Spalte "Teiler korr." zeigt die mit Faktor korrigierten Teiler-Werte
 - Gastteilnehmer erhalten Badge "Gast" neben dem Namen
+- **PDF-Export:** Rangliste als druckoptimiertes PDF (Button im Header)
 
 ### Zielwert-Modus ✓
 
@@ -399,7 +400,7 @@ Die Seite `/competitions` zeigt Wettbewerbe in Karten mit:
 - **Event:** Rangliste mit Disziplin, Ergebniswert und Faktor-Korrektur (bei gemischt: "Teiler korr." angezeigt)
 - **Saison:** Mehrfach-Tabelle (Ringe, Teiler, Ringteiler) mit sortierbaren Spalten und Serien-Expansion, Serien-Erfassungsdialog mit Disziplin-Vorauswahl, Fortschrittsanzeige
 - **Alle:** Paarungsplan/Serienliste, Profil-Seite je Teilnehmer
-- Export: Spielplan + Tabelle als druckoptimiertes PDF (nur Liga)
+- **Export:** Spielplan + Tabelle als druckoptimiertes PDF (Liga); Rangliste als PDF (Event)
 
 ---
 

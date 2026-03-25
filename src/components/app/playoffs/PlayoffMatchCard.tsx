@@ -99,7 +99,10 @@ export function PlayoffMatchCard({
   // - Nicht-Finale: wenn kein offenes Duell vorhanden (deckt auch 0 Duelle ab)
   // - Finale: nur wenn noch gar kein Duell angelegt wurde (Folge-Duelle via SD automatisch)
   const canAddDuel =
-    isAdmin && !isCompleted && nextPendingDuel === undefined && (!isFinal || match.duels.length === 0)
+    isAdmin &&
+    !isCompleted &&
+    nextPendingDuel === undefined &&
+    (!isFinal || match.duels.length === 0)
 
   function handleAddDuel() {
     startTransition(async () => {
