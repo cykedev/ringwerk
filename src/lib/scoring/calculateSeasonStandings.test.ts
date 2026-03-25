@@ -214,12 +214,12 @@ describe("calculateSeasonStandings", () => {
       const p2 = result.find((e) => e.participantId === "p2")!
 
       expect(p1.meetsMinSeries).toBe(false)
-      expect(p1.bestRings_rank).toBeNull()
+      expect(p1.bestRings_rank).toBe(2) // 96 Ringe → Rang 2
       expect(p2.meetsMinSeries).toBe(false)
-      expect(p2.bestRings_rank).toBeNull()
+      expect(p2.bestRings_rank).toBe(1) // 98 Ringe → Rang 1
     })
 
-    it("gibt Rang nur an Teilnehmer mit genug Serien", () => {
+    it("gibt Rang an alle Teilnehmer mit Werten, unabhängig von Qualifikation", () => {
       const result = calculateSeasonStandings(
         [
           {
@@ -243,9 +243,9 @@ describe("calculateSeasonStandings", () => {
       const p2 = result.find((e) => e.participantId === "p2")!
 
       expect(p1.meetsMinSeries).toBe(true)
-      expect(p1.bestRings_rank).toBe(1)
+      expect(p1.bestRings_rank).toBe(2) // 95 Ringe → Rang 2 (p2 hat 98)
       expect(p2.meetsMinSeries).toBe(false)
-      expect(p2.bestRings_rank).toBeNull()
+      expect(p2.bestRings_rank).toBe(1) // 98 Ringe → Rang 1 (auch wenn unqualifiziert)
     })
 
     it("qualifiziert alle wenn minSeries null", () => {

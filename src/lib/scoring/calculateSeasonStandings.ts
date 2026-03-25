@@ -79,8 +79,8 @@ export function calculateSeasonStandings(
     }
   })
 
-  // Nur qualifizierte Teilnehmer für Ränge berücksichtigen
-  const qualified = entries.filter((e) => e.meetsMinSeries && e.bestRings !== null)
+  // Alle Einträge mit Werten für Ränge berücksichtigen (unqualifizierte erhalten ebenfalls Ränge)
+  const allWithValues = entries.filter((e) => e.bestRings !== null)
 
   // Rang berechnen: gleiche Werte → gleicher Rang
   function assignRanks(
@@ -109,7 +109,7 @@ export function calculateSeasonStandings(
     return ranks
   }
 
-  const qualifiedIds = qualified.map((e) => e.participantId)
+  const qualifiedIds = allWithValues.map((e) => e.participantId)
   const entryMap = new Map(entries.map((e) => [e.participantId, e]))
 
   const ringsRanks = assignRanks(

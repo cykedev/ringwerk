@@ -49,9 +49,56 @@ function formatRingteiler(value: number | null): string {
   return value.toFixed(1)
 }
 
-function withRank(value: string, rank: number | null): string {
-  if (rank === null || value === "–") return value
-  return `${rank}. · ${value}`
+function rankBadgeColor(rank: number): string {
+  if (rank === 1) return PDF_COLORS.gold
+  if (rank === 2) return PDF_COLORS.silver
+  if (rank === 3) return PDF_COLORS.orange
+  return "#9ca3af"
+}
+
+function MetricCell({
+  value,
+  rank,
+  width,
+  muted = false,
+}: {
+  value: string
+  rank: number | null
+  width: number
+  muted?: boolean
+}): ReactElement {
+  const showBadge = rank !== null && value !== "–"
+  return (
+    <View
+      style={{
+        width,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "flex-end",
+        gap: 4,
+        paddingRight: 4,
+      }}
+    >
+      <Text style={{ fontSize: 10, color: muted ? PDF_COLORS.muted : PDF_COLORS.dark }}>
+        {value}
+      </Text>
+      {showBadge ? (
+        <View
+          style={{
+            backgroundColor: rankBadgeColor(rank!),
+            borderRadius: 3,
+            paddingVertical: 1,
+            width: 18,
+            alignItems: "center",
+          }}
+        >
+          <Text style={{ fontSize: 8, color: "white" }}>{rank}</Text>
+        </View>
+      ) : (
+        <View style={{ width: 18 }} />
+      )}
+    </View>
+  )
 }
 
 // ─── Spaltenbreiten (Portrait A4, 515pt nutzbar) ──────────────────────────────
@@ -110,52 +157,63 @@ function StandingsTable({
       {/* Zeilen */}
       {entries.map((entry, idx) => {
         const isAlt = idx % 2 === 1
-        const dimmed = !entry.meetsMinSeries
-        const rowStyle = dimmed ? styles.tableRowWithdrawn : {}
+        const qualified = entry.meetsMinSeries
 
         const seriesText =
-          hasSeries && minSeries !== null
-            ? dimmed
-              ? `${entry.seriesCount}/${minSeries}`
-              : `${entry.seriesCount}`
-            : null
-
-        const ringsText = withRank(formatRings(entry.bestRings), entry.bestRings_rank)
-        const teilerText = withRank(formatTeiler(entry.bestCorrectedTeiler), entry.bestTeiler_rank)
-        const ringteilerText = withRank(
-          formatRingteiler(entry.bestRingteiler),
-          entry.bestRingteiler_rank
-        )
+          hasSeries && minSeries !== null ? `${entry.seriesCount}/${minSeries}` : null
+        const seriesColor = qualified ? "#16a34a" : "#dc2626"
 
         if (hasSeries) {
           return (
             <View
               key={entry.participantId}
               wrap={false}
-              style={[styles.tableRow, isAlt ? styles.tableRowAlt : {}, rowStyle]}
+              style={[styles.tableRow, isAlt ? styles.tableRowAlt : {}]}
             >
-              <Text style={[styles.tableCellLeft, { width: W_WITH_SERIES.name }]}>
-                {entry.participantName}
-              </Text>
-              <Text
-                style={[styles.tableCell, { width: W_WITH_SERIES.series, color: PDF_COLORS.muted }]}
+              <View
+                style={{
+                  width: W_WITH_SERIES.name,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 4,
+                  paddingLeft: 4,
+                }}
               >
+                <View
+                  style={{
+                    backgroundColor: rankBadgeColor(idx + 1),
+                    borderRadius: 3,
+                    paddingHorizontal: 4,
+                    paddingVertical: 1,
+                    minWidth: 18,
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={{ fontSize: 8, color: "white" }}>{idx + 1}</Text>
+                </View>
+                <Text style={{ fontSize: 10, color: PDF_COLORS.dark, flex: 1 }}>
+                  {entry.participantName}
+                </Text>
+              </View>
+              <Text style={[styles.tableCell, { width: W_WITH_SERIES.series, color: seriesColor }]}>
                 {seriesText}
               </Text>
-              <Text style={[styles.tableCellBold, { width: W_WITH_SERIES.rings }]}>
-                {ringsText}
-              </Text>
-              <Text
-                style={[
-                  styles.tableCellBold,
-                  { width: W_WITH_SERIES.teiler, color: PDF_COLORS.muted },
-                ]}
-              >
-                {teilerText}
-              </Text>
-              <Text style={[styles.tableCellBold, { width: W_WITH_SERIES.ringteiler }]}>
-                {ringteilerText}
-              </Text>
+              <MetricCell
+                value={formatRings(entry.bestRings)}
+                rank={entry.bestRings_rank}
+                width={W_WITH_SERIES.rings}
+              />
+              <MetricCell
+                value={formatTeiler(entry.bestCorrectedTeiler)}
+                rank={entry.bestTeiler_rank}
+                width={W_WITH_SERIES.teiler}
+                muted
+              />
+              <MetricCell
+                value={formatRingteiler(entry.bestRingteiler)}
+                rank={entry.bestRingteiler_rank}
+                width={W_WITH_SERIES.ringteiler}
+              />
             </View>
           )
         }
@@ -164,20 +222,49 @@ function StandingsTable({
           <View
             key={entry.participantId}
             wrap={false}
-            style={[styles.tableRow, isAlt ? styles.tableRowAlt : {}, rowStyle]}
+            style={[styles.tableRow, isAlt ? styles.tableRowAlt : {}]}
           >
-            <Text style={[styles.tableCellLeft, { width: W_NO_SERIES.name }]}>
-              {entry.participantName}
-            </Text>
-            <Text style={[styles.tableCellBold, { width: W_NO_SERIES.rings }]}>{ringsText}</Text>
-            <Text
-              style={[styles.tableCellBold, { width: W_NO_SERIES.teiler, color: PDF_COLORS.muted }]}
+            <View
+              style={{
+                width: W_NO_SERIES.name,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 4,
+                paddingLeft: 4,
+              }}
             >
-              {teilerText}
-            </Text>
-            <Text style={[styles.tableCellBold, { width: W_NO_SERIES.ringteiler }]}>
-              {ringteilerText}
-            </Text>
+              <View
+                style={{
+                  backgroundColor: rankBadgeColor(idx + 1),
+                  borderRadius: 3,
+                  paddingHorizontal: 4,
+                  paddingVertical: 1,
+                  minWidth: 18,
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ fontSize: 8, color: "white" }}>{idx + 1}</Text>
+              </View>
+              <Text style={{ fontSize: 10, color: PDF_COLORS.dark, flex: 1 }}>
+                {entry.participantName}
+              </Text>
+            </View>
+            <MetricCell
+              value={formatRings(entry.bestRings)}
+              rank={entry.bestRings_rank}
+              width={W_NO_SERIES.rings}
+            />
+            <MetricCell
+              value={formatTeiler(entry.bestCorrectedTeiler)}
+              rank={entry.bestTeiler_rank}
+              width={W_NO_SERIES.teiler}
+              muted
+            />
+            <MetricCell
+              value={formatRingteiler(entry.bestRingteiler)}
+              rank={entry.bestRingteiler_rank}
+              width={W_NO_SERIES.ringteiler}
+            />
           </View>
         )
       })}
