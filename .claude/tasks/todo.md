@@ -10,6 +10,12 @@ _Keine offenen Tasks._
 
 ## Abgeschlossen
 
+### [2026-03-26] Bugfix: TARGET_OVER Penalty-Tier Vorzeichen
+
+- `EventRankingTable`, `EventTeamRankingTable`, `EventRankingPdf`: Penalty-Tier zeigt `-X` statt `+X` (Wert liegt unter dem Ziel)
+
+---
+
 ### [2026-03-26] Bugfix: TARGET_OVER Label-Maps in Pages/Components/PDF
 
 - `ranking/page.tsx`, `standings/page.tsx`: Badge-Label "Zielwert über" ergänzt
