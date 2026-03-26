@@ -85,6 +85,11 @@ enum TargetValueType {
   RINGS_DECIMAL // Zielwert bezieht sich auf Gesamtringe (Zehntelwertung)
 }
 
+enum TeamScoring {
+  SUM  // Teamergebnis = Summe der Einzelergebnisse
+  BEST // Teamergebnis = bestes Einzelergebnis im Team
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // User
 // ─────────────────────────────────────────────────────────────────────────────
@@ -202,6 +207,8 @@ model Competition {
   eventDate    DateTime?
   allowGuests  Boolean?
   teamSize     Int?
+  // teamScoring: nur relevant wenn teamSize gesetzt (SUM = Summe, BEST = Bestes Einzelergebnis)
+  teamScoring  TeamScoring?
   targetValue  Decimal?       @db.Decimal(8, 2)
   targetValueType TargetValueType?
 
@@ -215,6 +222,7 @@ model Competition {
   playoffMatches PlayoffMatch[]
   series         Series[]
   auditLogs      AuditLog[]
+  eventTeams     EventTeam[]
 
   @@index([status])
   @@index([type])
@@ -254,9 +262,36 @@ model Participant {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// EventTeam (Team in einem Event-Wettbewerb)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// DESIGN: Nur für type=EVENT mit teamSize >= 2.
+// Kein Teamname — Teams werden mit einer Nummer innerhalb des Events identifiziert.
+// Ein Teilnehmer kann mehrfach eingeschrieben sein (je einmal pro Team, eigene Serie je Team).
+model EventTeam {
+  id            String      @id @default(cuid())
+  competitionId String
+  competition   Competition @relation(fields: [competitionId], references: [id])
+  // Fortlaufende Nummer des Teams innerhalb des Wettbewerbs (1, 2, 3, ...)
+  teamNumber    Int
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  members       CompetitionParticipant[]
+
+  @@unique([competitionId, teamNumber])
+  @@index([competitionId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // CompetitionParticipant (Einschreibung Teilnehmer ↔ Wettbewerb)
 // ─────────────────────────────────────────────────────────────────────────────
 
+// DESIGN: Bei Team-Events (teamSize >= 2) kann ein Teilnehmer mehrfach eingeschrieben sein
+// (einmal pro Team, mit eigener Serie). Daher kein globales @@unique([competitionId, participantId]).
+// Stattdessen zwei partielle Unique-Indizes in der Migration:
+//   - Einzel-Events (eventTeamId IS NULL): unique(competitionId, participantId)
+//   - Team-Events (eventTeamId IS NOT NULL): unique(competitionId, participantId, eventTeamId)
 model CompetitionParticipant {
   id            String            @id @default(cuid())
   competitionId String
@@ -273,11 +308,17 @@ model CompetitionParticipant {
   discipline    Discipline?       @relation(fields: [disciplineId], references: [id])
   // Gast-Schütze (nur für Events relevant)
   isGuest       Boolean           @default(false)
+  // Team-Zugehörigkeit (nur bei type=EVENT mit teamSize >= 2)
+  eventTeamId   String?
+  eventTeam     EventTeam?        @relation(fields: [eventTeamId], references: [id])
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
 
-  @@unique([competitionId, participantId])
+  series        Series[]
+
+  // Kein globales @@unique — partielle Indizes in der Migration (see above)
   @@index([competitionId])
+  @@index([competitionId, participantId])
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -344,6 +385,10 @@ model Series {
   // MaxRinge: 100 (WHOLE) oder 109 (DECIMAL), abgeleitet aus Disziplin
   ringteiler    Decimal      @db.Decimal(7, 1)
   importSource  ImportSource @default(MANUAL)
+  // Bei type=EVENT mit teamSize: Verknüpfung zur konkreten Einschreibung (Team-spezifisch)
+  // Nullable für Rückwärtskompatibilität (bestehende Serien ohne CP-Referenz)
+  competitionParticipantId String?
+  competitionParticipant   CompetitionParticipant? @relation(fields: [competitionParticipantId], references: [id])
   // Audit: wer hat das Ergebnis erfasst
   recordedByUserId String
   recordedBy       User    @relation(fields: [recordedByUserId], references: [id])
@@ -352,6 +397,8 @@ model Series {
 
   // Liga: genau eine Serie pro Schütze pro Paarung (NULL-Werte sind per SQL-Standard distinct)
   @@unique([matchupId, participantId])
+  // Event: eine Serie pro CP-Einschreibung (NULL = alte Daten ohne CP-Referenz; NULLs sind distinct)
+  @@unique([competitionParticipantId])
   @@index([matchupId])
   @@index([competitionId])
   @@index([participantId])

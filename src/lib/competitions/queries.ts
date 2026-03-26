@@ -21,6 +21,8 @@ const listSelect = {
   rueckrundeDeadline: true,
   eventDate: true,
   allowGuests: true,
+  teamSize: true,
+  teamScoring: true,
   seasonStart: true,
   seasonEnd: true,
   createdAt: true,
@@ -71,6 +73,7 @@ export async function getCompetitionById(id: string): Promise<CompetitionDetail 
       eventDate: true,
       allowGuests: true,
       teamSize: true,
+      teamScoring: true,
       targetValue: true,
       targetValueType: true,
       minSeries: true,
@@ -103,6 +106,7 @@ export async function getEventWithSeries(id: string): Promise<{
     select: {
       id: true,
       participantId: true,
+      competitionParticipantId: true,
       disciplineId: true,
       discipline: { select: { name: true, teilerFaktor: true } },
       participant: {
@@ -115,6 +119,14 @@ export async function getEventWithSeries(id: string): Promise<{
             select: { isGuest: true },
             take: 1,
           },
+        },
+      },
+      // Team-Daten via direkte CP-Relation (neue Serien mit competitionParticipantId)
+      competitionParticipant: {
+        select: {
+          isGuest: true,
+          eventTeamId: true,
+          eventTeam: { select: { teamNumber: true } },
         },
       },
       rings: true,
@@ -130,6 +142,7 @@ export async function getEventWithSeries(id: string): Promise<{
   const series: EventSeriesItem[] = rows.map((s) => ({
     id: s.id,
     participantId: s.participantId,
+    competitionParticipantId: s.competitionParticipantId,
     disciplineId: s.disciplineId,
     discipline: { name: s.discipline.name, teilerFaktor: s.discipline.teilerFaktor.toNumber() },
     participant: {
@@ -137,7 +150,9 @@ export async function getEventWithSeries(id: string): Promise<{
       firstName: s.participant.firstName,
       lastName: s.participant.lastName,
     },
-    isGuest: s.participant.competitions[0]?.isGuest ?? false,
+    // CP-Relation hat Vorrang (neue Serien); Fallback auf alte Abfrage (bestehende Serien)
+    isGuest: s.competitionParticipant?.isGuest ?? s.participant.competitions[0]?.isGuest ?? false,
+    teamNumber: s.competitionParticipant?.eventTeam?.teamNumber ?? null,
     rings: s.rings.toNumber(),
     teiler: s.teiler.toNumber(),
     ringteiler: s.ringteiler.toNumber(),

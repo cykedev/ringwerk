@@ -3,7 +3,7 @@ import { renderToBuffer, type DocumentProps } from "@react-pdf/renderer"
 import { createElement, type ReactElement } from "react"
 import { getAuthSession } from "@/lib/auth-helpers"
 import { getEventWithSeries } from "@/lib/competitions/queries"
-import { rankEventParticipants } from "@/lib/scoring/rankEventParticipants"
+import { rankEventParticipants, rankEventTeams } from "@/lib/scoring/rankEventParticipants"
 import { EventRankingPdf } from "@/lib/pdf/EventRankingPdf"
 
 export async function GET(
@@ -31,6 +31,10 @@ export async function GET(
     discipline: competition.discipline,
   })
 
+  const isTeamEvent = (competition.teamSize ?? 0) >= 2
+  const teamScoring = competition.teamScoring ?? "SUM"
+  const teamRanked = isTeamEvent ? rankEventTeams(ranked, teamScoring, competition.scoringMode) : []
+
   const element = createElement(EventRankingPdf, {
     competitionName: competition.name,
     disciplineName: competition.discipline?.name ?? null,
@@ -40,6 +44,8 @@ export async function GET(
     targetValue: competition.targetValue,
     isMixed: !competition.disciplineId,
     entries: ranked,
+    teamEntries: isTeamEvent ? teamRanked : undefined,
+    teamScoring: isTeamEvent ? teamScoring : undefined,
     generatedAt: new Date(),
   }) as ReactElement<DocumentProps>
 

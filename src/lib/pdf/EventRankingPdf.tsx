@@ -1,6 +1,6 @@
 import { Document, Page, View, Text } from "@react-pdf/renderer"
 import type { ReactElement } from "react"
-import type { EventRankedEntry } from "@/lib/scoring/rankEventParticipants"
+import type { EventRankedEntry, EventTeamRankedEntry } from "@/lib/scoring/rankEventParticipants"
 import { styles, PDF_COLORS } from "@/lib/pdf/styles"
 
 // ─── Typen ────────────────────────────────────────────────────────────────────
@@ -14,6 +14,8 @@ export interface EventRankingPdfProps {
   targetValue: number | null
   isMixed: boolean
   entries: EventRankedEntry[]
+  teamEntries?: EventTeamRankedEntry[]
+  teamScoring?: "SUM" | "BEST" | null
   generatedAt: Date
 }
 
@@ -66,6 +68,67 @@ function formatScore(score: number, mode: string): string {
 
 const W_MIXED = { rank: 28, name: 130, disc: 90, rings: 55, teiler: 65, score: 65 }
 const W_SINGLE = { rank: 28, name: 200, rings: 65, teiler: 90, score: 90 }
+
+// ─── Team-Ranglisten-Tabelle ──────────────────────────────────────────────────
+
+const W_TEAM = { rank: 28, team: 60, members: 220, score: 80 }
+const TEAM_SCORING_LABELS: Record<string, string> = { SUM: "Summe", BEST: "Bestes" }
+
+function TeamRankingTable({
+  entries,
+  scoringMode,
+  teamScoring,
+}: {
+  entries: EventTeamRankedEntry[]
+  scoringMode: string
+  teamScoring: "SUM" | "BEST"
+}): ReactElement {
+  const scoreLabel = SCORE_LABEL[scoringMode] ?? "Score"
+
+  return (
+    <View style={styles.table}>
+      <View style={styles.tableHeaderRow}>
+        <Text style={[styles.tableHeaderCell, { width: W_TEAM.rank }]}>Pl.</Text>
+        <Text style={[styles.tableHeaderCellLeft, { width: W_TEAM.team }]}>Team</Text>
+        <Text style={[styles.tableHeaderCellLeft, { width: W_TEAM.members }]}>Mitglieder</Text>
+        <Text style={[styles.tableHeaderCell, { width: W_TEAM.score }]}>{scoreLabel}</Text>
+      </View>
+      {entries.map((entry, idx) => {
+        const isAlt = idx % 2 === 1
+        const memberNames = entry.members.map((m) => m.participantName).join(", ")
+        return (
+          <View
+            key={entry.teamNumber}
+            wrap={false}
+            style={[styles.tableRow, isAlt ? styles.tableRowAlt : {}]}
+          >
+            <View style={{ width: W_TEAM.rank, alignItems: "center" }}>
+              <View style={[styles.rankBadge, { backgroundColor: rankBadgeColor(entry.rank) }]}>
+                <Text style={styles.rankBadgeText}>{entry.rank}</Text>
+              </View>
+            </View>
+            <Text style={[styles.tableCellLeft, { width: W_TEAM.team }]}>
+              Team {entry.teamNumber}
+            </Text>
+            <Text
+              style={[styles.tableCellLeft, { width: W_TEAM.members, color: PDF_COLORS.muted }]}
+            >
+              {memberNames}
+            </Text>
+            <Text style={[styles.tableCellBold, { width: W_TEAM.score }]}>
+              {formatScore(entry.teamScore, scoringMode)}
+            </Text>
+          </View>
+        )
+      })}
+      <View style={{ marginTop: 4 }}>
+        <Text style={{ fontSize: 8, color: PDF_COLORS.muted }}>
+          Wertung: {TEAM_SCORING_LABELS[teamScoring] ?? teamScoring}
+        </Text>
+      </View>
+    </View>
+  )
+}
 
 // ─── Ranglisten-Tabelle ───────────────────────────────────────────────────────
 
@@ -150,6 +213,8 @@ export function EventRankingPdf({
   targetValue,
   isMixed,
   entries,
+  teamEntries,
+  teamScoring,
   generatedAt,
 }: EventRankingPdfProps): ReactElement {
   const disciplineDisplay = disciplineName ?? "Gemischt"
@@ -180,7 +245,24 @@ export function EventRankingPdf({
           )}
         </View>
 
-        {/* Rangliste */}
+        {/* Team-Rangliste (wenn Team-Event) */}
+        {teamEntries && teamEntries.length > 0 && teamScoring && (
+          <View style={{ marginBottom: 16 }}>
+            <Text style={{ fontSize: 10, fontWeight: "bold", marginBottom: 6 }}>
+              Team-Rangliste
+            </Text>
+            <TeamRankingTable
+              entries={teamEntries}
+              scoringMode={scoringMode}
+              teamScoring={teamScoring}
+            />
+          </View>
+        )}
+
+        {/* Einzel-Rangliste */}
+        {teamEntries && teamEntries.length > 0 && (
+          <Text style={{ fontSize: 10, fontWeight: "bold", marginBottom: 6 }}>Einzelrangliste</Text>
+        )}
         {entries.length === 0 ? (
           <Text style={{ fontSize: 10, color: PDF_COLORS.muted }}>
             Noch keine Ergebnisse erfasst.

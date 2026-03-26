@@ -18,7 +18,7 @@ import type { ActionResult } from "@/lib/types"
 
 interface Props {
   competitionId: string
-  participantId: string
+  competitionParticipantId: string
   participantName: string
   /** Vorhandene Serie — wenn gesetzt, Korrektur-Modus */
   existingSeries?: { rings: number; teiler: number }
@@ -26,14 +26,14 @@ interface Props {
 
 export function EventSeriesDialog({
   competitionId,
-  participantId,
+  competitionParticipantId,
   participantName,
   existingSeries,
 }: Props) {
   const [open, setOpen] = useState(false)
   const isCorrection = !!existingSeries
 
-  const boundAction = saveEventSeries.bind(null, competitionId, participantId)
+  const boundAction = saveEventSeries.bind(null, competitionId, competitionParticipantId)
   const [state, formAction, isPending] = useActionState(
     (prev: ActionResult | null, formData: FormData) => boundAction(prev, formData),
     null

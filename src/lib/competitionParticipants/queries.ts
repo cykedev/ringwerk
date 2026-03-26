@@ -21,13 +21,19 @@ export async function getCompetitionParticipants(
       participant: {
         select: { id: true, firstName: true, lastName: true, contact: true },
       },
+      eventTeam: { select: { teamNumber: true } },
     },
-    orderBy: [{ status: "asc" }, { participant: { lastName: "asc" } }],
+    orderBy: [
+      { status: "asc" },
+      { eventTeam: { teamNumber: "asc" } },
+      { participant: { lastName: "asc" } },
+    ],
   })
   return rows.map((r) => ({
     ...r,
     discipline: r.discipline
       ? { ...r.discipline, teilerFaktor: r.discipline.teilerFaktor.toNumber() }
       : null,
+    teamNumber: r.eventTeam?.teamNumber ?? null,
   })) as unknown as CompetitionParticipantListItem[]
 }

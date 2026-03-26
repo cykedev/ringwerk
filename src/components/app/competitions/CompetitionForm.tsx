@@ -67,6 +67,7 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
   const [type, setType] = useState<string>(competition?.type ?? "LEAGUE")
   const [scoringMode, setScoringMode] = useState<string>(competition?.scoringMode ?? "RINGTEILER")
   const [allowGuests, setAllowGuests] = useState<boolean>(competition?.allowGuests ?? false)
+  const [teamSize, setTeamSize] = useState<string>(String(competition?.teamSize ?? ""))
   const [finalePrimary, setFinalePrimary] = useState<string>(competition?.finalePrimary ?? "RINGS")
   const [finaleTiebreaker1, setFinaleTiebreaker1] = useState<string>(
     competition?.finaleTiebreaker1 ?? "none"
@@ -456,6 +457,44 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
           </div>
           {/* Hidden field damit der Wert immer im FormData landet */}
           <input type="hidden" name="allowGuests" value={allowGuests ? "true" : "false"} />
+
+          {/* Team-Modus */}
+          <div className="space-y-2">
+            <Label htmlFor="teamSize">Teamgröße (optional)</Label>
+            <Input
+              id="teamSize"
+              name="teamSize"
+              type="number"
+              min={2}
+              max={20}
+              value={teamSize}
+              onChange={(e) => setTeamSize(e.target.value)}
+              placeholder="z.B. 2 für Zweier-Teams"
+              disabled={isPending}
+            />
+            <p className="text-xs text-muted-foreground">
+              Leer lassen für Einzelwertung. Ab 2 wird ein Team-Modus aktiviert.
+            </p>
+          </div>
+
+          {Number(teamSize) >= 2 && (
+            <div className="space-y-2">
+              <Label htmlFor="teamScoring">Team-Wertung</Label>
+              <Select
+                name="teamScoring"
+                defaultValue={competition?.teamScoring ?? "SUM"}
+                disabled={isPending}
+              >
+                <SelectTrigger id="teamScoring">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="SUM">Summe (alle Einzel-Ergebnisse addiert)</SelectItem>
+                  <SelectItem value="BEST">Bestes (bestes Einzelergebnis im Team)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {isTargetMode && (
             <>

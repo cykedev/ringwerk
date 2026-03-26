@@ -39,11 +39,11 @@ function revalidateSeasonPaths(competitionId: string): void {
 
 /**
  * Speichert eine Serie für einen Event-Teilnehmer.
- * Pro Teilnehmer ist genau eine Serie erlaubt — bestehende wird überschrieben.
+ * Pro Einschreibung (CompetitionParticipant) ist genau eine Serie erlaubt — bestehende wird überschrieben.
  */
 export async function saveEventSeries(
   competitionId: string,
-  participantId: string,
+  competitionParticipantId: string,
   _prevState: ActionResult | null,
   formData: FormData
 ): Promise<ActionResult> {
@@ -67,9 +67,10 @@ export async function saveEventSeries(
 
   // Disziplin bestimmen: aus CompetitionParticipant (gemischt) oder Competition (fix)
   const cp = await db.competitionParticipant.findUnique({
-    where: { competitionId_participantId: { competitionId, participantId } },
+    where: { id: competitionParticipantId },
     select: {
       id: true,
+      participantId: true,
       disciplineId: true,
       discipline: { select: { id: true, name: true, scoringType: true, teilerFaktor: true } },
       participant: { select: { firstName: true, lastName: true } },
@@ -105,9 +106,9 @@ export async function saveEventSeries(
 
   const sessionDate = new Date()
 
-  // Bestehendes Ergebnis prüfen (eine Serie pro Teilnehmer pro Event)
-  const existing = await db.series.findFirst({
-    where: { competitionId, participantId },
+  // Bestehendes Ergebnis prüfen (eine Serie pro Einschreibung pro Event)
+  const existing = await db.series.findUnique({
+    where: { competitionParticipantId },
     select: { id: true },
   })
 
@@ -128,7 +129,8 @@ export async function saveEventSeries(
     await db.series.create({
       data: {
         competitionId,
-        participantId,
+        participantId: cp.participantId,
+        competitionParticipantId,
         disciplineId,
         rings,
         teiler,
@@ -146,7 +148,7 @@ export async function saveEventSeries(
     data: {
       eventType: existing ? "EVENT_SERIES_CORRECTED" : "EVENT_SERIES_ENTERED",
       entityType: "SERIES",
-      entityId: existing?.id ?? participantId,
+      entityId: existing?.id ?? competitionParticipantId,
       userId: session.user.id,
       competitionId,
       details: {
@@ -248,8 +250,8 @@ export async function saveSeasonSeries(
   if (competition.type !== "SEASON") return { error: "Nur für Saison-Wettbewerbe." }
   if (competition.status === "ARCHIVED") return { error: "Archivierte Wettbewerbe sind gesperrt." }
 
-  const cp = await db.competitionParticipant.findUnique({
-    where: { competitionId_participantId: { competitionId, participantId } },
+  const cp = await db.competitionParticipant.findFirst({
+    where: { competitionId, participantId },
     select: {
       id: true,
       disciplineId: true,
@@ -358,12 +360,10 @@ export async function updateSeasonSeries(
   if (!existingSeries) return { error: "Serie nicht gefunden." }
   if (existingSeries.competitionId !== competitionId) return { error: "Ungültige Anfrage." }
 
-  const cp = await db.competitionParticipant.findUnique({
+  const cp = await db.competitionParticipant.findFirst({
     where: {
-      competitionId_participantId: {
-        competitionId,
-        participantId: existingSeries.participantId,
-      },
+      competitionId,
+      participantId: existingSeries.participantId,
     },
     select: {
       disciplineId: true,

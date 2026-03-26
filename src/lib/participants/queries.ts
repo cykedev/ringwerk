@@ -57,6 +57,15 @@ export async function getParticipantById(id: string): Promise<ParticipantDetail 
   })
 }
 
+/** Alle aktiven Vereinsmitglieder — für Team-Events, wo Mehrfach-Einschreibung erlaubt ist. */
+export async function getAllActiveParticipants(): Promise<ParticipantOption[]> {
+  return db.participant.findMany({
+    where: { isActive: true, isGuestRecord: false },
+    select: { id: true, firstName: true, lastName: true, contact: true },
+    orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+  })
+}
+
 /** Aktive Vereinsmitglieder, die noch nicht in der angegebenen Meisterschaft eingeschrieben sind. */
 export async function getParticipantsNotInCompetition(
   competitionId: string

@@ -35,6 +35,7 @@ vi.mock("@/lib/db", () => ({
     competition: { findUnique: competitionFindUniqueMock },
     competitionParticipant: {
       findUnique: competitionParticipantFindUniqueMock,
+      findFirst: competitionParticipantFindUniqueMock,
       create: competitionParticipantCreateMock,
       delete: competitionParticipantDeleteMock,
     },

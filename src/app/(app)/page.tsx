@@ -9,11 +9,12 @@ import {
 } from "@/lib/competitions/queries"
 import { getStandingsForCompetition } from "@/lib/standings/queries"
 import { getPlayoffBracket } from "@/lib/playoffs/queries"
-import { rankEventParticipants } from "@/lib/scoring/rankEventParticipants"
+import { rankEventParticipants, rankEventTeams } from "@/lib/scoring/rankEventParticipants"
 import { calculateSeasonStandings } from "@/lib/scoring/calculateSeasonStandings"
 import { StandingsTable } from "@/components/app/standings/StandingsTable"
 import { PlayoffBracket } from "@/components/app/playoffs/PlayoffBracket"
 import { EventRankingTable } from "@/components/app/series/EventRankingTable"
+import { EventTeamRankingTable } from "@/components/app/series/EventTeamRankingTable"
 import { SeasonStandingsTable } from "@/components/app/series/SeasonStandingsTable"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -41,15 +42,18 @@ export default async function DashboardPage() {
     Promise.all(
       activeEvents.map(async (c) => {
         const data = await getEventWithSeries(c.id)
-        const ranked = data
-          ? rankEventParticipants(data.series, {
-              scoringMode: data.competition.scoringMode,
-              targetValue: data.competition.targetValue,
-              targetValueType: data.competition.targetValueType,
-              discipline: data.competition.discipline,
-            })
+        if (!data) return { competition: c, ranked: [], teamRanked: [] }
+        const ranked = rankEventParticipants(data.series, {
+          scoringMode: data.competition.scoringMode,
+          targetValue: data.competition.targetValue,
+          targetValueType: data.competition.targetValueType,
+          discipline: data.competition.discipline,
+        })
+        const isTeamEvent = (c.teamSize ?? 0) >= 2
+        const teamRanked = isTeamEvent
+          ? rankEventTeams(ranked, c.teamScoring ?? "SUM", c.scoringMode)
           : []
-        return { competition: c, ranked }
+        return { competition: c, ranked, teamRanked }
       })
     ),
     Promise.all(
@@ -128,28 +132,44 @@ export default async function DashboardPage() {
           })}
 
           {/* Events: Rangliste */}
-          {eventData.map(({ competition: c, ranked }) => (
-            <div key={c.id} className="space-y-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-lg font-semibold">{c.name}</h2>
-                <Badge variant="secondary" className="text-xs">
-                  {c.discipline?.name ?? "Gemischt"}
-                </Badge>
-              </div>
-              <div className="space-y-2">
-                <EventRankingTable
-                  entries={ranked}
-                  scoringMode={c.scoringMode}
-                  isMixed={!c.discipline}
-                />
-                <div className="flex justify-end">
-                  <Button asChild variant="outline" size="sm">
-                    <Link href={`/competitions/${c.id}/ranking`}>Rangliste →</Link>
-                  </Button>
+          {eventData.map(({ competition: c, ranked, teamRanked }) => {
+            const isTeamEvent = (c.teamSize ?? 0) >= 2
+            return (
+              <div key={c.id} className="space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-lg font-semibold">{c.name}</h2>
+                  <Badge variant="secondary" className="text-xs">
+                    {c.discipline?.name ?? "Gemischt"}
+                  </Badge>
+                  {isTeamEvent && (
+                    <Badge variant="outline" className="text-xs">
+                      Teams
+                    </Badge>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  {isTeamEvent ? (
+                    <EventTeamRankingTable
+                      entries={teamRanked}
+                      scoringMode={c.scoringMode}
+                      teamScoring={c.teamScoring ?? "SUM"}
+                    />
+                  ) : (
+                    <EventRankingTable
+                      entries={ranked}
+                      scoringMode={c.scoringMode}
+                      isMixed={!c.discipline}
+                    />
+                  )}
+                  <div className="flex justify-end">
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={`/competitions/${c.id}/ranking`}>Rangliste →</Link>
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
 
           {/* Saisons: Rangliste */}
           {seasonData.map(({ competition: c, standings, minSeries }) => (

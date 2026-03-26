@@ -3,8 +3,9 @@ import { notFound, redirect } from "next/navigation"
 import { ArrowLeft, ListOrdered, Pencil, Users } from "lucide-react"
 import { getAuthSession } from "@/lib/auth-helpers"
 import { getEventWithSeries } from "@/lib/competitions/queries"
-import { rankEventParticipants } from "@/lib/scoring/rankEventParticipants"
+import { rankEventParticipants, rankEventTeams } from "@/lib/scoring/rankEventParticipants"
 import { EventRankingTable } from "@/components/app/series/EventRankingTable"
+import { EventTeamRankingTable } from "@/components/app/series/EventTeamRankingTable"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { PdfDownloadButton } from "@/components/app/shared/PdfDownloadButton"
@@ -26,12 +27,18 @@ export default async function EventRankingPage({ params }: Props) {
   const isAdmin = session.user.role === "ADMIN"
   const tz = getDisplayTimeZone()
 
-  const ranked = rankEventParticipants(series, {
+  const eventConfig = {
     scoringMode: competition.scoringMode,
     targetValue: competition.targetValue,
     targetValueType: competition.targetValueType,
     discipline: competition.discipline,
-  })
+  }
+
+  const ranked = rankEventParticipants(series, eventConfig)
+
+  const isTeamEvent = (competition.teamSize ?? 0) >= 2
+  const teamScoring = competition.teamScoring ?? "SUM"
+  const teamRanked = isTeamEvent ? rankEventTeams(ranked, teamScoring, competition.scoringMode) : []
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
@@ -94,10 +101,19 @@ export default async function EventRankingPage({ params }: Props) {
         )}
       </div>
 
+      {isTeamEvent && (
+        <EventTeamRankingTable
+          entries={teamRanked}
+          scoringMode={competition.scoringMode}
+          teamScoring={teamScoring}
+        />
+      )}
+
       <EventRankingTable
         entries={ranked}
         scoringMode={competition.scoringMode}
         isMixed={!competition.disciplineId}
+        showTeam={isTeamEvent}
       />
     </div>
   )

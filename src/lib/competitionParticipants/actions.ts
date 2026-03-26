@@ -46,6 +46,17 @@ const EnrollSchema = z
       .nullable()
       .optional()
       .transform((v) => v || null),
+    // Team-Felder (nur bei type=EVENT mit teamSize >= 2)
+    teamId: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => v || null),
+    newTeam: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => v === "true" || v === "on"),
   })
   .superRefine((data, ctx) => {
     if (data.isGuest) {
@@ -78,7 +89,7 @@ export async function enrollParticipant(
 
   const competition = await db.competition.findUnique({
     where: { id: competitionId },
-    select: { id: true, status: true, disciplineId: true },
+    select: { id: true, status: true, disciplineId: true, teamSize: true },
   })
   if (!competition) return { error: "Wettbewerb nicht gefunden." }
   if (competition.status !== "ACTIVE") {
@@ -91,12 +102,54 @@ export async function enrollParticipant(
     startNumber: formData.get("startNumber"),
     isGuest: formData.get("isGuest"),
     disciplineId: formData.get("disciplineId"),
+    teamId: formData.get("teamId"),
+    newTeam: formData.get("newTeam"),
   })
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
 
   // Bei gemischtem Wettbewerb (disciplineId = null) muss Disziplin gewählt werden
   if (!competition.disciplineId && !parsed.data.disciplineId) {
     return { error: "Bei gemischten Wettbewerben muss eine Disziplin gewählt werden." }
+  }
+
+  const isTeamEvent = (competition.teamSize ?? 0) >= 2
+
+  // Team-ID auflösen: bestehendes Team oder neues Team anlegen
+  let resolvedTeamId: string | null = null
+  if (isTeamEvent) {
+    if (parsed.data.newTeam) {
+      // Nächste Teamnummer berechnen (höchste bestehende + 1)
+      const lastTeam = await db.eventTeam.findFirst({
+        where: { competitionId },
+        orderBy: { teamNumber: "desc" },
+        select: { teamNumber: true },
+      })
+      const nextNumber = (lastTeam?.teamNumber ?? 0) + 1
+      const team = await db.eventTeam.create({
+        data: { competitionId, teamNumber: nextNumber },
+        select: { id: true },
+      })
+      resolvedTeamId = team.id
+    } else if (parsed.data.teamId) {
+      // Bestehendes Team prüfen: existiert es, und hat es noch Platz?
+      const team = await db.eventTeam.findUnique({
+        where: { id: parsed.data.teamId },
+        select: {
+          id: true,
+          competitionId: true,
+          _count: { select: { members: { where: { status: "ACTIVE" } } } },
+        },
+      })
+      if (!team || team.competitionId !== competitionId) {
+        return { error: "Team nicht gefunden." }
+      }
+      if (team._count.members >= competition.teamSize!) {
+        return { error: "Team ist bereits voll." }
+      }
+      resolvedTeamId = team.id
+    } else {
+      return { error: "Bei Team-Events muss ein Team gewählt oder ein neues Team erstellt werden." }
+    }
   }
 
   if (parsed.data.isGuest) {
@@ -119,20 +172,31 @@ export async function enrollParticipant(
           startNumber: parsed.data.startNumber,
           isGuest: true,
           disciplineId: parsed.data.disciplineId,
+          eventTeamId: resolvedTeamId,
         },
       })
     })
   } else {
-    const existing = await db.competitionParticipant.findUnique({
-      where: {
-        competitionId_participantId: {
+    // Duplikat-Prüfung: abhängig von Team-Modus
+    if (isTeamEvent) {
+      // Im Team-Modus: gleicher Teilnehmer darf nicht in dasselbe Team zweimal
+      const existing = await db.competitionParticipant.findFirst({
+        where: {
           competitionId,
           participantId: parsed.data.participantId!,
+          eventTeamId: resolvedTeamId,
         },
-      },
-      select: { id: true },
-    })
-    if (existing) return { error: "Teilnehmer ist bereits in diesem Wettbewerb eingeschrieben." }
+        select: { id: true },
+      })
+      if (existing) return { error: "Teilnehmer ist bereits in diesem Team eingeschrieben." }
+    } else {
+      // Einzel-Modus: nur einmal pro Wettbewerb
+      const existing = await db.competitionParticipant.findFirst({
+        where: { competitionId, participantId: parsed.data.participantId!, eventTeamId: null },
+        select: { id: true },
+      })
+      if (existing) return { error: "Teilnehmer ist bereits in diesem Wettbewerb eingeschrieben." }
+    }
 
     await db.competitionParticipant.create({
       data: {
@@ -141,6 +205,7 @@ export async function enrollParticipant(
         startNumber: parsed.data.startNumber,
         isGuest: false,
         disciplineId: parsed.data.disciplineId,
+        eventTeamId: resolvedTeamId,
       },
     })
   }
@@ -165,6 +230,7 @@ export async function unenrollParticipant(competitionParticipantId: string): Pro
       competitionId: true,
       participantId: true,
       isGuest: true,
+      eventTeamId: true,
     },
   })
   if (!cp) return { error: "Einschreibung nicht gefunden." }
@@ -190,8 +256,29 @@ export async function unenrollParticipant(competitionParticipantId: string): Pro
       })
       await tx.competitionParticipant.delete({ where: { id: competitionParticipantId } })
       await tx.participant.delete({ where: { id: cp.participantId } })
+      // Leeres Team aufräumen
+      if (cp.eventTeamId) {
+        const remaining = await tx.competitionParticipant.count({
+          where: { eventTeamId: cp.eventTeamId },
+        })
+        if (remaining === 0) {
+          await tx.eventTeam.delete({ where: { id: cp.eventTeamId } })
+        }
+      }
+    })
+  } else if (cp.eventTeamId) {
+    // Team-Mitglied: Löschen + leeres Team aufräumen in einer Transaktion
+    await db.$transaction(async (tx) => {
+      await tx.competitionParticipant.delete({ where: { id: competitionParticipantId } })
+      const remaining = await tx.competitionParticipant.count({
+        where: { eventTeamId: cp.eventTeamId },
+      })
+      if (remaining === 0) {
+        await tx.eventTeam.delete({ where: { id: cp.eventTeamId! } })
+      }
     })
   } else {
+    // Einzel-Einschreibung: direktes Löschen ohne Transaktion
     await db.competitionParticipant.delete({ where: { id: competitionParticipantId } })
   }
 

@@ -54,6 +54,10 @@ const KNOWN_RECOVERY_HANDLERS = {
   "20260324000000_participant_guest_record": (_client, migrationName) => {
     runPrismaResolve("--applied", migrationName)
   },
+  // Idempotente Migration — als zurückgerollt markieren, damit sie sauber neu läuft
+  "20260326000000_add_event_teams": (_client, migrationName) => {
+    runPrismaResolve("--rolled-back", migrationName)
+  },
 }
 
 async function main() {

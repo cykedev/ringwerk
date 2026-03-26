@@ -329,6 +329,26 @@ Phase 6 implementiert die Logik und UI dafuer.
 
 ## Abgeschlossen
 
+### [2026-03-26] Team-Support für Event-Wettbewerbe
+
+- Schema: `TeamScoring` Enum, `EventTeam` Modell, `CompetitionParticipant.eventTeamId`, `Series.competitionParticipantId`, partielle Unique-Indizes (individual/team)
+- Migration `20260326000000_add_event_teams` — vollständig idempotent
+- Recovery-Handler in `resolve-failed-migrations.mjs` (`--rolled-back` für idempotente Migration)
+- `rankEventTeams()` Funktion + `EventTeamRankedEntry` Typ
+- `computeTeamScore()` Helper für SUM/BEST mit korrekter asc/desc-Logik
+- Identity-Key-Fix in `rankByScore`: `seriesId` statt `participantId` (Doppel-Enrollment)
+- `getAllActiveParticipants()` Query + `getEventTeamsForCompetition()` Query
+- `EventTeamRankingTable` Komponente
+- `EnrollParticipantForm`: Team-Sektion (newTeam checkbox + Team-Select)
+- `EventSeriesDialog`: `competitionParticipantId` statt `participantId`
+- `EventRankingTable`: `showTeam` prop mit T{n}-Badge
+- participants/page, series/page, ranking/page — Team-Support vollständig integriert
+- Dashboard: zeigt nur Team-Rangliste für Team-Events
+- PDF `EventRankingPdf` + API-Route: Team-Ranking-Sektion vor Einzelrangliste
+- 237 Tests grün, alle Quality Gates grün
+
+---
+
 ### [2026-03-26] Rang-Badge-Konsistenz
 
 - Neue gemeinsame Komponente `src/components/ui/rank-badge.tsx` (rechteckige Pill, gold/silber/bronze/muted)

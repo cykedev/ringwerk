@@ -1,6 +1,7 @@
 export type EventSeriesItem = {
   id: string
   participantId: string
+  competitionParticipantId: string | null
   disciplineId: string
   discipline: {
     name: string
@@ -12,6 +13,8 @@ export type EventSeriesItem = {
     lastName: string
   }
   isGuest: boolean
+  // teamNumber: gesetzt wenn Team-Event (eventTeamId auf CompetitionParticipant)
+  teamNumber: number | null
   rings: number
   teiler: number
   ringteiler: number

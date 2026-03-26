@@ -20,4 +20,5 @@ export type CompetitionParticipantListItem = {
     lastName: string
     contact: string | null
   }
+  teamNumber: number | null
 }

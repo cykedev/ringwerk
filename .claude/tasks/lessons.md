@@ -5,6 +5,10 @@ Format: Datum | Fehler | Regel die ihn verhindert
 
 ---
 
+| 2026-03-26 | Partielle Unique-Indizes in PostgreSQL ermöglichen Doppel-Einschreibung bei Team-Events, verhindern aber Duplikate bei Einzel — `WHERE eventTeamId IS NULL` vs. `WHERE eventTeamId IS NOT NULL` | Bei nullable FK-Feldern, die die Eindeutigkeitsbedingung kontrollieren, partielle Indizes statt globaler `@@unique`-Constraints verwenden |
+| 2026-03-26 | `rankByScore` nutzte `participantId` als Identity-Key — Doppel-Enrollment (zwei CPs für denselben Teilnehmer) führte dazu, dass nur ein Eintrag in der Rangliste erschien | Bei Team-Events den `seriesId` als Identity-Key verwenden, nicht `participantId` — jede Serie ist eindeutig, auch wenn Teilnehmer mehrfach eingeschrieben sind |
+| 2026-03-26 | Migration P3009: Enum `TeamScoring` bereits vorhanden → Migration als failed markiert obwohl sie teilweise durchgelaufen war | Migrations-SQL konsequent idempotent schreiben: `DO $$ BEGIN CREATE TYPE...; EXCEPTION WHEN duplicate_object THEN null; END $$;` + `IF NOT EXISTS` für alle DDL-Statements |
+| 2026-03-26 | `unenrollParticipant` in `$transaction` gewrapped für Nicht-Team-Teilnehmer → Test erwartete keinen Transaction-Aufruf | `$transaction` nur wenn wirklich nötig (mehrere atomare Operationen); einfaches `db.competitionParticipant.delete` für unkomplizierte Einzellöschungen ohne Cleanup |
 | 2026-03-09 | Punktevergabe mit 3 statt 2 dokumentiert; Unentschieden-Regelung fehlte komplett | Vor dem Dokumentieren von Spielregeln explizit nachfragen statt SRS-Defaults übernehmen |
 | 2026-03-09 | Projekt-Setup: `postcss.config.mjs` vergessen → `shadcn/tailwind.css` und `tw-animate-css` nicht auflösbar | Bei Tailwind 4 + shadcn immer `postcss.config.mjs` mit `@tailwindcss/postcss` anlegen — ohne diese Datei schlägt die CSS-Auflösung im Dev-Server fehl |
 | 2026-03-09 | DB-Port 5432 bei parallelen Projekten belegt → Docker `up` schlägt fehl | In `docker-compose.dev.yml` den extern gemappten Port projektspezifisch wählen (1gegen1: 5433, treffsicher: 5432) |

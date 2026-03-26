@@ -4,8 +4,12 @@ import { ArrowLeft, BarChart2, CalendarDays, ListOrdered, Trophy, UserMinus } fr
 import { getAuthSession } from "@/lib/auth-helpers"
 import { getCompetitionById } from "@/lib/competitions/queries"
 import { getCompetitionParticipants } from "@/lib/competitionParticipants/queries"
-import { getParticipantsNotInCompetition } from "@/lib/participants/queries"
+import {
+  getParticipantsNotInCompetition,
+  getAllActiveParticipants,
+} from "@/lib/participants/queries"
 import { getDisciplines } from "@/lib/disciplines/queries"
+import { getEventTeamsForCompetition } from "@/lib/eventTeams/queries"
 import { enrollParticipant } from "@/lib/competitionParticipants/actions"
 import { hasPlayoffsStarted } from "@/lib/playoffs/queries"
 import { EnrollParticipantForm } from "@/components/app/competitionParticipants/EnrollParticipantForm"
@@ -21,24 +25,25 @@ interface Props {
 export default async function CompetitionParticipantsPage({ params }: Props) {
   const { id } = await params
 
-  const [
-    session,
-    competition,
-    competitionParticipants,
-    available,
-    playoffsStarted,
-    allDisciplines,
-  ] = await Promise.all([
-    getAuthSession(),
-    getCompetitionById(id),
-    getCompetitionParticipants(id),
-    getParticipantsNotInCompetition(id),
-    hasPlayoffsStarted(id),
-    getDisciplines(),
-  ])
+  const [session, competition, competitionParticipants, playoffsStarted, allDisciplines] =
+    await Promise.all([
+      getAuthSession(),
+      getCompetitionById(id),
+      getCompetitionParticipants(id),
+      hasPlayoffsStarted(id),
+      getDisciplines(),
+    ])
 
   if (session?.user.role !== "ADMIN") redirect("/")
   if (!competition) notFound()
+
+  const isTeamEvent = (competition.teamSize ?? 0) >= 2
+
+  // Im Team-Modus darf jeder Teilnehmer mehrfach eingeschrieben werden → alle aktiven anzeigen
+  const [available, eventTeams] = await Promise.all([
+    isTeamEvent ? getAllActiveParticipants() : getParticipantsNotInCompetition(id),
+    isTeamEvent ? getEventTeamsForCompetition(id) : Promise.resolve([]),
+  ])
 
   const enrollAction = async (prevState: ActionResult | null, formData: FormData) => {
     "use server"
@@ -124,6 +129,8 @@ export default async function CompetitionParticipantsPage({ params }: Props) {
           availableParticipants={available}
           disciplines={enrollDisciplines}
           allowGuests={isEvent ? (competition.allowGuests ?? false) : false}
+          teamSize={isEvent ? competition.teamSize : null}
+          eventTeams={isEvent ? eventTeams : []}
           action={enrollAction}
         />
       )}
@@ -150,6 +157,11 @@ export default async function CompetitionParticipantsPage({ params }: Props) {
                       {cp.isGuest && (
                         <Badge variant="outline" className="text-xs">
                           Gast
+                        </Badge>
+                      )}
+                      {cp.teamNumber != null && (
+                        <Badge variant="secondary" className="text-xs">
+                          Team {cp.teamNumber}
                         </Badge>
                       )}
                       {isMixed && cp.discipline && (

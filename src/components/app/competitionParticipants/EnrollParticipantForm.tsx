@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select"
 import type { ParticipantOption } from "@/lib/participants/types"
 import type { SerializableDiscipline } from "@/lib/disciplines/types"
+import type { EventTeamItem } from "@/lib/eventTeams/types"
 import type { ActionResult } from "@/lib/types"
 
 interface Props {
@@ -23,6 +24,10 @@ interface Props {
   disciplines?: SerializableDiscipline[]
   /** Wenn true: Gast-Einschreibung erlaubt (allowGuests auf Event) */
   allowGuests?: boolean
+  /** Team-Events: Teamgröße ≥ 2 */
+  teamSize?: number | null
+  /** Team-Events: bestehende Teams mit ihren Mitgliedern */
+  eventTeams?: EventTeamItem[]
   action: (prevState: ActionResult | null, formData: FormData) => Promise<ActionResult>
 }
 
@@ -30,12 +35,16 @@ export function EnrollParticipantForm({
   availableParticipants,
   disciplines,
   allowGuests,
+  teamSize,
+  eventTeams,
   action,
 }: Props) {
   const [state, formAction, isPending] = useActionState(action, null)
   const [isGuest, setIsGuest] = useState(false)
+  const [newTeam, setNewTeam] = useState(false)
 
   const isMixed = disciplines && disciplines.length > 0
+  const isTeamEvent = (teamSize ?? 0) >= 2
 
   useEffect(() => {
     if (state && "success" in state && state.success) {
@@ -50,14 +59,16 @@ export function EnrollParticipantForm({
 
   const noRegularParticipants = availableParticipants.length === 0
 
-  // Formular nur ausblenden wenn keine Teilnehmer verfügbar UND keine Gäste erlaubt
-  if (noRegularParticipants && !allowGuests) {
+  // Im Team-Modus können Teilnehmer mehrfach eingeschrieben werden — kein "alle bereits eingeschrieben"
+  if (noRegularParticipants && !allowGuests && !isTeamEvent) {
     return (
       <p className="text-sm text-muted-foreground">
         Alle aktiven Teilnehmer sind bereits in diesem Wettbewerb eingeschrieben.
       </p>
     )
   }
+
+  const incompleteTeams = (eventTeams ?? []).filter((t) => t.members.length < (teamSize ?? 0))
 
   return (
     <form action={formAction} className="space-y-3">
@@ -147,12 +158,69 @@ export function EnrollParticipantForm({
           </div>
         )}
 
-        {(isGuest || !noRegularParticipants) && (
+        {(isGuest || !noRegularParticipants) && !isTeamEvent && (
           <Button type="submit" disabled={isPending} className="w-full sm:w-auto sm:shrink-0">
             {isPending ? "Lädt…" : "Einschreiben"}
           </Button>
         )}
       </div>
+
+      {/* Team-Auswahl */}
+      {isTeamEvent && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="newTeam"
+              checked={newTeam}
+              onCheckedChange={(checked: boolean | "indeterminate") => setNewTeam(checked === true)}
+              disabled={isPending}
+            />
+            <Label htmlFor="newTeam" className="cursor-pointer text-sm">
+              Neues Team erstellen
+            </Label>
+            <input type="hidden" name="newTeam" value={newTeam ? "true" : "false"} />
+          </div>
+
+          {!newTeam && (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="teamId" className="text-sm">
+                Team wählen
+              </Label>
+              <Select name="teamId" disabled={isPending}>
+                <SelectTrigger id="teamId" className="w-full">
+                  <SelectValue placeholder="Team wählen…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {incompleteTeams.length === 0 ? (
+                    <SelectItem value="_none" disabled>
+                      Keine unvollständigen Teams vorhanden
+                    </SelectItem>
+                  ) : (
+                    incompleteTeams.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        Team {t.teamNumber} ({t.members.length}/{teamSize})
+                        {t.members.length > 0 &&
+                          ` — ${t.members.map((m) => m.firstName).join(", ")}`}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              {fieldErrors?.teamId && (
+                <p className="text-xs text-destructive">{fieldErrors.teamId[0]}</p>
+              )}
+            </div>
+          )}
+
+          <Button
+            type="submit"
+            disabled={isPending || (!newTeam && incompleteTeams.length === 0)}
+            className="w-full sm:w-auto"
+          >
+            {isPending ? "Lädt…" : "Einschreiben"}
+          </Button>
+        </div>
+      )}
 
       {generalError && <p className="text-sm text-destructive">{generalError}</p>}
     </form>

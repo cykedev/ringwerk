@@ -6,6 +6,7 @@ interface Props {
   entries: EventRankedEntry[]
   scoringMode: string
   isMixed?: boolean
+  showTeam?: boolean
 }
 
 const SCORE_LABEL: Record<string, string> = {
@@ -18,7 +19,12 @@ const SCORE_LABEL: Record<string, string> = {
   TARGET_UNDER: "Abweichung",
 }
 
-export function EventRankingTable({ entries, scoringMode, isMixed = false }: Props) {
+export function EventRankingTable({
+  entries,
+  scoringMode,
+  isMixed = false,
+  showTeam = false,
+}: Props) {
   if (entries.length === 0) {
     return <p className="text-sm text-muted-foreground">Noch keine Ergebnisse erfasst.</p>
   }
@@ -54,6 +60,11 @@ export function EventRankingTable({ entries, scoringMode, isMixed = false }: Pro
                   {entry.isGuest && (
                     <Badge variant="outline" className="text-xs">
                       Gast
+                    </Badge>
+                  )}
+                  {showTeam && entry.teamNumber != null && (
+                    <Badge variant="secondary" className="text-xs">
+                      T{entry.teamNumber}
                     </Badge>
                   )}
                 </span>

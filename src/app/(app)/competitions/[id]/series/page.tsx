@@ -36,12 +36,19 @@ export default async function SeriesPage({ params }: Props) {
 
   const existingSeries = await db.series.findMany({
     where: { competitionId: id },
-    select: { id: true, participantId: true, rings: true, teiler: true },
+    select: {
+      id: true,
+      participantId: true,
+      competitionParticipantId: true,
+      rings: true,
+      teiler: true,
+    },
   })
 
+  // Key by competitionParticipantId (new data) with fallback to participantId (legacy data)
   const seriesMap = new Map(
     existingSeries.map((s) => [
-      s.participantId,
+      s.competitionParticipantId ?? s.participantId,
       { id: s.id, rings: s.rings.toNumber(), teiler: s.teiler.toNumber() },
     ])
   )
@@ -91,7 +98,7 @@ export default async function SeriesPage({ params }: Props) {
         <div className="rounded-lg border bg-card">
           <div className="divide-y">
             {activeParticipants.map((cp) => {
-              const series = seriesMap.get(cp.participant.id)
+              const series = seriesMap.get(cp.id) ?? seriesMap.get(cp.participant.id)
 
               return (
                 <div key={cp.id} className="flex items-center justify-between px-4 py-3">
@@ -105,6 +112,11 @@ export default async function SeriesPage({ params }: Props) {
                       {cp.isGuest && (
                         <Badge variant="outline" className="text-xs">
                           Gast
+                        </Badge>
+                      )}
+                      {cp.teamNumber != null && (
+                        <Badge variant="secondary" className="text-xs">
+                          Team {cp.teamNumber}
                         </Badge>
                       )}
                       {isMixed && cp.discipline && (
@@ -124,7 +136,7 @@ export default async function SeriesPage({ params }: Props) {
                   <div className="flex items-center gap-1">
                     <EventSeriesDialog
                       competitionId={id}
-                      participantId={cp.participant.id}
+                      competitionParticipantId={cp.id}
                       participantName={
                         cp.isGuest
                           ? cp.participant.firstName

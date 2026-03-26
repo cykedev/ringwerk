@@ -63,6 +63,11 @@ const BaseSchema = z
       .nullable()
       .optional()
       .transform((v) => (v && v.trim() !== "" ? parseInt(v, 10) : null)),
+    teamScoring: z
+      .enum(["SUM", "BEST"])
+      .nullable()
+      .optional()
+      .transform((v) => v || null),
     targetValue: z
       .string()
       .nullable()
@@ -152,6 +157,7 @@ export async function createCompetition(
     eventDate: formData.get("eventDate"),
     allowGuests: formData.get("allowGuests"),
     teamSize: formData.get("teamSize"),
+    teamScoring: formData.get("teamScoring"),
     targetValue: formData.get("targetValue"),
     targetValueType: formData.get("targetValueType"),
     minSeries: formData.get("minSeries"),
@@ -189,6 +195,7 @@ export async function createCompetition(
       eventDate: parseDate(parsed.data.eventDate),
       allowGuests: type === "EVENT" ? parsed.data.allowGuests : null,
       teamSize: type === "EVENT" ? (parsed.data.teamSize ?? null) : null,
+      teamScoring: type === "EVENT" ? (parsed.data.teamScoring ?? null) : null,
       targetValue: type === "EVENT" ? (parsed.data.targetValue ?? null) : null,
       targetValueType: type === "EVENT" ? (parsed.data.targetValueType ?? null) : null,
       minSeries: type === "SEASON" ? (parsed.data.minSeries ?? null) : null,
@@ -241,6 +248,7 @@ export async function updateCompetition(
     eventDate: formData.get("eventDate"),
     allowGuests: formData.get("allowGuests"),
     teamSize: formData.get("teamSize"),
+    teamScoring: formData.get("teamScoring"),
     targetValue: formData.get("targetValue"),
     targetValueType: formData.get("targetValueType"),
     minSeries: formData.get("minSeries"),
@@ -269,6 +277,7 @@ export async function updateCompetition(
       eventDate: type === "EVENT" ? parseDate(parsed.data.eventDate) : undefined,
       allowGuests: type === "EVENT" ? parsed.data.allowGuests : undefined,
       teamSize: type === "EVENT" ? (parsed.data.teamSize ?? null) : undefined,
+      teamScoring: type === "EVENT" ? (parsed.data.teamScoring ?? null) : undefined,
       targetValue: type === "EVENT" ? (parsed.data.targetValue ?? null) : undefined,
       targetValueType: type === "EVENT" ? (parsed.data.targetValueType ?? null) : undefined,
       minSeries: type === "SEASON" ? (parsed.data.minSeries ?? null) : undefined,
@@ -434,9 +443,10 @@ export async function forceDeleteCompetition(
       // 4. Event/Saison-Serien (via competitionId)
       await tx.series.deleteMany({ where: { competitionId } })
 
-      // 5. AuditLog + Teilnehmer + Wettbewerb
+      // 5. AuditLog + Teilnehmer (CPs halten FK auf EventTeam → zuerst CPs löschen) + Teams + Wettbewerb
       await tx.auditLog.deleteMany({ where: { competitionId } })
       await tx.competitionParticipant.deleteMany({ where: { competitionId } })
+      await tx.eventTeam.deleteMany({ where: { competitionId } })
       await tx.competition.delete({ where: { id: competitionId } })
     })
   } catch (error) {

@@ -4,6 +4,7 @@ import type {
   ScoringMode,
   ScoringType,
   TargetValueType,
+  TeamScoring,
 } from "@/generated/prisma/client"
 
 export type CompetitionListItem = {
@@ -24,6 +25,8 @@ export type CompetitionListItem = {
   // Event
   eventDate: Date | null
   allowGuests: boolean | null
+  teamSize: number | null
+  teamScoring: TeamScoring | null
   // Saison
   seasonStart: Date | null
   seasonEnd: Date | null
@@ -60,6 +63,7 @@ export type CompetitionDetail = {
   eventDate: Date | null
   allowGuests: boolean | null
   teamSize: number | null
+  teamScoring: TeamScoring | null
   targetValue: number | null
   targetValueType: TargetValueType | null
   // Saison

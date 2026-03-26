@@ -49,13 +49,14 @@
 
 #### Event-spezifisch (EVENT)
 
-| Feld            | Typ              | Default | Beschreibung                                  |
-| --------------- | ---------------- | ------- | --------------------------------------------- |
-| eventDate       | DateTime?        | null    | Veranstaltungsdatum                           |
-| allowGuests     | Boolean?         | false   | Gastteilnehmer erlaubt                        |
-| teamSize        | Int?             | null    | null = Einzel; 2+ = Teamgroesse               |
-| targetValue     | Decimal?         | null    | Zielwert (nur TARGET_ABSOLUTE / TARGET_UNDER) |
-| targetValueType | TargetValueType? | null    | TEILER, RINGS oder RINGS_DECIMAL              |
+| Feld            | Typ              | Default | Beschreibung                                              |
+| --------------- | ---------------- | ------- | --------------------------------------------------------- |
+| eventDate       | DateTime?        | null    | Veranstaltungsdatum                                       |
+| allowGuests     | Boolean?         | false   | Gastteilnehmer erlaubt                                    |
+| teamSize        | Int?             | null    | null = Einzel; 2+ = Teamgrösse (Anzahl Mitglieder/Team)  |
+| teamScoring     | TeamScoring?     | null    | SUM = Summe; BEST = Bestes; nur wenn teamSize >= 2        |
+| targetValue     | Decimal?         | null    | Zielwert (nur TARGET_ABSOLUTE / TARGET_UNDER)             |
+| targetValueType | TargetValueType? | null    | TEILER, RINGS oder RINGS_DECIMAL                          |
 
 #### Saison-spezifisch (SEASON)
 
@@ -72,7 +73,19 @@
 - startNumber: Int?
 - status: ACTIVE | WITHDRAWN
 - **isGuest: Boolean (default false)** — Gastteilnehmer bei Events; wird in der Event-Rangliste als "Gast"-Badge angezeigt
+- **eventTeamId: String?** — Team-Zugehörigkeit bei Team-Events (FK auf EventTeam)
 - withdrawalReason, withdrawnAt, withdrawalDate
+
+**Doppel-Einschreibung:** Bei Team-Events kann ein Teilnehmer mehrere CP-Records haben (je einen pro Team). Eindeutigkeit wird über zwei partielle Unique-Indizes erzwungen: `cp_unique_individual` (WHERE eventTeamId IS NULL) und `cp_unique_team` (WHERE eventTeamId IS NOT NULL).
+
+### Team im Event (EventTeam)
+
+- **id: String** — eindeutige Team-ID
+- **competitionId: String** — Wettbewerb (FK)
+- **teamNumber: Int** — fortlaufende Nummer (1, 2, 3, …) innerhalb des Wettbewerbs
+- **members: CompetitionParticipant[]** — Teilnehmer dieses Teams
+
+**Design:** Nur für `type=EVENT` mit `teamSize >= 2`. Teams haben keine Bezeichnung, nur Nummern. Teams entstehen beim Einschreiben und werden automatisch gelöscht wenn alle Mitglieder abgemeldet werden.
 
 ### Teilnehmer (Participant)
 
@@ -86,7 +99,7 @@
 
 Universelle Ergebniseinheit für alle Wettbewerbstypen:
 
-- **competitionParticipantId: String (FK)** — Zuordnung zu Teilnehmer im Wettbewerb
+- **competitionParticipantId: String? (FK)** — Zuordnung zur konkreten Einschreibung (Pflicht für neue Serien bei Events; null nur bei Legacy-Serien). Disambiguiert Doppel-Enrollment bei Team-Events.
 - **disciplineId: String (FK)** — geschossene Disziplin (wichtig bei gemischten Wettbewerben)
 - **rings: Decimal** — Gesamtringe der Serie
 - **teiler: Decimal** — bester Teiler der Serie
@@ -134,6 +147,13 @@ TEILER           – Teiler * Faktor; niedrigster gewinnt
 DECIMAL_REST     – Nachkommastelle der Ringe summiert; hoechster gewinnt
 TARGET_ABSOLUTE  – Abweichung vom Zielwert; geringste gewinnt (nur EVENT)
 TARGET_UNDER     – ≤ Zielwert bevorzugt, dann Abweichung; geringste gewinnt (nur EVENT)
+```
+
+### TeamScoring (nur bei Event mit teamSize >= 2)
+
+```
+SUM  – Teamergebnis = Summe der Einzelergebnisse aller Mitglieder
+BEST – Teamergebnis = bestes Einzelergebnis im Team
 ```
 
 ### TargetValueType (NEU, nur bei TARGET-Modi)
@@ -295,7 +315,8 @@ Nur Teilnehmer mit ≥ minSeries Serien werden gewertet.
 | Ringteiler                  | MaxRinge − Ringe + (Teiler \* Faktor); je kleiner, desto besser                                                |
 | Wettbewerb (Competition)    | Oberbegriff für Liga, Event und Saison                                                                         |
 | Liga (LEAGUE)               | Rundenbasierter Wettbewerb mit Spielplan, Tabelle, Playoffs                                                    |
-| Event (EVENT)               | Einmaliges Schießen (z.B. Kranzl); Rangliste aus einer Serie pro Teilnehmer                                    |
+| Event (EVENT)               | Einmaliges Schießen (z.B. Kranzl); Rangliste aus einer Serie pro Teilnehmer; optional mit Team-Wertung         |
+| Team im Event (EventTeam)   | Mehrere Schützen als Team; Teamergebnis = Summe oder Bestes der Mitglieder; kein Teamname, nur Nummer          |
 | Saison (SEASON)             | Langzeit-Wettbewerb; viele Serien über Monate, beste Einzelserien zählen                                       |
 | Wertungsmodus (ScoringMode) | Bestimmt wie Ergebnisse verglichen/gereiht werden (7 Modi)                                                     |
 | Zielwert                    | Vorgabewert bei TARGET-Modi; Teilnehmer schießen möglichst nah daran                                           |

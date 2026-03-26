@@ -23,7 +23,7 @@ Project context: read `docs.projectBrief` from pipeline.json
 
 1. **NEVER create a git commit.** Not under any circumstances. The user commits manually after reviewing and testing. Not even "just a quick one". Never.
 2. **Commit messages MUST be displayed as a fenced code block** — so the user can copy them easily.
-3. **Finalize is mandatory** — if the user gives feedback or asks questions mid-implementation, incorporate them and *still* complete every Finalize step. Nothing may be left pending.
+3. **Finalize is mandatory** — if the user gives feedback or asks questions mid-implementation, incorporate them and _still_ complete every Finalize step. Nothing may be left pending.
 4. **todo.md must be cleaned up** — at the end of every task, completed items must be moved to the `## Abgeschlossen` section in `.claude/tasks/todo.md`. Never leave the file with stale open checkboxes after a completed task.
 
 ---

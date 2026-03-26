@@ -7,16 +7,31 @@ const MAX_RINGS: Record<ScoringType, number> = { WHOLE: 100, DECIMAL: 109 }
 
 export type EventRankedEntry = {
   rank: number
+  seriesId: string
+  competitionParticipantId: string | null
   participantId: string
   participantName: string
   disciplineName: string
   isGuest: boolean
+  teamNumber: number | null
   rings: number
   teiler: number
   correctedTeiler: number
   ringteiler: number
   score: number
-  seriesId: string
+}
+
+export type EventTeamRankedEntry = {
+  rank: number
+  teamNumber: number
+  teamScore: number
+  members: Array<{
+    participantId: string
+    participantName: string
+    rings: number
+    teiler: number
+    score: number
+  }>
 }
 
 type EventConfig = {
@@ -28,7 +43,8 @@ type EventConfig = {
 
 /**
  * Berechnet die Rangliste für ein Event.
- * Jede Series entspricht einem Teilnehmer (eine Serie pro Teilnehmer).
+ * Jede Series entspricht einer Einschreibung (eine Serie pro CompetitionParticipant).
+ * Bei Team-Events mit Double-Enrollment identifiziert seriesId jeden Eintrag eindeutig.
  */
 export function rankEventParticipants(
   series: EventSeriesItem[],
@@ -38,7 +54,6 @@ export function rankEventParticipants(
 
   const entries = series.map((s) => {
     const faktor = s.discipline.teilerFaktor
-    // scoringType aus der Teilnehmer-Disziplin ableiten — fallback auf WHOLE
     const scoringType: ScoringType = config.discipline?.scoringType ?? "WHOLE"
     const maxRings = MAX_RINGS[scoringType]
     const correctedTeiler = calculateCorrectedTeiler(s.teiler, faktor)
@@ -56,28 +71,102 @@ export function rankEventParticipants(
     })
 
     return {
+      seriesId: s.id,
+      competitionParticipantId: s.competitionParticipantId,
       participantId: s.participantId,
       participantName: `${s.participant.firstName} ${s.participant.lastName}`,
       disciplineName: s.discipline.name,
       isGuest: s.isGuest,
+      teamNumber: s.teamNumber,
       rings: s.rings,
       teiler: s.teiler,
       correctedTeiler,
       ringteiler: s.ringteiler,
       score,
-      seriesId: s.id,
     }
   })
 
+  // Use seriesId as identity key to correctly handle double enrollment
   const ranked = rankByScore(
-    entries.map((e) => ({ participantId: e.participantId, score: e.score })),
+    entries.map((e) => ({ participantId: e.seriesId, score: e.score })),
     config.scoringMode
   )
 
   return ranked.map((r) => {
-    const entry = entries.find((e) => e.participantId === r.participantId)!
+    const entry = entries.find((e) => e.seriesId === r.participantId)!
     return { ...entry, rank: r.rank }
   })
+}
+
+/**
+ * Berechnet die Team-Rangliste für ein Team-Event.
+ * teamScoring: "SUM" = Summe aller Teamnmitglieder-Scores, "BEST" = bester Score im Team.
+ * Nur Teams mit mindestens einer gemeldeten Serie werden gerankt.
+ */
+export function rankEventTeams(
+  individualRanking: EventRankedEntry[],
+  teamScoring: "SUM" | "BEST",
+  scoringMode: ScoringMode
+): EventTeamRankedEntry[] {
+  // Gruppe nach Team
+  const teamMap = new Map<number, { members: EventRankedEntry[] }>()
+
+  for (const entry of individualRanking) {
+    if (entry.teamNumber === null) continue
+    const existing = teamMap.get(entry.teamNumber) ?? { members: [] }
+    existing.members.push(entry)
+    teamMap.set(entry.teamNumber, existing)
+  }
+
+  if (teamMap.size === 0) return []
+
+  const teamEntries = Array.from(teamMap.entries()).map(([teamNumber, { members }]) => {
+    const teamScore = computeTeamScore(
+      members.map((m) => m.score),
+      teamScoring,
+      scoringMode
+    )
+    return {
+      teamNumber,
+      teamScore,
+      members: members.map((m) => ({
+        participantId: m.participantId,
+        participantName: m.participantName,
+        rings: m.rings,
+        teiler: m.teiler,
+        score: m.score,
+      })),
+    }
+  })
+
+  const ranked = rankByScore(
+    teamEntries.map((t) => ({ participantId: String(t.teamNumber), score: t.teamScore })),
+    scoringMode
+  )
+
+  return ranked.map((r) => {
+    const entry = teamEntries.find((t) => String(t.teamNumber) === r.participantId)!
+    return { ...entry, rank: r.rank }
+  })
+}
+
+/**
+ * Berechnet den Team-Score aus Einzel-Scores.
+ * SUM: Summe aller Scores (bei asc-Modi addieren sich die Teiler — kleinerer Gesamtteiler gewinnt).
+ * BEST: Bester Score im Team (niedrigster Teiler / höchste Ringe).
+ */
+function computeTeamScore(
+  scores: number[],
+  teamScoring: "SUM" | "BEST",
+  scoringMode: ScoringMode
+): number {
+  if (scores.length === 0) return 0
+  if (teamScoring === "SUM") {
+    return scores.reduce((a, b) => a + b, 0)
+  }
+  // BEST: asc-Modi → minimum, desc-Modi → maximum
+  const ascModes: ScoringMode[] = ["RINGTEILER", "TEILER", "TARGET_ABSOLUTE", "TARGET_UNDER"]
+  return ascModes.includes(scoringMode) ? Math.min(...scores) : Math.max(...scores)
 }
 
 /**

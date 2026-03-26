@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { rankEventParticipants } from "./rankEventParticipants"
+import { rankEventParticipants, rankEventTeams } from "./rankEventParticipants"
 import type { EventSeriesItem } from "@/lib/series/types"
 
 function makeSeries(
@@ -11,8 +11,9 @@ function makeSeries(
   }
 ): EventSeriesItem {
   return {
-    id: overrides.participantId + "-series",
+    id: overrides.id ?? overrides.participantId + "-series",
     participantId: overrides.participantId,
+    competitionParticipantId: overrides.competitionParticipantId ?? null,
     disciplineId: overrides.disciplineId ?? "disc-1",
     discipline: overrides.discipline ?? { name: "LG", teilerFaktor: 1.0 },
     participant: overrides.participant ?? {
@@ -21,6 +22,7 @@ function makeSeries(
       lastName: "Müller",
     },
     isGuest: overrides.isGuest ?? false,
+    teamNumber: overrides.teamNumber ?? null,
     rings: overrides.rings,
     teiler: overrides.teiler,
     ringteiler: overrides.ringteiler ?? 100 - overrides.rings + overrides.teiler * 1.0,
@@ -162,5 +164,124 @@ describe("rankEventParticipants", () => {
     ]
     const result = rankEventParticipants(series, BASE_CONFIG)
     expect(result[0].participantName).toBe("Hans Gruber")
+  })
+
+  it("Double-Enrollment: gleicher Teilnehmer in zwei Teams wird separat gerankt", () => {
+    // Müller schießt zweimal — einmal für Team 1 (gut), einmal für Team 2 (schwächer)
+    const series = [
+      makeSeries({
+        id: "cp1-series",
+        participantId: "mueller",
+        competitionParticipantId: "cp-1",
+        teamNumber: 1,
+        rings: 95,
+        teiler: 5.0,
+        ringteiler: 10.0,
+      }),
+      makeSeries({
+        id: "cp2-series",
+        participantId: "mueller",
+        competitionParticipantId: "cp-2",
+        teamNumber: 2,
+        rings: 88,
+        teiler: 12.0,
+        ringteiler: 24.0,
+      }),
+      makeSeries({
+        participantId: "schmidt",
+        competitionParticipantId: "cp-3",
+        teamNumber: 1,
+        rings: 91,
+        teiler: 8.0,
+        ringteiler: 17.0,
+      }),
+    ]
+    const result = rankEventParticipants(series, BASE_CONFIG)
+    expect(result).toHaveLength(3)
+    // Alle drei Einträge landen in der Rangliste
+    const muellerEntries = result.filter((r) => r.participantId === "mueller")
+    expect(muellerEntries).toHaveLength(2)
+    // Bestes Müller-Ergebnis auf Rang 1
+    expect(result[0].seriesId).toBe("cp1-series")
+    expect(result[0].rank).toBe(1)
+  })
+})
+
+describe("rankEventTeams", () => {
+  const makeRankedEntry = (
+    teamNumber: number,
+    participantId: string,
+    score: number
+  ): import("./rankEventParticipants").EventRankedEntry => ({
+    rank: 1,
+    seriesId: participantId + "-series",
+    competitionParticipantId: null,
+    participantId,
+    participantName: participantId,
+    disciplineName: "LG",
+    isGuest: false,
+    teamNumber,
+    rings: 90,
+    teiler: score, // score für einfaches Testen
+    correctedTeiler: score,
+    ringteiler: score,
+    score,
+  })
+
+  it("leere Liste wenn keine Serien mit teamNumber", () => {
+    const entries = [makeRankedEntry(null as unknown as number, "A", 10)]
+    // teamNumber null → kein Team
+    const result = rankEventTeams(entries, "SUM", "RINGTEILER")
+    expect(result).toEqual([])
+  })
+
+  it("SUM: Teamscore ist Summe der Einzel-Scores", () => {
+    const entries = [
+      makeRankedEntry(1, "A", 10), // Team 1: 10+15 = 25
+      makeRankedEntry(1, "B", 15),
+      makeRankedEntry(2, "C", 8), // Team 2: 8+9 = 17
+      makeRankedEntry(2, "D", 9),
+    ]
+    const result = rankEventTeams(entries, "SUM", "RINGTEILER")
+    expect(result).toHaveLength(2)
+    // RINGTEILER ist asc → niedrigerer Score gewinnt
+    expect(result[0].teamNumber).toBe(2) // Score 17
+    expect(result[1].teamNumber).toBe(1) // Score 25
+    expect(result[0].rank).toBe(1)
+    expect(result[0].teamScore).toBe(17)
+  })
+
+  it("BEST: Teamscore ist bester (niedrigster) Einzel-Score bei asc-Modus", () => {
+    const entries = [
+      makeRankedEntry(1, "A", 10), // Team 1 best: 10
+      makeRankedEntry(1, "B", 20),
+      makeRankedEntry(2, "C", 8), // Team 2 best: 8
+      makeRankedEntry(2, "D", 15),
+    ]
+    const result = rankEventTeams(entries, "BEST", "RINGTEILER")
+    expect(result[0].teamNumber).toBe(2) // best score 8 < 10
+    expect(result[0].teamScore).toBe(8)
+    expect(result[1].teamScore).toBe(10)
+  })
+
+  it("BEST: bei RINGS-Modus (desc) ist höchste Ringe das Beste", () => {
+    const entries = [
+      makeRankedEntry(1, "A", 95), // Team 1 best: 95
+      makeRankedEntry(1, "B", 80),
+      makeRankedEntry(2, "C", 98), // Team 2 best: 98
+      makeRankedEntry(2, "D", 70),
+    ]
+    const result = rankEventTeams(entries, "BEST", "RINGS")
+    expect(result[0].teamNumber).toBe(2) // best score 98 > 95
+    expect(result[0].teamScore).toBe(98)
+  })
+
+  it("Team-Mitglieder korrekt im Ergebnis", () => {
+    const entries = [makeRankedEntry(1, "mueller", 10), makeRankedEntry(1, "schmidt", 12)]
+    const result = rankEventTeams(entries, "SUM", "RINGTEILER")
+    expect(result[0].members).toHaveLength(2)
+    const names = result[0].members.map((m) => m.participantId)
+    expect(names).toContain("mueller")
+    expect(names).toContain("schmidt")
   })
 })

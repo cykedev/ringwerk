@@ -347,6 +347,7 @@ describe("forceDeleteCompetition", () => {
     playoffDuel: { findMany: vi.fn(), deleteMany: vi.fn() },
     playoffDuelResult: { deleteMany: vi.fn() },
     auditLog: { deleteMany: vi.fn() },
+    eventTeam: { deleteMany: vi.fn() },
     competition: { delete: vi.fn() },
   }
 
@@ -362,6 +363,7 @@ describe("forceDeleteCompetition", () => {
     mockTx.series.deleteMany.mockResolvedValue({ count: 0 })
     mockTx.matchup.deleteMany.mockResolvedValue({ count: 0 })
     mockTx.auditLog.deleteMany.mockResolvedValue({ count: 0 })
+    mockTx.eventTeam.deleteMany.mockResolvedValue({ count: 0 })
     mockTx.competitionParticipant.deleteMany.mockResolvedValue({ count: 0 })
     mockTx.competition.delete.mockResolvedValue({})
     transactionMock.mockImplementation(async (fn: (tx: typeof mockTx) => Promise<void>) =>
