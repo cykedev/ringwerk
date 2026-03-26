@@ -530,3 +530,55 @@ export async function createLeague(
 // FALSCH — funktioniert nicht mit useActionState
 export async function createLeague(formData: FormData): Promise<ActionResult>
 ```
+
+---
+
+## Aus Lernlog übernommen
+
+<!-- Zuletzt konsolidiert: 2026-03-26 -->
+
+### Migration & Datenbankschema
+
+- **Idempotente Migrations-SQL**: Immer `DO $$ BEGIN CREATE TYPE ...; EXCEPTION WHEN duplicate_object THEN null; END $$;` + `IF NOT EXISTS` für alle DDL-Statements schreiben. Verhindert Failed-Migration-States bei Teilanwendungen oder Wiederholungen.
+- **Enum-Typ-Änderung in drei Schritten**: (1) `ALTER TABLE ... ALTER COLUMN ... DROP DEFAULT`, (2) `ALTER TYPE ... ADD VALUE` / `SET DATA TYPE`, (3) `ALTER TABLE ... ALTER COLUMN ... SET DEFAULT`. Bestehende Defaults blockieren `ALTER TYPE`.
+- **Manuelle Migrationen mit Future-Timestamp anlegen**: Timestamp > aktuell wählen (z.B. `+1 Tag`), damit nach anschliessendem `prisma migrate dev` die Anwendungsreihenfolge konsistent bleibt.
+- **Unique Indexes umbenennen mit `ALTER INDEX`**: Prisma erzeugt Unique-Constraints als Indexes (`CREATE UNIQUE INDEX`). Umbenennen mit `ALTER INDEX ... RENAME TO`, nie mit `ALTER TABLE ... RENAME CONSTRAINT`.
+- **Migrationen NIE nachträglich editieren**: Bereits angewendete Migration → Drift-Error bei erneutem `migrate dev`. Stattdessen neue Migration anlegen.
+- **`npx prisma generate` nach jeder Migration**: `prisma migrate dev` führt `prisma generate` NICHT automatisch aus. Vor Typecheck oder Build immer manuell aufrufen.
+- **Partielle Unique-Indizes für nullable FK-Felder**: Wenn ein nullable FK die Eindeutigkeitsbedingung kontrolliert, partielle Indizes statt globaler `@@unique`-Constraints verwenden (`WHERE col IS NULL` vs. `WHERE col IS NOT NULL`). Globale Unique-Indexes behandeln NULLs als distinct und erlauben dadurch Duplikate.
+
+### Prisma-Queries
+
+- **Nested-Select: exakten Relationsnamen aus schema.prisma ablesen**: Der Feldname auf dem Model (nicht der Typ) ist der korrekte Select-Key. `leagueParticipants` ≠ `LeagueParticipant[]`.
+- **`onDelete: SetNull` nur auf nullable Felder**: Nur `String?` mit `onDelete: SetNull` kombinieren. Auf `String` (non-nullable) kommt FK-Constraint-Verletzung trotzdem.
+- **Field-Rename: Nested Selects in verwandten Queries prüfen**: Beim Umbenennen nicht nur direkte Nutzung durchsuchen — ein Feld kann in vielen Kontexten genested sein (League → Participant, Matchup → Participant, etc.).
+- **Test-Mocks nach Prisma-Renames aktualisieren**: Auch `count`-Mocks und FormData-Mocks mit alten Feldnamen aktualisieren — nicht nur Production-Code.
+- **Aggregates (`_count`, `_sum`) in den Haupt-Query**: Nicht separat fetchen. Aggregates im Select kosten minimal, sparen aber einen DB Round-Trip.
+- **`upsert` Pattern für Startup-Daten**: `where` mit deterministischem Schlüssel, `create` mit vollständigen Feldern, `update` nur mit änderbaren Feldern — idempotent ausführbar.
+- **Prisma-Relation umbenennen: alle select/include-Queries aktualisieren**: Application-Interface-Felder können sich unterscheiden — nur der Prisma-Query-Key muss korrekt sein.
+- **Neue Relationsfelder vor Core-Logic definieren**: Schema-Felder anlegen und migrieren, bevor Queries + Actions implementiert werden. Umgekehrte Reihenfolge zwingt zu manuellen Migrations-Workarounds.
+- **`db push` nur für schnelle Exploration**: Nie für Dev-Persistenz. Wenn Drift auftritt: `prisma migrate reset --force`, dann `migrate dev` neu aufsetzen.
+- **`$transaction` nur bei mehreren atomaren Operationen**: Einfache Einzellöschungen/-updates nie in `$transaction` wrappen — erhöht Komplexität ohne Nutzen.
+
+### Zod & FormData
+
+- **Optionale FormData-Felder**: `z.string().nullable().optional()` verwenden — `FormData.get()` liefert `null` für fehlende Felder.
+- **Zod: `.transform()` statt `.pipe()` für optionale Zahlen**: `.pipe()` nach `.transform()` kann Typ-Kollisionen verursachen.
+- **Zod-Verarbeitungsreihenfolge**: `z.preprocess()` (Sentinel → null) → `.enum()` → `.nullable()` → `.transform()`. `preprocess` läuft vor Validierung, `transform` danach.
+- **shadcn Select Sentinel-Wert**: `<SelectItem value="none">` + `.preprocess((v) => (v === "none" || !v ? null : v), z.enum([...]).nullable())`. Nie `value=""` — verursacht Runtime-Error.
+
+### TypeScript & React
+
+- **Typen nie aus `"use server"`-Dateien re-exportieren**: Verursacht Turbopack Build-Error. Typen in eigene `types.ts` auslagern, direkt von dort importieren.
+- **Server-Actions mit Rückgabewert generisch typisieren**: `ActionResult<{ id: string }>` statt implizit `void`, wenn das Frontend Daten für Redirect/State-Update braucht.
+- **Nullable-Feld-Änderung: Props-Cascade prüfen**: Bei Required → Nullable (`String` → `String?`): alle `types.ts` und alle Komponenten-Props die diesen Typ konsumieren aktualisieren.
+- **Dialog auto-close mit `useEffect`**: `useEffect(() => { if (state?.success) setOpen(false) }, [state])` — nie im render body oder mit `useRef`-Guard.
+- **Variablen ausserhalb `$transaction`-Callback deklarieren**: Variablen, die in der Transaktion UND danach gebraucht werden, mit `let` ausserhalb deklarieren, innerhalb zuweisen, ausserhalb verwenden (z.B. für Audit-Logs).
+- **Komponenten nie inside render definieren**: ESLint `react-hooks/static-components`. Komponente ausserhalb verschieben, State als Props durchreichen.
+- **HTML date input: ISO-Format für `defaultValue`**: `date.toISOString().slice(0, 10)`. `formatDateOnly()` ist für Display, nie für Form-`defaultValue`.
+- **Prisma `@default` gilt nur für neue Datensätze**: Bei bestehenden Zeilen keine Defaults rückwirkend gesetzt. Migrations-Strategie vorher klären: nullable + Backfill-Query vs. non-nullable mit Migration-`data`-Block.
+
+### Tooling
+
+- **Prettier nach neuen Dateien**: Nach jeder neuen Datei lokal `npx prettier --write <datei>` ausführen, bevor CI-Check läuft.
+- **`<fieldset disabled>` für Form-Sektionen**: Deaktiviert alle enthaltenen Inputs, Labels und Buttons gleichzeitig — statt einzelne Inputs manuell zu disablen.

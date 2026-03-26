@@ -229,3 +229,28 @@ Page-Header-Pattern:
   </Button>
 </div>
 ```
+
+---
+
+## Aus Lernlog übernommen
+
+<!-- Zuletzt konsolidiert: 2026-03-26 -->
+
+### Layout & Grid
+
+- **CSS-Grid + `max-w-*` nicht kombinieren bei single-item-Grids**: `sm:grid-cols-2` und `max-w-*` nie gleichzeitig auf demselben Container. Item bekommt nur halbe max-width. Bei single-item: `max-w-* mx-auto` ohne Grid.
+- **shadcn Card Padding auf Mobile überschreiben**: `CardHeader`/`CardContent` haben `px-6` als Default — für Mobile explizit `px-4 sm:px-6` setzen.
+- **Responsive Button (Icon + Label)**: `px-1.5 sm:px-2` + `<Icon className="h-3 w-3 sm:mr-1" />` + `<span className="hidden sm:inline">Label</span>` für Buttons die auf Mobile Icon-only zeigen.
+- **Tabellenspalten auf Mobile ausblenden**: `hidden sm:table-cell` statt horizontales Scrollen. Padding: `px-2 sm:px-4` für enge Viewports.
+
+### Interaktion
+
+- **Kein `prompt()`/`confirm()`/`alert()` in async-Callbacks**: Wird auf iOS Safari geblockt. Immer shadcn `Dialog` (Formulare) oder `AlertDialog` (Bestätigung) verwenden.
+- **SVG-Icon als einziger Zelleninhalt**: In `<span className="inline-flex items-center justify-center">` wrappen für zuverlässige Zentrierung in `<td>`.
+- **Spacing-Verhältnis für gestapelte Karten**: `cardHeight × 0.5 = gap` als Faustregel. Bei 80px Kartenhöhe mindestens 40–48px Gap für optisches Gleichgewicht.
+
+### PDF-Rendering (react-pdf)
+
+- **`wrap={false}` für Zeilen**: `<View wrap={false}>` erzwingt Seitenumbruch statt Element zu splitten — verhindert dass Name auf einer Seite, Ergebnis auf der nächsten landet.
+- **PDF: eigene Spacing-Konstanten**: A4-Querformat (769pt × 546pt) hat deutlich tightere Constraints als Bildschirm. PDF-Module mit separaten kompakten Konstanten versehen — nie Web-Konstanten teilen.
+- **react-pdf Union-Types: kein Narrowing per `"in"`-Guard**: react-pdf `<Text>` benötigt konkrete Typ-Constraints zur Compile-Zeit. Statt `if ("disc" in W)` direkt auf die spezifische Konstante zugreifen (`W_MIXED.disc` statt `W.disc`).
