@@ -305,13 +305,13 @@ export const styles = StyleSheet.create({
   // ── Rang-Abzeichen ─────────────────────────────────────────────────────────
   rankBadge: {
     width: 18,
-    height: 18,
-    borderRadius: 9,
+    borderRadius: 3,
+    paddingVertical: 1,
     alignItems: "center",
     justifyContent: "center",
   },
   rankBadgeText: {
-    fontSize: 9,
+    fontSize: 8,
     fontFamily: "Helvetica-Bold",
     color: "#ffffff",
   },

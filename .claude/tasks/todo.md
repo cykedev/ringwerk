@@ -4,53 +4,6 @@
 
 ## Aktuell
 
-### Rang-Badge-Konsistenz — GEPLANT [2026-03-25]
-
-**Ziel:** Einheitlicher Rang-Badge-Style (rechteckige Pill, gold/silber/bronze/grau) in allen Tabellen und PDFs der App. Liga-Tabelle hat aktuell runde Badges, Event-Rangliste hat gar keine.
-
-**Klassifikation:** MAINTENANCE · SMALL
-
-**Wichtige Einschränkung:** Event-Tabelle bekommt **nur** den Gesamtrang-Badge in der Pl.-Spalte — **keine** per-Metrik-Badges, da der Score fix nach Regelset bestimmt wird.
-
----
-
-#### Schritt 1: Gemeinsame RankBadge-Komponente extrahieren
-
-- [ ] `src/components/ui/rank-badge.tsx` — Neue gemeinsame Komponente
-  - Props: `rank: number`
-  - Style: rechteckige Pill, feste Breite `w-5`, `rounded`, `tabular-nums`
-  - Farben: gold (1), silber (2), bronze/orange (3), muted (4+)
-  - `SeasonStandingsTable.tsx` — lokale `RankBadge`-Definition entfernen, neue Komponente importieren
-
-#### Schritt 2: StandingsTable (Liga-Tabelle)
-
-- [ ] `src/components/app/standings/StandingsTable.tsx`
-  - Runde `rounded-full`-Badges durch gemeinsame `RankBadge`-Komponente ersetzen
-  - Ausrichtung: Badge links in der Pl.-Spalte (wie bisher), oder Name-Zelle (wie SeasonStandingsTable)
-  - Zellen-Layout angleichen (flex, tabular-nums)
-
-#### Schritt 3: EventRankingTable (Event-Rangliste)
-
-- [ ] `src/components/app/series/EventRankingTable.tsx`
-  - Plain-Text-Rang in der Pl.-Spalte durch gemeinsame `RankBadge`-Komponente ersetzen
-  - **Keine** per-Metrik-Badges (Ringe, Teiler, Score — sind fix pro Regelset)
-  - Alignment: wie StandingsTable
-
-#### Schritt 4: EventRankingPdf (PDF Event-Rangliste)
-
-- [ ] `src/lib/pdf/EventRankingPdf.tsx`
-  - Muted-Farbe für Ränge 4+ angleichen: `#374151` → `#9ca3af` (wie SeasonStandingsPdf)
-  - Badge-Layout prüfen (bereits rechteckig, nur Farbkorrektur)
-
-#### Schritt 5: Qualität
-
-- [ ] Prettier auf alle geänderten Dateien
-- [ ] `/check` — alle Gates grün
-- [ ] Preview: Liga-Tabelle + Event-Rangliste + PDF
-
----
-
-
 ### Ringwerk-Umbau: Uebersicht
 
 Iterativer Umbau von "1-gegen-1 Liga-App" zu "Ringwerk" — universelle Wettbewerbs-Plattform.
@@ -375,6 +328,14 @@ Phase 6 implementiert die Logik und UI dafuer.
 ---
 
 ## Abgeschlossen
+
+### [2026-03-26] Rang-Badge-Konsistenz
+
+- Neue gemeinsame Komponente `src/components/ui/rank-badge.tsx` (rechteckige Pill, gold/silber/bronze/muted)
+- `SeasonStandingsTable`, `StandingsTable`, `EventRankingTable` — alle nutzen jetzt `RankBadge`
+- PDFs vereinheitlicht: `styles.ts` `rankBadge` von Kreis (`borderRadius: 9`) auf Pill (`borderRadius: 3`), Rang-4+-Farbe in `EventRankingPdf` + `SchedulePdf` von `#374151` → `#9ca3af`
+
+---
 
 ### [2026-03-25] PDF: Event-Rangliste & Saison-Standings + Badge-Verfeinerungen
 

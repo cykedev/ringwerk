@@ -1,5 +1,6 @@
 import type { EventRankedEntry } from "@/lib/scoring/rankEventParticipants"
 import { Badge } from "@/components/ui/badge"
+import { RankBadge } from "@/components/ui/rank-badge"
 
 interface Props {
   entries: EventRankedEntry[]
@@ -44,7 +45,9 @@ export function EventRankingTable({ entries, scoringMode, isMixed = false }: Pro
         <tbody className="divide-y">
           {entries.map((entry) => (
             <tr key={entry.seriesId} className="hover:bg-muted/30 transition-colors">
-              <td className="px-3 py-2 text-muted-foreground tabular-nums">{entry.rank}</td>
+              <td className="px-3 py-2">
+                <RankBadge rank={entry.rank} />
+              </td>
               <td className="px-3 py-2 font-medium">
                 <span className="flex items-center gap-1.5 flex-wrap">
                   {entry.participantName}

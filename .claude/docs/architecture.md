@@ -121,6 +121,7 @@ src/
   components/
     ui/
       checkbox.tsx            ← shadcn/ui Checkbox
+      rank-badge.tsx          ← gemeinsamer RankBadge (gold/silber/bronze/muted Pill, Props: rank: number)
     app/
       competitions/           ← Wettbewerbs-spezifische Komponenten, type badges
       competitionParticipants/ ← Einschreiben + Rückzug, isGuest/Disziplin-Support

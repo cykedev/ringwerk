@@ -1,33 +1,14 @@
 import type { StandingRow } from "@/lib/standings/queries"
+import { RankBadge } from "@/components/ui/rank-badge"
 
 interface Props {
   rows: StandingRow[]
-}
-
-const RANK_RING: Record<number, string> = {
-  1: "ring-2 ring-yellow-400 text-yellow-400 bg-yellow-400/15",
-  2: "ring-2 ring-slate-400 text-slate-400 bg-slate-400/15",
-  3: "ring-2 ring-orange-500 text-orange-500 bg-orange-500/15",
 }
 
 const ROW_HIGHLIGHT: Record<number, string> = {
   1: "bg-yellow-400/5",
   2: "bg-slate-400/5",
   3: "bg-orange-500/5",
-}
-
-function RankBadge({ rank }: { rank: number }) {
-  const ringStyle = RANK_RING[rank]
-
-  return (
-    <span
-      className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-        ringStyle ?? "text-muted-foreground"
-      }`}
-    >
-      {rank}
-    </span>
-  )
 }
 
 export function StandingsTable({ rows }: Props) {

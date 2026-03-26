@@ -31,7 +31,7 @@ function rankBadgeColor(rank: number): string {
   if (rank === 1) return "#b8860b"
   if (rank === 2) return "#6b7280"
   if (rank === 3) return "#c2410c"
-  return "#374151"
+  return "#9ca3af"
 }
 
 // ─── Kopfzeile ────────────────────────────────────────────────────────────────

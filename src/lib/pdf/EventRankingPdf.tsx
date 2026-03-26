@@ -27,7 +27,7 @@ function rankBadgeColor(rank: number): string {
   if (rank === 1) return PDF_COLORS.gold
   if (rank === 2) return PDF_COLORS.silver
   if (rank === 3) return PDF_COLORS.orange
-  return "#374151"
+  return "#9ca3af"
 }
 
 const SCORING_MODE_LABELS: Record<string, string> = {
