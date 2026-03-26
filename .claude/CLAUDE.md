@@ -129,7 +129,8 @@ Read model assignments from `pipeline.agents` in pipeline.json. Always specify t
 | `/migrate <name>` | After schema change (after schema-analyzer!) |
 | `/commit-msg`     | Generate commit message from diff            |
 | `/seed`           | After `/db-reset`                            |
-| `/db-reset`       | Reset dev database                           |
+| `/db-reset`            | Reset dev database                           |
+| `/consolidate-lessons` | Lessons komprimieren, Regeln in Docs promoten |
 
 ## Hooks (automatic, zero-context)
 
