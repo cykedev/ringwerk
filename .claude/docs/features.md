@@ -265,6 +265,7 @@ Alle Teilnehmer schiessen, eine Rangliste wird erstellt.
 - Anzeige: Platzierung, Name, Disziplin, Ringe, Teiler (korrigiert), Ergebniswert
 - Bei gemischten Wettbewerben: Spalte "Teiler korr." zeigt die mit Faktor korrigierten Teiler-Werte
 - Gastteilnehmer erhalten Badge "Gast" neben dem Namen
+- **Zurückgezogene Teilnehmer:** Teilnehmer mit Status "WITHDRAWN" werden ausgeschlossen und erscheinen nicht in der Rangliste
 - **PDF-Export:** Rangliste als druckoptimiertes PDF (Button im Header)
 
 ### Zielwert-Modus ✓
@@ -339,6 +340,7 @@ Ringteiler muss aus **derselben Serie** stammen (Ringe und Teiler gehören zusam
 - **Sortierbare Spalten:** Header-Click zum Sortieren nach Platzierung, Name, Ringe, Teiler, Ringteiler
 - **Default-Sortierung:** abhängig vom `scoringMode` (z.B. Ringe für RINGS-Modus)
 - **Gemischte Wettbewerbe:** Spalte "Best. Teiler korr." zeigt die mit Faktor korrigierten Teiler-Werte
+- **Zurückgezogene Teilnehmer:** Teilnehmer mit Status "WITHDRAWN" werden ausgeschlossen und erscheinen nicht in der Standingtabelle
 - **Serien-Anzeige:** Pro Teilnehmer können Serien expandiert/collapsiert werden (Chevron-Icon)
 
 ### Mindestserien-Prüfung ✓

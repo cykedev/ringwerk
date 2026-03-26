@@ -116,7 +116,7 @@ export async function getEventWithSeries(id: string): Promise<{
           lastName: true,
           competitions: {
             where: { competitionId: id },
-            select: { isGuest: true },
+            select: { isGuest: true, status: true },
             take: 1,
           },
         },
@@ -125,6 +125,7 @@ export async function getEventWithSeries(id: string): Promise<{
       competitionParticipant: {
         select: {
           isGuest: true,
+          status: true,
           eventTeamId: true,
           eventTeam: { select: { teamNumber: true } },
         },
@@ -139,7 +140,14 @@ export async function getEventWithSeries(id: string): Promise<{
     orderBy: { createdAt: "asc" },
   })
 
-  const series: EventSeriesItem[] = rows.map((s) => ({
+  // Serien von zurückgezogenen Teilnehmern ausschließen
+  const activeRows = rows.filter((s) => {
+    const cpStatus = s.competitionParticipant?.status
+    if (cpStatus !== undefined) return cpStatus === "ACTIVE"
+    return s.participant.competitions[0]?.status === "ACTIVE"
+  })
+
+  const series: EventSeriesItem[] = activeRows.map((s) => ({
     id: s.id,
     participantId: s.participantId,
     competitionParticipantId: s.competitionParticipantId,
@@ -173,7 +181,7 @@ export async function getSeasonWithSeries(id: string): Promise<{
   if (!competition || competition.type !== "SEASON") return null
 
   const participants = await db.competitionParticipant.findMany({
-    where: { competitionId: id },
+    where: { competitionId: id, status: "ACTIVE" },
     select: {
       participantId: true,
       status: true,

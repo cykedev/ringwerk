@@ -329,6 +329,13 @@ Phase 6 implementiert die Logik und UI dafuer.
 
 ## Abgeschlossen
 
+### [2026-03-26] Bugfix: WITHDRAWN-Teilnehmer in Ranglisten
+
+- `getEventWithSeries`: `status` zu CP- und participant.competitions-Select hinzugefügt; Filter auf `status === "ACTIVE"` vor dem Mapping
+- `getSeasonWithSeries`: `where: { status: "ACTIVE" }` in Participant-Query — WITHDRAWN-Teilnehmer erscheinen nicht mehr in Standings
+
+---
+
 ### [2026-03-26] Team-Support für Event-Wettbewerbe
 
 - Schema: `TeamScoring` Enum, `EventTeam` Modell, `CompetitionParticipant.eventTeamId`, `Series.competitionParticipantId`, partielle Unique-Indizes (individual/team)
