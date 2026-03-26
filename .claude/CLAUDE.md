@@ -17,6 +17,17 @@ Project context: read `docs.projectBrief` from pipeline.json
 
 ---
 
+## Hard Rules (non-negotiable, always active)
+
+> These rules apply in **every** task, regardless of size, class, or user feedback received mid-implementation.
+
+1. **NEVER create a git commit.** Not under any circumstances. The user commits manually after reviewing and testing. Not even "just a quick one". Never.
+2. **Commit messages MUST be displayed as a fenced code block** — so the user can copy them easily.
+3. **Finalize is mandatory** — if the user gives feedback or asks questions mid-implementation, incorporate them and *still* complete every Finalize step. Nothing may be left pending.
+4. **todo.md must be cleaned up** — at the end of every task, completed items must be moved to the `## Abgeschlossen` section in `.claude/tasks/todo.md`. Never leave the file with stale open checkboxes after a completed task.
+
+---
+
 ## Pipeline
 
 Every request passes through **4 stages**. Never skip a stage.
@@ -78,16 +89,18 @@ Launch agents **in parallel**, using the model from `pipeline.agents.<name>.mode
 - On UI changes: preview (mobile + desktop)
 - **On failure:** fix and retry (max retries from `pipeline.errorRecovery.maxRetries`), then escalate to user
 
-**Finalize (mandatory — not optional, even if user gave feedback mid-implementation):**
+**Finalize — MANDATORY. Not optional. Applies even when the user gave feedback mid-implementation.**
 
-- `docs-sync` agent — sync docs with code
-- `lessons-check` agent — update learning log
-- `/commit-msg` — generate commit message and display it as a **fenced code block** (so the user can copy it easily)
-- Update TodoWrite: all tasks completed
-- **NEVER create a git commit** — the user always commits manually after reviewing and optionally testing
+> If the user asks questions, requests changes, or comments during implementation: incorporate the feedback, then **still** run every single step below. Nothing may be skipped or deferred.
 
-**The task is NOT done until "Finalize" has completed.**
-**If the user provides feedback or comments during EXECUTE, incorporate them and still complete all Finalize steps — nothing may be left pending.**
+- [ ] `docs-sync` agent — sync docs with code
+- [ ] `lessons-check` agent — update learning log
+- [ ] **Clean up `.claude/tasks/todo.md`** — move all completed items to the `## Abgeschlossen` section; no stale open checkboxes may remain
+- [ ] Update TodoWrite: mark all tasks completed
+- [ ] `/commit-msg` — generate commit message and display it as a **fenced code block**
+- [ ] **DO NOT create a git commit** — the user always commits manually
+
+**The task is NOT done until every checkbox above is ticked.**
 
 ---
 
