@@ -127,4 +127,5 @@ const SCORING_MODE_LABELS: Record<string, string> = {
   DECIMAL_REST: "Dezimalrest",
   TARGET_ABSOLUTE: "Zielwert absolut",
   TARGET_UNDER: "Zielwert unter",
+  TARGET_OVER: "Zielwert über",
 }

@@ -34,6 +34,7 @@ const SCORING_MODE_LABELS: Record<string, string> = {
   DECIMAL_REST: "Dezimalrest",
   TARGET_ABSOLUTE: "Zielwert (absolut)",
   TARGET_UNDER: "Zielwert (unter)",
+  TARGET_OVER: "Zielwert (über)",
 }
 
 // DECIMAL_REST benötigt Einzelschüsse — nur für Liga verfügbar
@@ -95,7 +96,10 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
   const generalError =
     state && "error" in state && typeof state.error === "string" ? state.error : null
 
-  const isTargetMode = scoringMode === "TARGET_ABSOLUTE" || scoringMode === "TARGET_UNDER"
+  const isTargetMode =
+    scoringMode === "TARGET_ABSOLUTE" ||
+    scoringMode === "TARGET_UNDER" ||
+    scoringMode === "TARGET_OVER"
 
   return (
     <form action={formAction} className="space-y-4">

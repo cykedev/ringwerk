@@ -6,8 +6,8 @@ import { SCORE_DIRECTION } from "./types"
  * Sortiert eine Liste von Einträgen nach dem Score des gegebenen Wertungsmodus
  * und weist jedem Eintrag einen Rang zu (1-basiert).
  *
- * TARGET_UNDER: Einträge mit Messwert ≤ Zielwert (Score < 1e9) werden durch
- * die Score-Kodierung automatisch vor Über-Zielwert-Einträgen platziert.
+ * TARGET_UNDER/TARGET_OVER: Einträge in der bevorzugten Tier (Score < 1e9) werden durch
+ * die Score-Kodierung automatisch vor Einträgen der schlechteren Tier platziert.
  *
  * Die Originalliste wird nicht verändert.
  */

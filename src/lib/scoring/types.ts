@@ -14,6 +14,7 @@ export const SCORE_DIRECTION: Record<ScoringMode, ScoreDirection> = {
   DECIMAL_REST: "desc",
   TARGET_ABSOLUTE: "asc",
   TARGET_UNDER: "asc",
+  TARGET_OVER: "asc",
 }
 
 /** Eingabewerte für die universelle Score-Berechnung */

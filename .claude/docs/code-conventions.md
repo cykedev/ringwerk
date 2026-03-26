@@ -104,6 +104,7 @@ TEILER           – Teiler * Faktor; niedrigster gewinnt
 DECIMAL_REST     – Nachkommastelle summiert; hoechster gewinnt
 TARGET_ABSOLUTE  – Abweichung vom Zielwert; geringste gewinnt
 TARGET_UNDER     – ≤ Zielwert bevorzugt, dann Abweichung
+TARGET_OVER      – >= Zielwert bevorzugt, dann Abweichung
 ```
 
 ### Zielwert-Typ (NEU, nur bei TARGET-Modi)

@@ -57,7 +57,7 @@ Ringwerk unterstuetzt drei Wettbewerbstypen, die alle auf einer gemeinsamen Scor
 4. **Kein Migrationsdruck** — App ist pre-launch, aggressive Refactorings erlaubt
 5. **Liga bleibt der komplexeste Modus** — Event und Saison sind strukturell einfacher
 6. **Teams als spaetere Erweiterung** — kein Mannschaftswettbewerb in der Erstversion
-7. **Zielwert-Modi nur fuer Events** — TARGET_ABSOLUTE und TARGET_UNDER kommen nur bei Kranzlschiessen vor
+7. **Zielwert-Modi nur fuer Events** — TARGET_ABSOLUTE, TARGET_UNDER und TARGET_OVER kommen nur bei Kranzlschiessen vor
 8. **Competition als Oberbegriff** — Liga, Event und Saison sind Auspraegungen von Competition (im Datenmodell)
 9. **Serie als universelle Ergebniseinheit** — ersetzt das bisherige MatchResult; optional mit Matchup verknuepft (nur Liga)
 10. **Saison zeigt Mehrfach-Ranking** — beste Ringe, bester Teiler, bester Ringteiler als separate Spalten; kein einzelner "Gewinner"

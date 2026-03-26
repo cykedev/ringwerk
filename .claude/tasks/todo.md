@@ -10,6 +10,30 @@ _Keine offenen Tasks._
 
 ## Abgeschlossen
 
+### [2026-03-26] Bugfix: TARGET_OVER Label-Maps in Pages/Components/PDF
+
+- `ranking/page.tsx`, `standings/page.tsx`: Badge-Label "Zielwert über" ergänzt
+- `EventRankingTable`, `EventTeamRankingTable`: Spaltenheader + `formatScore` 1e9-Check
+- `EventRankingPdf`: beide Label-Maps + `formatScore`; `SeasonStandingsPdf`: Label-Map
+
+---
+
+### [2026-03-26] Bugfix: TARGET_OVER fehlt im Zod-Schema (actions.ts)
+
+- `BaseSchema.scoringMode` in `src/lib/competitions/actions.ts` um `"TARGET_OVER"` ergänzt
+
+---
+
+### [2026-03-26] TARGET_OVER Wertungsmodus
+
+- `ScoringMode` Enum + Migration `20260326100000_add_target_over_scoring_mode`
+- `calculateScore.ts`: `TARGET_OVER` Case (≥ Zielwert → bevorzugte Tier, sonst 1e9 + Abweichung)
+- `types.ts`: `SCORE_DIRECTION` + `rankEventParticipants.ts`: `ascModes` erweitert
+- `CompetitionForm.tsx`: Label "Zielwert (über)" + `isTargetMode` erweitert
+- 4 Tests; 241 Tests grün, alle Gates grün
+
+---
+
 ### [2026-03-26] Bugfix: WITHDRAWN-Teilnehmer in Ranglisten
 
 - `getEventWithSeries`: `status` zu CP- und participant.competitions-Select hinzugefügt; Filter auf `status === "ACTIVE"` vor dem Mapping

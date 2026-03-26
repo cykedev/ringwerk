@@ -156,6 +156,61 @@ describe("calculateScore – TARGET_ABSOLUTE", () => {
   })
 })
 
+describe("calculateScore – TARGET_OVER", () => {
+  it("Über-Zielwert: Abweichung direkt (105 bei Ziel 100 → 5)", () => {
+    const score = calculateScore("TARGET_OVER", {
+      rings: 0,
+      teiler: 0,
+      faktor: 1,
+      maxRings: 100,
+      measuredValue: 105,
+      targetValue: 100,
+    })
+    expect(score).toBe(5)
+  })
+  it("Unter-Zielwert: 1e9 + Abweichung (95 bei Ziel 100 → 1e9+5)", () => {
+    const score = calculateScore("TARGET_OVER", {
+      rings: 0,
+      teiler: 0,
+      faktor: 1,
+      maxRings: 100,
+      measuredValue: 95,
+      targetValue: 100,
+    })
+    expect(score).toBe(1e9 + 5)
+  })
+  it("Über-Wert gewinnt immer gegen Unter-Wert", () => {
+    const over = calculateScore("TARGET_OVER", {
+      rings: 0,
+      teiler: 0,
+      faktor: 1,
+      maxRings: 100,
+      measuredValue: 150,
+      targetValue: 100,
+    })
+    const under = calculateScore("TARGET_OVER", {
+      rings: 0,
+      teiler: 0,
+      faktor: 1,
+      maxRings: 100,
+      measuredValue: 99,
+      targetValue: 100,
+    })
+    expect(over).toBeLessThan(under)
+  })
+  it("exakt auf Zielwert → Score 0 (über-Tier)", () => {
+    const score = calculateScore("TARGET_OVER", {
+      rings: 0,
+      teiler: 0,
+      faktor: 1,
+      maxRings: 100,
+      measuredValue: 100,
+      targetValue: 100,
+    })
+    expect(score).toBe(0)
+  })
+})
+
 describe("calculateScore – TARGET_UNDER", () => {
   it("Unter-Zielwert: Abweichung direkt (95 bei Ziel 100 → 5)", () => {
     const score = calculateScore("TARGET_UNDER", {

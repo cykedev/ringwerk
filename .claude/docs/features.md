@@ -92,6 +92,7 @@ Jeder Wettbewerb hat:
 | DECIMAL_REST    | Nachkommastelle der Ringe summiert    | Höchster    | Nein                |
 | TARGET_ABSOLUTE | Abweichung vom Zielwert               | Geringste   | Wenn Teiler-basiert |
 | TARGET_UNDER    | ≤ Zielwert bevorzugt, dann Abweichung | Geringste   | Wenn Teiler-basiert |
+| TARGET_OVER     | >= Zielwert bevorzugt, dann Abweichung | Geringste   | Wenn Teiler-basiert |
 
 Formeln und Details: siehe `data-model.md` → Berechnungsregeln.
 
@@ -270,7 +271,7 @@ Alle Teilnehmer schiessen, eine Rangliste wird erstellt.
 
 ### Zielwert-Modus ✓
 
-Nur bei Events. Zwei Varianten:
+Nur bei Events. Drei Varianten:
 
 **TARGET_ABSOLUTE:** Möglichst nah an den Zielwert — ob drüber oder drunter ist egal.
 
@@ -278,6 +279,11 @@ Nur bei Events. Zwei Varianten:
 
 - Erst alle die den Zielwert nicht überschritten haben (sortiert nach Nähe)
 - Dann alle die drüber sind (sortiert nach Nähe)
+
+**TARGET_OVER:** >= Zielwert wird bevorzugt.
+
+- Erst alle die den Zielwert erreicht haben oder überschritten (sortiert nach Nähe)
+- Dann alle die drunter sind (sortiert nach Nähe)
 
 Bei Teiler-basiertem Zielwert: Faktor-Korrektur wird auf den gemessenen Teiler angewendet. Der Zielwert ist im korrigierten Raum definiert.
 

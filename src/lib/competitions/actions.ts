@@ -34,6 +34,7 @@ const BaseSchema = z
         "DECIMAL_REST",
         "TARGET_ABSOLUTE",
         "TARGET_UNDER",
+        "TARGET_OVER",
       ],
       { message: "Ungültiger Wertungsmodus" }
     ),

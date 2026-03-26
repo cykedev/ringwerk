@@ -44,6 +44,8 @@ function sumDecimalRests(shots: number[]): number {
  * - TARGET_ABSOLUTE: |Messwert − Zielwert| → niedrigster gewinnt
  * - TARGET_UNDER:    Messwert ≤ Zielwert bevorzugt; niedrigste Abweichung gewinnt
  *   Kodierung: unter Zielwert → Abweichung direkt; über Zielwert → 1e9 + Abweichung
+ * - TARGET_OVER:     Messwert ≥ Zielwert bevorzugt; niedrigste Abweichung gewinnt
+ *   Kodierung: über Zielwert → Abweichung direkt; unter Zielwert → 1e9 + Abweichung
  *
  * Für TARGET_*: measuredValue vorab berechnen (z.B. correctedTeiler oder rings).
  */
@@ -76,6 +78,15 @@ export function calculateScore(mode: ScoringMode, input: ScoreInput): number {
       // Messwert ≤ Zielwert → bevorzugte Tier (direktes Abstand)
       // Messwert > Zielwert → schlechtere Tier (große Basiskonstante + Abstand)
       return measured <= target ? deviation : 1e9 + deviation
+    }
+
+    case "TARGET_OVER": {
+      const measured = input.measuredValue ?? input.rings
+      const target = input.targetValue ?? 0
+      const deviation = Math.abs(measured - target)
+      // Messwert ≥ Zielwert → bevorzugte Tier (direktes Abstand)
+      // Messwert < Zielwert → schlechtere Tier (große Basiskonstante + Abstand)
+      return measured >= target ? deviation : 1e9 + deviation
     }
   }
 }

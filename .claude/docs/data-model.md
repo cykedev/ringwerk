@@ -55,7 +55,7 @@
 | allowGuests     | Boolean?         | false   | Gastteilnehmer erlaubt                                    |
 | teamSize        | Int?             | null    | null = Einzel; 2+ = Teamgrösse (Anzahl Mitglieder/Team)  |
 | teamScoring     | TeamScoring?     | null    | SUM = Summe; BEST = Bestes; nur wenn teamSize >= 2        |
-| targetValue     | Decimal?         | null    | Zielwert (nur TARGET_ABSOLUTE / TARGET_UNDER)             |
+| targetValue     | Decimal?         | null    | Zielwert (nur TARGET_ABSOLUTE / TARGET_UNDER / TARGET_OVER) |
 | targetValueType | TargetValueType? | null    | TEILER, RINGS oder RINGS_DECIMAL                          |
 
 #### Saison-spezifisch (SEASON)
@@ -147,6 +147,7 @@ TEILER           – Teiler * Faktor; niedrigster gewinnt
 DECIMAL_REST     – Nachkommastelle der Ringe summiert; hoechster gewinnt
 TARGET_ABSOLUTE  – Abweichung vom Zielwert; geringste gewinnt (nur EVENT)
 TARGET_UNDER     – ≤ Zielwert bevorzugt, dann Abweichung; geringste gewinnt (nur EVENT)
+TARGET_OVER      – >= Zielwert bevorzugt, dann Abweichung; geringste gewinnt (nur EVENT)
 ```
 
 ### TeamScoring (nur bei Event mit teamSize >= 2)
@@ -268,6 +269,19 @@ Ranking-Logik (zweistufig):
 2. Alle Teilnehmer mit Messwert > Zielwert, sortiert nach geringster Abweichung
 
 Ergebnis: Wer über dem Ziel liegt, kommt immer nach allen die darunter oder gleich sind.
+
+### Wertungsmodus: TARGET_OVER (nur EVENT)
+
+```
+Abweichung = Zielwert − Messwert
+```
+
+Ranking-Logik (zweistufig):
+
+1. Alle Teilnehmer mit Messwert ≥ Zielwert, sortiert nach geringster Abweichung (nächster am Ziel gewinnt)
+2. Alle Teilnehmer mit Messwert < Zielwert, sortiert nach geringster Abweichung
+
+Ergebnis: Wer unter dem Ziel liegt, kommt immer nach allen die drüber oder gleich sind.
 
 ### Liga-spezifisch: Punktevergabe (Gruppenphase)
 

@@ -40,6 +40,7 @@ const SCORING_MODE_LABELS: Record<string, string> = {
   DECIMAL_REST: "Dezimalrest",
   TARGET_ABSOLUTE: "Zielwert absolut",
   TARGET_UNDER: "Zielwert unter",
+  TARGET_OVER: "Zielwert über",
 }
 
 const SCORE_LABEL: Record<string, string> = {
@@ -50,10 +51,11 @@ const SCORE_LABEL: Record<string, string> = {
   DECIMAL_REST: "Dezimalrest",
   TARGET_ABSOLUTE: "Abweichung",
   TARGET_UNDER: "Abweichung",
+  TARGET_OVER: "Abweichung",
 }
 
 function formatScore(score: number, mode: string): string {
-  if (mode === "TARGET_UNDER" && score >= 1e9) {
+  if ((mode === "TARGET_UNDER" || mode === "TARGET_OVER") && score >= 1e9) {
     return `+${(score - 1e9).toFixed(1)}`
   }
   if (mode === "RINGS" || mode === "DECIMAL_REST") {

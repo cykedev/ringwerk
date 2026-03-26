@@ -165,7 +165,13 @@ function computeTeamScore(
     return scores.reduce((a, b) => a + b, 0)
   }
   // BEST: asc-Modi → minimum, desc-Modi → maximum
-  const ascModes: ScoringMode[] = ["RINGTEILER", "TEILER", "TARGET_ABSOLUTE", "TARGET_UNDER"]
+  const ascModes: ScoringMode[] = [
+    "RINGTEILER",
+    "TEILER",
+    "TARGET_ABSOLUTE",
+    "TARGET_UNDER",
+    "TARGET_OVER",
+  ]
   return ascModes.includes(scoringMode) ? Math.min(...scores) : Math.max(...scores)
 }
 
