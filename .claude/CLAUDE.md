@@ -95,7 +95,7 @@ Launch agents **in parallel**, using the model from `pipeline.agents.<name>.mode
 
 - [ ] `docs-sync` agent — sync docs with code
 - [ ] `lessons-check` agent — update learning log
-- [ ] **Clean up `.claude/tasks/todo.md`** — move all completed items to the `## Abgeschlossen` section; no stale open checkboxes may remain
+- [ ] **Clean up `.claude/tasks/todo.md`** — move all completed items to the `## Abgeschlossen` section; no stale open checkboxes may remain. If todo.md exceeds ~100 lines, run `/cleanup-todos`
 - [ ] Update TodoWrite: mark all tasks completed
 - [ ] `/commit-msg` — generate commit message and display it as a **fenced code block**
 - [ ] **DO NOT create a git commit** — the user always commits manually
@@ -131,6 +131,7 @@ Read model assignments from `pipeline.agents` in pipeline.json. Always specify t
 | `/seed`           | After `/db-reset`                            |
 | `/db-reset`            | Reset dev database                           |
 | `/consolidate-lessons` | Lessons komprimieren, Regeln in Docs promoten |
+| `/cleanup-todos`       | todo.md aufräumen, Abgeschlossenes komprimieren/archivieren |
 
 ## Hooks (automatic, zero-context)
 
