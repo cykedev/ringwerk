@@ -5,6 +5,7 @@ import { z } from "zod"
 import { db } from "@/lib/db"
 import { getAuthSession } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
+import { ScoringMode } from "@/generated/prisma/client"
 import type { CompetitionStatus } from "@/generated/prisma/client"
 
 // ─── Shared helpers ────────────────────────────────────────────────────────
@@ -25,19 +26,9 @@ function revalidateCompetitionPaths(): void {
 const BaseSchema = z
   .object({
     name: z.string().min(1, "Name ist erforderlich").max(100, "Name zu lang"),
-    scoringMode: z.enum(
-      [
-        "RINGTEILER",
-        "RINGS",
-        "RINGS_DECIMAL",
-        "TEILER",
-        "DECIMAL_REST",
-        "TARGET_ABSOLUTE",
-        "TARGET_UNDER",
-        "TARGET_OVER",
-      ],
-      { message: "Ungültiger Wertungsmodus" }
-    ),
+    scoringMode: z.nativeEnum(ScoringMode, {
+      message: "Ungültiger Wertungsmodus",
+    }),
     shotsPerSeries: z
       .string()
       .nullable()
