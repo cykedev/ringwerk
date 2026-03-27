@@ -1,7 +1,6 @@
 Run only the test suite (no lint, format check, or type check).
 
-1. Read `.claude/pipeline.json` to get `quality.runner` and `quality.testOnly`
-2. Run: `<runner> <testOnly>`
+Run: `docker compose -f docker-compose.dev.yml run --rm app npm run test`
 
 Report:
 

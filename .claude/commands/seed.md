@@ -1,7 +1,6 @@
 Run the database seed manually (only needed after `/db-reset`).
 
-1. Read `.claude/pipeline.json` to get `quality.runner` and `schema.seedCommand`
-2. Run: `<runner> <seedCommand>`
+Run: `docker compose -f docker-compose.dev.yml run --rm app npx prisma db seed`
 
 After running, confirm:
 

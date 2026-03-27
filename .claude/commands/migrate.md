@@ -1,8 +1,9 @@
 Create a new schema migration.
 
-1. Read `.claude/pipeline.json` to get `quality.runner` and `schema.migrateDevCommand`
-2. Use the first argument token as migration name (kebab-case, English, descriptive). If no name was given, ask before proceeding.
-3. Run: `<runner> <migrateDevCommand> --name <name>`
+Runner: `docker compose -f docker-compose.dev.yml run --rm app`
+
+1. Use the first argument token as migration name (kebab-case, English, descriptive). If no name was given, ask before proceeding.
+2. Run: `docker compose -f docker-compose.dev.yml run --rm app npx prisma migrate dev --name <name>`
 
 After running:
 
