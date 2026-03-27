@@ -1,53 +1,5 @@
 {
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/session-init.sh"
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/code-compliance.sh"
-          }
-        ]
-      },
-      {
-        "matcher": "Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/code-compliance.sh"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/schema-gate.sh"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/completeness.sh"
-          }
-        ]
-      }
-    ]
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true
   }
 }
