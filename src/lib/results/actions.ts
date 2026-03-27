@@ -157,7 +157,8 @@ export async function saveMatchResult(
       },
     })
   } catch (error) {
-    console.error("Fehler beim Speichern des Ergebnisses:", error)
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error("Fehler beim Speichern des Ergebnisses:", msg)
     return { error: "Ergebnis konnte nicht gespeichert werden." }
   }
 

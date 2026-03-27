@@ -7,6 +7,8 @@ export default defineConfig({
     environment: "node",
     // Kein Fehler wenn noch keine Testdateien vorhanden sind (frühe Projektphasen)
     passWithNoTests: true,
+    // Worktrees im .claude-Verzeichnis ausschliessen (werden sonst doppelt gepickt)
+    exclude: [".claude/worktrees/**", "**/node_modules/**"],
   },
   resolve: {
     // @-Alias muss hier wiederholt werden, da vitest tsconfig nicht automatisch liest

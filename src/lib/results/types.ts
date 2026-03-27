@@ -1,7 +1,3 @@
-import type { ScoringType } from "@/generated/prisma/client"
-
-export type { ScoringType }
-
 export interface ResultInput {
   rings: number
   teiler: number
@@ -18,6 +14,3 @@ export interface SeriesSummary {
   teiler: number
   ringteiler: number
 }
-
-/** @deprecated Bitte SeriesSummary verwenden */
-export type MatchResultSummary = SeriesSummary

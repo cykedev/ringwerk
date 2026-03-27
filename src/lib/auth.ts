@@ -10,6 +10,9 @@ import {
 } from "@/lib/auth-rate-limit"
 import { normalizeLoginEmail } from "@/lib/authValidation"
 
+// CSRF-Schutz: Next.js Server Actions sind durch den Same-Origin-Check des Browsers geschuetzt.
+// NextAuth prueft zusaetzlich den Origin-Header bei POST-Requests. Ein manueller CSRF-Token
+// ist deshalb nicht noetig — der Schutz ist im Framework implizit vorhanden.
 const TRUST_PROXY_HEADERS_FOR_RATE_LIMIT = process.env.AUTH_TRUST_PROXY_HEADERS === "true"
 const MAX_IP_HEADER_LENGTH = 512
 // Konservativer Default:

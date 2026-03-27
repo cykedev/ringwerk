@@ -93,7 +93,8 @@ export async function startPlayoffs(competitionId: string): Promise<ActionResult
       },
     })
   } catch (error) {
-    console.error("Fehler beim Starten der Playoffs:", error)
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error("Fehler beim Starten der Playoffs:", msg)
     return { error: "Playoffs konnten nicht gestartet werden." }
   }
 
@@ -345,7 +346,8 @@ export async function savePlayoffDuelResult(
       })
     })
   } catch (error) {
-    console.error("Fehler beim Speichern des Playoff-Ergebnisses:", error)
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error("Fehler beim Speichern des Playoff-Ergebnisses:", msg)
     return { error: "Ergebnis konnte nicht gespeichert werden." }
   }
 
@@ -765,7 +767,8 @@ export async function addPlayoffDuel(
     revalidatePath(`/competitions/${match.competitionId}/playoffs`)
     return { success: true, data: { duelId: duel.id } }
   } catch (error) {
-    console.error("Fehler beim Anlegen des Duells:", error)
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error("Fehler beim Anlegen des Duells:", msg)
     return { error: "Duell konnte nicht angelegt werden." }
   }
 }

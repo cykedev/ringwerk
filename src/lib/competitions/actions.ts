@@ -442,7 +442,8 @@ export async function forceDeleteCompetition(
       await tx.competition.delete({ where: { id: competitionId } })
     })
   } catch (error) {
-    console.error("Fehler beim endgültigen Löschen des Wettbewerbs:", error)
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error("Fehler beim endgültigen Löschen des Wettbewerbs:", msg)
     return { error: "Wettbewerb konnte nicht gelöscht werden." }
   }
 

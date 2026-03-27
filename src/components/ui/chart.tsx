@@ -73,6 +73,9 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   }
 
   return (
+    // dangerouslySetInnerHTML ist hier sicher: der String wird ausschliesslich aus
+    // statischen Chart-Konfigurationswerten (CSS-Variablen-Namen und Farbwerten) zusammengesetzt.
+    // Kein User-Input fliesst in diesen String ein.
     <style
       dangerouslySetInnerHTML={{
         // CSS-Variablen pro Chart-ID isolieren, damit mehrere Charts mit unterschiedlichen Paletten koexistieren.

@@ -51,6 +51,17 @@
 | `codeConventions` | `.claude/docs/code-conventions.md` | Writing code |
 | `uiPatterns` | `.claude/docs/ui-patterns.md` | Building UI |
 | `referenceFiles` | `.claude/docs/reference-files.md` | Finding patterns, templates |
+| `worktrees` | `.claude/docs/worktrees.md` | Before using git worktrees |
+
+---
+
+## Superpowers Docs Location
+
+All superpowers artifacts (specs, plans) MUST be saved under `.claude/docs/superpowers/`:
+- Specs → `.claude/docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`
+- Plans → `.claude/docs/superpowers/plans/YYYY-MM-DD-<topic>-plan.md`
+
+Never write these to `docs/` at the project root.
 
 ---
 
