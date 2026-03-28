@@ -10,17 +10,18 @@
 
 ## What Gets Removed
 
-| Asset | Action |
-|-------|--------|
-| `pipeline.json` | Deleted — content migrated into CLAUDE.md |
-| `.claude/agents/*` (9 files) | Deleted — generic ones replaced by superpowers subagents; project-specific guidance folded into CLAUDE.md/docs |
-| `.claude/hooks/code-compliance.sh` | Deleted — superpowers quality process replaces enforcement |
-| `.claude/hooks/schema-gate.sh` | Deleted — schema guidance moves into CLAUDE.md |
-| `.claude/hooks/completeness.sh` | Deleted — `finishing-a-development-branch` skill handles this |
-| `.claude/hooks/session-init.sh` | Deleted — session start defined in CLAUDE.md |
-| `settings.json` hooks config | Removed — only plugin activation entry remains |
+| Asset                              | Action                                                                                                         |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `pipeline.json`                    | Deleted — content migrated into CLAUDE.md                                                                      |
+| `.claude/agents/*` (9 files)       | Deleted — generic ones replaced by superpowers subagents; project-specific guidance folded into CLAUDE.md/docs |
+| `.claude/hooks/code-compliance.sh` | Deleted — superpowers quality process replaces enforcement                                                     |
+| `.claude/hooks/schema-gate.sh`     | Deleted — schema guidance moves into CLAUDE.md                                                                 |
+| `.claude/hooks/completeness.sh`    | Deleted — `finishing-a-development-branch` skill handles this                                                  |
+| `.claude/hooks/session-init.sh`    | Deleted — session start defined in CLAUDE.md                                                                   |
+| `settings.json` hooks config       | Removed — only plugin activation entry remains                                                                 |
 
 Content migrated from `pipeline.json` into new CLAUDE.md:
+
 - Quality gates (lint, format, test, typecheck via `/check`)
 - Layer order (Schema → Migration → Types → Queries → Actions → Calculate → Components → Page)
 - 5 compliance rules (native dialogs, DropdownMenu, bg-card, touch targets, date formatter)
@@ -28,31 +29,34 @@ Content migrated from `pipeline.json` into new CLAUDE.md:
 
 ## What Stays
 
-| Asset | Reason |
-|-------|--------|
-| `.claude/docs/*` | Valuable project knowledge — loaded on-demand |
-| `.claude/tasks/todo.md`, `lessons.md`, `todo-archive.md` | Continuity — learning log and task history |
-| `.claude/commands/*` (8 commands) | `/check`, `/test`, `/migrate`, `/seed`, `/db-reset`, `/commit-msg`, `/cleanup-todos`, `/consolidate-lessons` |
-| `settings.json` (plugin entry) | Superpowers stays enabled |
-| Memory system | User preferences and feedback |
+| Asset                                                    | Reason                                                                                                       |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `.claude/docs/*`                                         | Valuable project knowledge — loaded on-demand                                                                |
+| `.claude/tasks/todo.md`, `lessons.md`, `todo-archive.md` | Continuity — learning log and task history                                                                   |
+| `.claude/commands/*` (8 commands)                        | `/check`, `/test`, `/migrate`, `/seed`, `/db-reset`, `/commit-msg`, `/cleanup-todos`, `/consolidate-lessons` |
+| `settings.json` (plugin entry)                           | Superpowers stays enabled                                                                                    |
+| Memory system                                            | User preferences and feedback                                                                                |
 
 ## New CLAUDE.md Structure
 
 Target: ~80 lines. Six sections:
 
 ### 1. Hard Rules (always active)
+
 - Never create a git commit
 - Commit messages as fenced code blocks
 - All communication in German
 - Clean up todo.md on task completion (move to Abgeschlossen)
 
 ### 2. Session Start
+
 1. Read `.claude/docs/project-brief.md`
 2. Check `.claude/tasks/todo.md` for open tasks
 3. Read last 5 entries of `.claude/tasks/lessons.md`
 4. Brief onboarding message in German (one line: open tasks or "all clear")
 
 ### 3. Project Context
+
 - **Name:** Ringwerk | **Language:** de
 - **Quality:** `/check` → runs via `docker compose -f docker-compose.dev.yml run --rm app` with npm run lint / format:check / test + tsc
 - **Layer order:** Schema → Migration → Types → Queries → Actions → Calculate → Components → Page
@@ -64,31 +68,33 @@ Target: ~80 lines. Six sections:
   5. No bare `toLocaleDateString()` — use project date formatter
 
 ### 4. Docs (on-demand)
+
 Same table as before — load only when needed:
 
-| Key | Path | Load when |
-|-----|------|-----------|
-| `projectBrief` | `.claude/docs/project-brief.md` | Always (session start) |
-| `features` | `.claude/docs/features.md` | Clarifying feature scope |
-| `architecture` | `.claude/docs/architecture.md` | Routes, directory structure |
-| `techStack` | `.claude/docs/technical.md` | Stack details |
-| `domainModel` | `.claude/docs/data-model.md` | Business logic, formulas |
-| `codeConventions` | `.claude/docs/code-conventions.md` | Writing code |
-| `uiPatterns` | `.claude/docs/ui-patterns.md` | Building UI |
-| `referenceFiles` | `.claude/docs/reference-files.md` | Finding patterns |
+| Key               | Path                               | Load when                   |
+| ----------------- | ---------------------------------- | --------------------------- |
+| `projectBrief`    | `.claude/docs/project-brief.md`    | Always (session start)      |
+| `features`        | `.claude/docs/features.md`         | Clarifying feature scope    |
+| `architecture`    | `.claude/docs/architecture.md`     | Routes, directory structure |
+| `techStack`       | `.claude/docs/technical.md`        | Stack details               |
+| `domainModel`     | `.claude/docs/data-model.md`       | Business logic, formulas    |
+| `codeConventions` | `.claude/docs/code-conventions.md` | Writing code                |
+| `uiPatterns`      | `.claude/docs/ui-patterns.md`      | Building UI                 |
+| `referenceFiles`  | `.claude/docs/reference-files.md`  | Finding patterns            |
 
 ### 5. Superpowers Workflow
 
-| Task type | Skills to use |
-|-----------|---------------|
+| Task type                  | Skills to use                                                     |
+| -------------------------- | ----------------------------------------------------------------- |
 | New feature / modification | `brainstorming` → `writing-plans` → `subagent-driven-development` |
-| Bug | `systematic-debugging` |
-| Branch completion | `finishing-a-development-branch` |
-| Requesting review | `requesting-code-review` |
-| Receiving review | `receiving-code-review` |
-| Parallel independent tasks | `dispatching-parallel-agents` |
+| Bug                        | `systematic-debugging`                                            |
+| Branch completion          | `finishing-a-development-branch`                                  |
+| Requesting review          | `requesting-code-review`                                          |
+| Receiving review           | `receiving-code-review`                                           |
+| Parallel independent tasks | `dispatching-parallel-agents`                                     |
 
 ### 6. Commands Reference
+
 `/check` · `/test` · `/migrate <name>` · `/seed` · `/db-reset` · `/commit-msg` · `/cleanup-todos` · `/consolidate-lessons`
 
 ---

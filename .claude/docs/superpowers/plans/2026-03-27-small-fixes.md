@@ -15,6 +15,7 @@
 ### Task 1: Skeleton-Komponente hinzufügen
 
 **Files:**
+
 - Create: `src/components/ui/skeleton.tsx`
 
 Wird von den Loading-States in Task 3 benötigt. Folgt dem Pattern der anderen UI-Komponenten (z.B. `card.tsx`).
@@ -27,12 +28,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn("animate-pulse rounded-md bg-muted", className)}
-      {...props}
-    />
-  )
+  return <div className={cn("animate-pulse rounded-md bg-muted", className)} {...props} />
 }
 
 export { Skeleton }
@@ -51,6 +47,7 @@ Erwartet: kein Fehler
 ### Task 2: Error Boundaries (R-01)
 
 **Files:**
+
 - Create: `src/app/error.tsx`
 - Create: `src/app/(app)/error.tsx`
 - Create: `src/app/(public)/error.tsx`
@@ -60,6 +57,7 @@ Alle drei Dateien sind `"use client"` (Next.js Anforderung für error.tsx). Die 
 - [ ] **Schritt 1: Globale Error Boundary anlegen**
 
 `src/app/error.tsx`:
+
 ```tsx
 "use client"
 
@@ -80,9 +78,7 @@ export default function GlobalError({ error, reset }: Props) {
   return (
     <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
       <h2 className="text-lg font-semibold">Etwas ist schiefgelaufen</h2>
-      <p className="text-sm text-muted-foreground">
-        Ein unerwarteter Fehler ist aufgetreten.
-      </p>
+      <p className="text-sm text-muted-foreground">Ein unerwarteter Fehler ist aufgetreten.</p>
       <Button onClick={reset} variant="outline">
         Seite neu laden
       </Button>
@@ -94,6 +90,7 @@ export default function GlobalError({ error, reset }: Props) {
 - [ ] **Schritt 2: Error Boundary für den eingeloggten Bereich anlegen**
 
 `src/app/(app)/error.tsx`:
+
 ```tsx
 "use client"
 
@@ -114,9 +111,7 @@ export default function AppError({ error, reset }: Props) {
   return (
     <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
       <h2 className="text-lg font-semibold">Etwas ist schiefgelaufen</h2>
-      <p className="text-sm text-muted-foreground">
-        Ein unerwarteter Fehler ist aufgetreten.
-      </p>
+      <p className="text-sm text-muted-foreground">Ein unerwarteter Fehler ist aufgetreten.</p>
       <Button onClick={reset} variant="outline">
         Seite neu laden
       </Button>
@@ -128,6 +123,7 @@ export default function AppError({ error, reset }: Props) {
 - [ ] **Schritt 3: Error Boundary für den Login-Bereich anlegen**
 
 `src/app/(public)/error.tsx`:
+
 ```tsx
 "use client"
 
@@ -148,9 +144,7 @@ export default function PublicError({ error, reset }: Props) {
   return (
     <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
       <h2 className="text-lg font-semibold">Etwas ist schiefgelaufen</h2>
-      <p className="text-sm text-muted-foreground">
-        Ein unerwarteter Fehler ist aufgetreten.
-      </p>
+      <p className="text-sm text-muted-foreground">Ein unerwarteter Fehler ist aufgetreten.</p>
       <Button onClick={reset} variant="outline">
         Seite neu laden
       </Button>
@@ -172,6 +166,7 @@ Erwartet: kein Fehler
 ### Task 3: Loading States (R-08)
 
 **Files:**
+
 - Create: `src/app/(app)/competitions/[id]/standings/loading.tsx`
 - Create: `src/app/(app)/competitions/[id]/playoffs/loading.tsx`
 - Create: `src/app/(app)/competitions/[id]/ranking/loading.tsx`
@@ -181,6 +176,7 @@ Nutzt die in Task 1 erstellte `Skeleton`-Komponente. Jede `loading.tsx` zeigt ei
 - [ ] **Schritt 1: Loading für Standings anlegen** (Saison-Tabelle)
 
 `src/app/(app)/competitions/[id]/standings/loading.tsx`:
+
 ```tsx
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -201,6 +197,7 @@ export default function StandingsLoading() {
 - [ ] **Schritt 2: Loading für Playoffs anlegen** (Bracket-Ansicht)
 
 `src/app/(app)/competitions/[id]/playoffs/loading.tsx`:
+
 ```tsx
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -225,6 +222,7 @@ export default function PlayoffsLoading() {
 - [ ] **Schritt 3: Loading für Ranking anlegen** (Event-Rangliste)
 
 `src/app/(app)/competitions/[id]/ranking/loading.tsx`:
+
 ```tsx
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -260,6 +258,7 @@ Erwartet: alle Checks grün
 ### Task 4: console.error — Error-Message extrahieren (R-02)
 
 **Files:**
+
 - Modify: `src/lib/competitions/actions.ts:445`
 - Modify: `src/lib/playoffs/actions.ts:96`
 - Modify: `src/lib/playoffs/actions.ts:348`
@@ -271,11 +270,13 @@ An jeder Stelle das rohe `error`-Objekt durch eine extrahierte Message ersetzen,
 - [ ] **Schritt 1: `competitions/actions.ts:445` fixen**
 
 Suche nach:
+
 ```ts
 console.error("Fehler beim endgültigen Löschen des Wettbewerbs:", error)
 ```
 
 Ersetzen mit:
+
 ```ts
 const msg = error instanceof Error ? error.message : String(error)
 console.error("Fehler beim endgültigen Löschen des Wettbewerbs:", msg)
@@ -284,11 +285,13 @@ console.error("Fehler beim endgültigen Löschen des Wettbewerbs:", msg)
 - [ ] **Schritt 2: `playoffs/actions.ts:96` fixen**
 
 Suche nach:
+
 ```ts
 console.error("Fehler beim Starten der Playoffs:", error)
 ```
 
 Ersetzen mit:
+
 ```ts
 const msg = error instanceof Error ? error.message : String(error)
 console.error("Fehler beim Starten der Playoffs:", msg)
@@ -297,11 +300,13 @@ console.error("Fehler beim Starten der Playoffs:", msg)
 - [ ] **Schritt 3: `playoffs/actions.ts:348` fixen**
 
 Suche nach:
+
 ```ts
 console.error("Fehler beim Speichern des Playoff-Ergebnisses:", error)
 ```
 
 Ersetzen mit:
+
 ```ts
 const msg = error instanceof Error ? error.message : String(error)
 console.error("Fehler beim Speichern des Playoff-Ergebnisses:", msg)
@@ -310,11 +315,13 @@ console.error("Fehler beim Speichern des Playoff-Ergebnisses:", msg)
 - [ ] **Schritt 4: `playoffs/actions.ts:768` fixen**
 
 Suche nach:
+
 ```ts
 console.error("Fehler beim Anlegen des Duells:", error)
 ```
 
 Ersetzen mit:
+
 ```ts
 const msg = error instanceof Error ? error.message : String(error)
 console.error("Fehler beim Anlegen des Duells:", msg)
@@ -323,11 +330,13 @@ console.error("Fehler beim Anlegen des Duells:", msg)
 - [ ] **Schritt 5: `results/actions.ts:160` fixen**
 
 Suche nach:
+
 ```ts
 console.error("Fehler beim Speichern des Ergebnisses:", error)
 ```
 
 Ersetzen mit:
+
 ```ts
 const msg = error instanceof Error ? error.message : String(error)
 console.error("Fehler beim Speichern des Ergebnisses:", msg)
@@ -338,6 +347,7 @@ console.error("Fehler beim Speichern des Ergebnisses:", msg)
 ### Task 5: Deprecated Type entfernen (R-11)
 
 **Files:**
+
 - Modify: `src/lib/results/types.ts`
 
 `MatchResultSummary` in `src/lib/results/types.ts` ist als deprecated markiert und als Alias auf `SeriesSummary` definiert. Es gibt einen gleichnamigen Typ in `src/lib/matchups/types.ts` — der ist ein unabhängiges Interface und wird aktiv verwendet (kein Berührungspunkt).
@@ -349,6 +359,7 @@ grep -r "from.*results/types" src/ --include="*.ts" --include="*.tsx" | grep -v 
 ```
 
 Dann prüfen ob einer der importierenden Orte `MatchResultSummary` nutzt:
+
 ```bash
 grep -r "MatchResultSummary" src/ --include="*.ts" --include="*.tsx"
 ```
@@ -358,6 +369,7 @@ Erwartet: Alle Treffer zeigen auf `src/lib/matchups/types.ts` und dessen Consume
 - [ ] **Schritt 2: Deprecated Type aus `src/lib/results/types.ts` löschen**
 
 Datei lesen, dann die Zeile entfernen:
+
 ```ts
 /** @deprecated Bitte SeriesSummary verwenden */
 export type MatchResultSummary = SeriesSummary
@@ -408,11 +420,13 @@ Falls eine Query den Filter fehlt: `where`-Klausel entsprechend ergänzen und `/
 ### Task 7: dangerouslySetInnerHTML Kommentar (R-13)
 
 **Files:**
+
 - Modify: `src/components/ui/chart.tsx`
 
 - [ ] **Schritt 1: Kommentar über `dangerouslySetInnerHTML` ergänzen**
 
 In `src/components/ui/chart.tsx` Zeile ~77, direkt vor dem `<style`-Element:
+
 ```tsx
   return (
     <style
@@ -420,9 +434,10 @@ In `src/components/ui/chart.tsx` Zeile ~77, direkt vor dem `<style`-Element:
         // CSS-Variablen pro Chart-ID isolieren, damit mehrere Charts mit unterschiedlichen Paletten koexistieren.
 ```
 
-Der Kommentar ist bereits vorhanden (steht im `__html`-Wert). Stattdessen einen Sicherheits-Kommentar *oberhalb* von `<style` ergänzen:
+Der Kommentar ist bereits vorhanden (steht im `__html`-Wert). Stattdessen einen Sicherheits-Kommentar _oberhalb_ von `<style` ergänzen:
 
 Suche nach:
+
 ```tsx
   return (
     <style
@@ -430,6 +445,7 @@ Suche nach:
 ```
 
 Ersetzen mit:
+
 ```tsx
   return (
     // dangerouslySetInnerHTML ist hier sicher: der String wird ausschliesslich aus
@@ -444,6 +460,7 @@ Ersetzen mit:
 ### Task 8: CSRF Dokumentation (R-14)
 
 **Files:**
+
 - Modify: `src/lib/auth.ts`
 
 - [ ] **Schritt 1: CSRF-Schutz-Kommentar in `auth.ts` ergänzen**
@@ -451,11 +468,13 @@ Ersetzen mit:
 Am Anfang von `src/lib/auth.ts`, nach den Imports, vor der ersten Konstante, diesen Kommentar ergänzen:
 
 Suche nach:
+
 ```ts
 const TRUST_PROXY_HEADERS_FOR_RATE_LIMIT = process.env.AUTH_TRUST_PROXY_HEADERS === "true"
 ```
 
 Ersetzen mit:
+
 ```ts
 // CSRF-Schutz: Next.js Server Actions sind durch den Same-Origin-Check des Browsers geschuetzt.
 // NextAuth prueft zusaetzlich den Origin-Header bei POST-Requests. Ein manueller CSRF-Token

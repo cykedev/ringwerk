@@ -41,23 +41,24 @@
 
 ## Docs (load on-demand)
 
-| Key | Path | Load when |
-|-----|------|-----------|
-| `projectBrief` | `.claude/docs/project-brief.md` | Session start |
-| `features` | `.claude/docs/features.md` | Clarifying feature scope |
-| `architecture` | `.claude/docs/architecture.md` | Routes, directory structure |
-| `techStack` | `.claude/docs/technical.md` | Stack details, deployment |
-| `domainModel` | `.claude/docs/data-model.md` | Business logic, formulas |
-| `codeConventions` | `.claude/docs/code-conventions.md` | Writing code |
-| `uiPatterns` | `.claude/docs/ui-patterns.md` | Building UI |
-| `referenceFiles` | `.claude/docs/reference-files.md` | Finding patterns, templates |
-| `worktrees` | `.claude/docs/worktrees.md` | Before using git worktrees |
+| Key               | Path                               | Load when                   |
+| ----------------- | ---------------------------------- | --------------------------- |
+| `projectBrief`    | `.claude/docs/project-brief.md`    | Session start               |
+| `features`        | `.claude/docs/features.md`         | Clarifying feature scope    |
+| `architecture`    | `.claude/docs/architecture.md`     | Routes, directory structure |
+| `techStack`       | `.claude/docs/technical.md`        | Stack details, deployment   |
+| `domainModel`     | `.claude/docs/data-model.md`       | Business logic, formulas    |
+| `codeConventions` | `.claude/docs/code-conventions.md` | Writing code                |
+| `uiPatterns`      | `.claude/docs/ui-patterns.md`      | Building UI                 |
+| `referenceFiles`  | `.claude/docs/reference-files.md`  | Finding patterns, templates |
+| `worktrees`       | `.claude/docs/worktrees.md`        | Before using git worktrees  |
 
 ---
 
 ## Superpowers Docs Location
 
 All superpowers artifacts (specs, plans) MUST be saved under `.claude/docs/superpowers/`:
+
 - Specs → `.claude/docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`
 - Plans → `.claude/docs/superpowers/plans/YYYY-MM-DD-<topic>-plan.md`
 
@@ -69,25 +70,25 @@ Never write these to `docs/` at the project root.
 
 Use superpowers skills for all development work:
 
-| Task type | Skill sequence |
-|-----------|----------------|
-| New feature / change | `brainstorming` → `writing-plans` → `subagent-driven-development` |
-| Bug | `systematic-debugging` |
-| Branch completion | `finishing-a-development-branch` |
-| Parallel independent tasks | `dispatching-parallel-agents` |
-| Requesting review | `requesting-code-review` |
-| Receiving review | `receiving-code-review` |
+| Task type                  | Skill sequence                                                    |
+| -------------------------- | ----------------------------------------------------------------- |
+| New feature / change       | `brainstorming` → `writing-plans` → `subagent-driven-development` |
+| Bug                        | `systematic-debugging`                                            |
+| Branch completion          | `finishing-a-development-branch`                                  |
+| Parallel independent tasks | `dispatching-parallel-agents`                                     |
+| Requesting review          | `requesting-code-review`                                          |
+| Receiving review           | `receiving-code-review`                                           |
 
 ---
 
 ## Commands
 
-| Command | When |
-|---------|------|
-| `/check` | Before every commit — all quality gates |
-| `/test` | Quick feedback — tests only |
-| `/migrate <name>` | After schema change |
-| `/seed` | After `/db-reset` |
-| `/db-reset` | Reset dev database |
-| `/commit-msg` | Generate commit message from diff |
+| Command                | When                                    |
+| ---------------------- | --------------------------------------- |
+| `/check`               | Before every commit — all quality gates |
+| `/test`                | Quick feedback — tests only             |
+| `/migrate <name>`      | After schema change                     |
+| `/seed`                | After `/db-reset`                       |
+| `/db-reset`            | Reset dev database                      |
+| `/commit-msg`          | Generate commit message from diff       |
 | `/consolidate-lessons` | Compress lessons, promote rules to docs |

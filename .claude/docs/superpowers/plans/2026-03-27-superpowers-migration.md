@@ -13,10 +13,12 @@
 ## File Structure
 
 **Modified:**
+
 - `.claude/CLAUDE.md` — complete rewrite (pipeline → superpowers)
 - `.claude/settings.json` — remove hooks config, keep plugin entry
 
 **Deleted:**
+
 - `.claude/pipeline.json`
 - `.claude/agents/action-audit.md`
 - `.claude/agents/code-compliance.md`
@@ -33,6 +35,7 @@
 - `.claude/hooks/session-init.sh`
 
 **Preserved (no changes):**
+
 - `.claude/docs/*` (all project docs)
 - `.claude/tasks/todo.md`, `lessons.md`, `todo-archive.md`
 - `.claude/commands/*` (all 8 commands)
@@ -42,6 +45,7 @@
 ### Task 1: Write new CLAUDE.md
 
 **Files:**
+
 - Modify: `.claude/CLAUDE.md` (complete rewrite)
 
 - [ ] **Step 1: Replace CLAUDE.md with the new slim version**
@@ -93,16 +97,16 @@ Write the following content to `.claude/CLAUDE.md` (replacing everything):
 
 ## Docs (load on-demand)
 
-| Key | Path | Load when |
-|-----|------|-----------|
-| `projectBrief` | `.claude/docs/project-brief.md` | Session start |
-| `features` | `.claude/docs/features.md` | Clarifying feature scope |
-| `architecture` | `.claude/docs/architecture.md` | Routes, directory structure |
-| `techStack` | `.claude/docs/technical.md` | Stack details, deployment |
-| `domainModel` | `.claude/docs/data-model.md` | Business logic, formulas |
-| `codeConventions` | `.claude/docs/code-conventions.md` | Writing code |
-| `uiPatterns` | `.claude/docs/ui-patterns.md` | Building UI |
-| `referenceFiles` | `.claude/docs/reference-files.md` | Finding patterns, templates |
+| Key               | Path                               | Load when                   |
+| ----------------- | ---------------------------------- | --------------------------- |
+| `projectBrief`    | `.claude/docs/project-brief.md`    | Session start               |
+| `features`        | `.claude/docs/features.md`         | Clarifying feature scope    |
+| `architecture`    | `.claude/docs/architecture.md`     | Routes, directory structure |
+| `techStack`       | `.claude/docs/technical.md`        | Stack details, deployment   |
+| `domainModel`     | `.claude/docs/data-model.md`       | Business logic, formulas    |
+| `codeConventions` | `.claude/docs/code-conventions.md` | Writing code                |
+| `uiPatterns`      | `.claude/docs/ui-patterns.md`      | Building UI                 |
+| `referenceFiles`  | `.claude/docs/reference-files.md`  | Finding patterns, templates |
 
 ---
 
@@ -110,28 +114,28 @@ Write the following content to `.claude/CLAUDE.md` (replacing everything):
 
 Use superpowers skills for all development work:
 
-| Task type | Skill sequence |
-|-----------|----------------|
-| New feature / change | `brainstorming` → `writing-plans` → `subagent-driven-development` |
-| Bug | `systematic-debugging` |
-| Branch completion | `finishing-a-development-branch` |
-| Parallel independent tasks | `dispatching-parallel-agents` |
-| Requesting review | `requesting-code-review` |
-| Receiving review | `receiving-code-review` |
+| Task type                  | Skill sequence                                                    |
+| -------------------------- | ----------------------------------------------------------------- |
+| New feature / change       | `brainstorming` → `writing-plans` → `subagent-driven-development` |
+| Bug                        | `systematic-debugging`                                            |
+| Branch completion          | `finishing-a-development-branch`                                  |
+| Parallel independent tasks | `dispatching-parallel-agents`                                     |
+| Requesting review          | `requesting-code-review`                                          |
+| Receiving review           | `receiving-code-review`                                           |
 
 ---
 
 ## Commands
 
-| Command | When |
-|---------|------|
-| `/check` | Before every commit — all quality gates |
-| `/test` | Quick feedback — tests only |
-| `/migrate <name>` | After schema change |
-| `/seed` | After `/db-reset` |
-| `/db-reset` | Reset dev database |
-| `/commit-msg` | Generate commit message from diff |
-| `/cleanup-todos` | Clean up todo.md |
+| Command                | When                                    |
+| ---------------------- | --------------------------------------- |
+| `/check`               | Before every commit — all quality gates |
+| `/test`                | Quick feedback — tests only             |
+| `/migrate <name>`      | After schema change                     |
+| `/seed`                | After `/db-reset`                       |
+| `/db-reset`            | Reset dev database                      |
+| `/commit-msg`          | Generate commit message from diff       |
+| `/cleanup-todos`       | Clean up todo.md                        |
 | `/consolidate-lessons` | Compress lessons, promote rules to docs |
 ```
 
@@ -150,6 +154,7 @@ Expected: 5
 ### Task 2: Delete pipeline.json and all custom agents
 
 **Files:**
+
 - Delete: `.claude/pipeline.json`
 - Delete: `.claude/agents/` (all 9 files)
 
@@ -171,6 +176,7 @@ Expected: "No such file or directory" for pipeline.json; empty output or "No suc
 ### Task 3: Delete all hooks
 
 **Files:**
+
 - Delete: `.claude/hooks/code-compliance.sh`
 - Delete: `.claude/hooks/schema-gate.sh`
 - Delete: `.claude/hooks/completeness.sh`
@@ -190,9 +196,11 @@ Expected: empty output (no files listed)
 ### Task 4: Update settings.json
 
 **Files:**
+
 - Modify: `.claude/settings.json`
 
 Current content:
+
 ```json
 {
   "hooks": {

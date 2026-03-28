@@ -286,7 +286,7 @@ export function getAuditDescription(eventType: string, details: unknown): string
     case "USER_UPDATED":
     case "USER_DEACTIVATED":
     case "USER_REACTIVATED":
-      return d.fullName ? s(d.fullName) : (d.email ? s(d.email) : null)
+      return d.fullName ? s(d.fullName) : d.email ? s(d.email) : null
 
     case "PARTICIPANT_CREATED":
     case "PARTICIPANT_UPDATED":

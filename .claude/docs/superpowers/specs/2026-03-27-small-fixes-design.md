@@ -17,11 +17,11 @@ Alle kleinen Fixes aus dem Code-Review-Plan — aufgeteilt in zwei parallel arbe
 
 Drei neue Dateien anlegen — alle `"use client"`:
 
-| Datei | Zweck |
-|-------|-------|
-| `src/app/error.tsx` | Globale Fallback-Seite |
-| `src/app/(app)/error.tsx` | Eingeloggter Bereich |
-| `src/app/(public)/error.tsx` | Login-Bereich |
+| Datei                        | Zweck                  |
+| ---------------------------- | ---------------------- |
+| `src/app/error.tsx`          | Globale Fallback-Seite |
+| `src/app/(app)/error.tsx`    | Eingeloggter Bereich   |
+| `src/app/(public)/error.tsx` | Login-Bereich          |
 
 Props: `error: Error & { digest?: string }` und `reset: () => void`
 Inhalt: Deutschsprachige Fehlermeldung + Button "Seite neu laden" (`onClick={reset}`)
@@ -31,11 +31,11 @@ Styling: Zentriert, konsistent mit dem Rest der App (shadcn-Komponenten)
 
 Drei neue `loading.tsx`-Dateien für die schwersten Routen:
 
-| Datei |
-|-------|
+| Datei                                                   |
+| ------------------------------------------------------- |
 | `src/app/(app)/competitions/[id]/standings/loading.tsx` |
-| `src/app/(app)/competitions/[id]/playoffs/loading.tsx` |
-| `src/app/(app)/competitions/[id]/ranking/loading.tsx` |
+| `src/app/(app)/competitions/[id]/playoffs/loading.tsx`  |
+| `src/app/(app)/competitions/[id]/ranking/loading.tsx`   |
 
 Inhalt: `<Skeleton>`-Layout aus shadcn/ui, passend zur Struktur der jeweiligen Seite (Tabelle, Bracket, Rangliste).
 
@@ -57,6 +57,7 @@ console.error("Fehler beim Starten der Playoffs:", msg)
 ```
 
 Betroffene Dateien:
+
 - `src/lib/competitions/actions.ts:454`
 - `src/lib/playoffs/actions.ts:96, 348, 768`
 - `src/lib/results/actions.ts:160`
@@ -69,9 +70,11 @@ Falls keine Treffer außer der Definition: Type aus `src/lib/results/types.ts` l
 ### R-12 · isGuestRecord Filter Audit
 
 Per grep alle `findMany`-Queries auf Participants finden:
+
 ```
 grep -r "participant" src/lib --include="*.ts" | grep "findMany"
 ```
+
 Jede Query prüfen ob `where: { isGuestRecord: false }` gesetzt ist.
 Fehlende Filter ergänzen wo nötig.
 
@@ -82,6 +85,7 @@ In `src/components/ui/chart.tsx` einen Kommentar direkt über dem `dangerouslySe
 ### R-14 · CSRF Dokumentation
 
 In `src/lib/auth.ts` oder `src/lib/auth.config.ts` einen Kommentar ergänzen, der erklärt:
+
 - NextAuth bietet impliziten CSRF-Schutz über Origin-Header-Validierung
 - Server Actions sind durch das gleiche Mechanismus geschützt
 - Kein manueller CSRF-Token nötig

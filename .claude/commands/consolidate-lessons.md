@@ -3,18 +3,19 @@ Konsolidiere `.claude/tasks/lessons.md`: Promoviere wiederverwendbare Regeln in 
 ## Ziel
 
 lessons.md wächst nach jeder Session. Dieses Command hält die Datei schlank:
+
 - Generische Regeln/Patterns → passende Doc (code-conventions, ui-patterns)
 - Projektspezifische Bugs und Incidents → bleiben in lessons.md
 - Bereits bekannte oder obsolete Einträge → werden archiviert (gelöscht)
 
 ## Kategorien
 
-| Kategorie          | Ziel-Doc                              | Typische Inhalte                                          |
-| ------------------ | ------------------------------------- | --------------------------------------------------------- |
-| `CODE_CONVENTIONS` | `.claude/docs/code-conventions.md`    | Prisma-Patterns, TypeScript/Zod, Tests, Server Actions    |
-| `UI_PATTERNS`      | `.claude/docs/ui-patterns.md`         | shadcn, Mobile/Responsive, CSS, Touch-Targets, React-UI   |
-| `KEEP`             | lessons.md (bleibt)                   | Projektspezifisch, Business-Logic, einmalige Incidents    |
-| `ARCHIVE`          | wird gelöscht                         | Bereits in Docs vorhanden, obsolet, oder trivial          |
+| Kategorie          | Ziel-Doc                           | Typische Inhalte                                        |
+| ------------------ | ---------------------------------- | ------------------------------------------------------- |
+| `CODE_CONVENTIONS` | `.claude/docs/code-conventions.md` | Prisma-Patterns, TypeScript/Zod, Tests, Server Actions  |
+| `UI_PATTERNS`      | `.claude/docs/ui-patterns.md`      | shadcn, Mobile/Responsive, CSS, Touch-Targets, React-UI |
+| `KEEP`             | lessons.md (bleibt)                | Projektspezifisch, Business-Logic, einmalige Incidents  |
+| `ARCHIVE`          | wird gelöscht                      | Bereits in Docs vorhanden, obsolet, oder trivial        |
 
 ## Ablauf
 
@@ -22,6 +23,7 @@ lessons.md wächst nach jeder Session. Dieses Command hält die Datei schlank:
 
 Lies `.claude/tasks/lessons.md` in 50-Zeilen-Chunks (Datei kann gross sein).
 Lies auch die Ziel-Docs um Duplikate zu vermeiden:
+
 - `.claude/docs/code-conventions.md`
 - `.claude/docs/ui-patterns.md`
 
@@ -72,6 +74,7 @@ Format des Abschnitts:
 ### 4. lessons.md neu schreiben
 
 Schreibe die Datei neu mit:
+
 1. Original-Header (# Lernlog – Liga-App + Format-Zeile + Separator)
 2. Kommentarzeile: `<!-- Zuletzt konsolidiert: YYYY-MM-DD -->`
 3. Alle `KEEP`-Einträge (Priorität — immer behalten, unabhängig vom Alter)
@@ -83,6 +86,7 @@ Die letzten 10 Einträge werden immer behalten (für Kurzzeit-Gedächtnis bei Se
 ### 5. Bericht an User
 
 Berichte in Deutsch:
+
 - Gesamtzahl verarbeiteter Einträge
 - X Einträge → code-conventions.md
 - Y Einträge → ui-patterns.md

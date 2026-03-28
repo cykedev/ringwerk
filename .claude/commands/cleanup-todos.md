@@ -3,6 +3,7 @@ Räume `.claude/tasks/todo.md` auf: Abgeschlossene Tasks aus "Aktuell" entfernen
 ## Ziel
 
 todo.md wächst nach jeder Phase. Dieses Command hält die Datei schlank:
+
 - Abgeschlossene Einträge in "Aktuell" → komprimiert nach "Abgeschlossen" verschieben
 - Ältere "Abgeschlossen"-Einträge → nach `todo-archive.md` auslagern
 - Nur offene Tasks + die letzten 5 Abschlüsse bleiben in todo.md sichtbar
@@ -69,6 +70,7 @@ Archivierte abgeschlossene Tasks (zu alt für das aktive Log).
 ### 5. Bericht an User
 
 Berichte in Deutsch:
+
 - X offene Tasks behalten
 - Y abgeschlossene Tasks aus "Aktuell" komprimiert und verschoben
 - Z Einträge in "Abgeschlossen" sichtbar (letzte 5 + neu verschobene)
