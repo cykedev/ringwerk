@@ -5,6 +5,7 @@ import { z } from "zod"
 import { db } from "@/lib/db"
 import { getAuthSession } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
+import type { AuditEventType } from "@/lib/auditLog/types"
 
 const DisciplineSchema = z.object({
   name: z.string().min(1, "Name ist erforderlich").max(100, "Name zu lang"),
@@ -35,7 +36,25 @@ export async function createDiscipline(
   })
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
 
-  await db.discipline.create({ data: parsed.data })
+  const newDiscipline = await db.discipline.create({
+    data: parsed.data,
+    select: { id: true },
+  })
+
+  await db.auditLog.create({
+    data: {
+      eventType: "DISCIPLINE_CREATED" satisfies AuditEventType,
+      entityType: "DISCIPLINE",
+      entityId: newDiscipline.id,
+      userId: session.user.id,
+      details: {
+        name: parsed.data.name,
+        scoringType: parsed.data.scoringType,
+        teilerFaktor: parsed.data.teilerFaktor,
+      },
+    },
+  })
+
   revalidateDisciplinePaths()
   return { success: true }
 }
@@ -74,6 +93,21 @@ export async function updateDiscipline(
   }
 
   await db.discipline.update({ where: { id }, data: parsed.data })
+
+  await db.auditLog.create({
+    data: {
+      eventType: "DISCIPLINE_UPDATED" satisfies AuditEventType,
+      entityType: "DISCIPLINE",
+      entityId: id,
+      userId: session.user.id,
+      details: {
+        name: parsed.data.name,
+        scoringType: parsed.data.scoringType,
+        teilerFaktor: parsed.data.teilerFaktor,
+      },
+    },
+  })
+
   revalidateDisciplinePaths()
   return { success: true }
 }
@@ -85,12 +119,23 @@ export async function setDisciplineArchived(id: string, archive: boolean): Promi
 
   const discipline = await db.discipline.findUnique({
     where: { id },
-    select: { id: true, isArchived: true },
+    select: { id: true, name: true, isArchived: true },
   })
   if (!discipline) return { error: "Disziplin nicht gefunden." }
   if (discipline.isArchived === archive) return { success: true }
 
   await db.discipline.update({ where: { id }, data: { isArchived: archive } })
+
+  await db.auditLog.create({
+    data: {
+      eventType: "DISCIPLINE_ARCHIVED" satisfies AuditEventType,
+      entityType: "DISCIPLINE",
+      entityId: id,
+      userId: session.user.id,
+      details: { name: discipline.name },
+    },
+  })
+
   revalidateDisciplinePaths()
   return { success: true }
 }
@@ -102,7 +147,7 @@ export async function deleteDiscipline(id: string): Promise<ActionResult> {
 
   const discipline = await db.discipline.findUnique({
     where: { id },
-    select: { id: true },
+    select: { id: true, name: true },
   })
   if (!discipline) return { error: "Disziplin nicht gefunden." }
 
@@ -111,6 +156,16 @@ export async function deleteDiscipline(id: string): Promise<ActionResult> {
   if (competitionCount > 0) {
     return { error: "Disziplin kann nicht gelöscht werden — sie wird in Wettbewerben verwendet." }
   }
+
+  await db.auditLog.create({
+    data: {
+      eventType: "DISCIPLINE_DELETED" satisfies AuditEventType,
+      entityType: "DISCIPLINE",
+      entityId: id,
+      userId: session.user.id,
+      details: { name: discipline.name },
+    },
+  })
 
   await db.discipline.delete({ where: { id } })
   revalidateDisciplinePaths()
