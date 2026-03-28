@@ -12,6 +12,7 @@ const {
   matchupCountMock,
   playoffMatchCountMock,
   transactionMock,
+  auditLogCreateMock,
 } = vi.hoisted(() => ({
   getAuthSessionMock: vi.fn(),
   revalidatePathMock: vi.fn(),
@@ -24,6 +25,7 @@ const {
   matchupCountMock: vi.fn(),
   playoffMatchCountMock: vi.fn(),
   transactionMock: vi.fn(),
+  auditLogCreateMock: vi.fn(),
 }))
 
 vi.mock("@/lib/auth-helpers", () => ({ getAuthSession: getAuthSessionMock }))
@@ -42,6 +44,7 @@ vi.mock("@/lib/db", () => ({
     competitionParticipant: { count: competitionParticipantCountMock },
     matchup: { count: matchupCountMock },
     playoffMatch: { count: playoffMatchCountMock },
+    auditLog: { create: auditLogCreateMock },
     $transaction: transactionMock,
   },
 }))
@@ -153,7 +156,12 @@ describe("updateCompetition", () => {
   beforeEach(() => {
     vi.resetAllMocks()
     competitionUpdateMock.mockResolvedValue({})
-    competitionFindUniqueMock.mockResolvedValue({ id: "c1", type: "LEAGUE" })
+    competitionFindUniqueMock.mockResolvedValue({
+      id: "c1",
+      type: "LEAGUE",
+      scoringMode: "RINGTEILER",
+    })
+    matchupCountMock.mockResolvedValue(0)
   })
 
   it("liefert Fehler ohne Session", async () => {
@@ -219,13 +227,21 @@ describe("setCompetitionStatus", () => {
 
   it("liefert Fehler wenn kein Admin", async () => {
     getAuthSessionMock.mockResolvedValue(userSession)
-    competitionFindUniqueMock.mockResolvedValue({ id: "c1", status: "ACTIVE" })
+    competitionFindUniqueMock.mockResolvedValue({
+      id: "c1",
+      name: "Winterliga 2026",
+      status: "ACTIVE",
+    })
     expect(await setCompetitionStatus("c1", "COMPLETED")).toEqual({ error: "Keine Berechtigung" })
   })
 
   it("blockiert ungültigen Übergang ACTIVE → ARCHIVED", async () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
-    competitionFindUniqueMock.mockResolvedValue({ id: "c1", status: "ACTIVE" })
+    competitionFindUniqueMock.mockResolvedValue({
+      id: "c1",
+      name: "Winterliga 2026",
+      status: "ACTIVE",
+    })
     const result = await setCompetitionStatus("c1", "ARCHIVED")
     expect(result).toMatchObject({ error: expect.stringContaining("nicht erlaubt") })
     expect(competitionUpdateMock).not.toHaveBeenCalled()
@@ -233,14 +249,22 @@ describe("setCompetitionStatus", () => {
 
   it("blockiert ungültigen Übergang ARCHIVED → ACTIVE", async () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
-    competitionFindUniqueMock.mockResolvedValue({ id: "c1", status: "ARCHIVED" })
+    competitionFindUniqueMock.mockResolvedValue({
+      id: "c1",
+      name: "Winterliga 2026",
+      status: "ARCHIVED",
+    })
     const result = await setCompetitionStatus("c1", "ACTIVE")
     expect(result).toMatchObject({ error: expect.stringContaining("nicht erlaubt") })
   })
 
   it("erlaubt Übergang ACTIVE → COMPLETED", async () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
-    competitionFindUniqueMock.mockResolvedValue({ id: "c1", status: "ACTIVE" })
+    competitionFindUniqueMock.mockResolvedValue({
+      id: "c1",
+      name: "Winterliga 2026",
+      status: "ACTIVE",
+    })
     const result = await setCompetitionStatus("c1", "COMPLETED")
     expect(result).toEqual({ success: true })
     expect(competitionUpdateMock).toHaveBeenCalledWith({
@@ -251,7 +275,11 @@ describe("setCompetitionStatus", () => {
 
   it("erlaubt Übergang COMPLETED → ARCHIVED", async () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
-    competitionFindUniqueMock.mockResolvedValue({ id: "c1", status: "COMPLETED" })
+    competitionFindUniqueMock.mockResolvedValue({
+      id: "c1",
+      name: "Winterliga 2026",
+      status: "COMPLETED",
+    })
     const result = await setCompetitionStatus("c1", "ARCHIVED")
     expect(result).toEqual({ success: true })
     expect(competitionUpdateMock).toHaveBeenCalledWith({
@@ -262,7 +290,11 @@ describe("setCompetitionStatus", () => {
 
   it("erlaubt Übergang COMPLETED → ACTIVE (wieder öffnen)", async () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
-    competitionFindUniqueMock.mockResolvedValue({ id: "c1", status: "COMPLETED" })
+    competitionFindUniqueMock.mockResolvedValue({
+      id: "c1",
+      name: "Winterliga 2026",
+      status: "COMPLETED",
+    })
     const result = await setCompetitionStatus("c1", "ACTIVE")
     expect(result).toEqual({ success: true })
     expect(competitionUpdateMock).toHaveBeenCalledWith({
@@ -273,7 +305,11 @@ describe("setCompetitionStatus", () => {
 
   it("erlaubt Übergang ARCHIVED → COMPLETED (unarchivieren)", async () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
-    competitionFindUniqueMock.mockResolvedValue({ id: "c1", status: "ARCHIVED" })
+    competitionFindUniqueMock.mockResolvedValue({
+      id: "c1",
+      name: "Winterliga 2026",
+      status: "ARCHIVED",
+    })
     const result = await setCompetitionStatus("c1", "COMPLETED")
     expect(result).toEqual({ success: true })
     expect(competitionUpdateMock).toHaveBeenCalledWith({

@@ -8,6 +8,7 @@ const {
   updateMock,
   deleteMock,
   competitionCountMock,
+  auditLogCreateMock,
 } = vi.hoisted(() => ({
   getAuthSessionMock: vi.fn(),
   revalidatePathMock: vi.fn(),
@@ -16,6 +17,7 @@ const {
   updateMock: vi.fn(),
   deleteMock: vi.fn(),
   competitionCountMock: vi.fn(),
+  auditLogCreateMock: vi.fn(),
 }))
 
 vi.mock("@/lib/auth-helpers", () => ({ getAuthSession: getAuthSessionMock }))
@@ -29,6 +31,7 @@ vi.mock("@/lib/db", () => ({
       delete: deleteMock,
     },
     competition: { count: competitionCountMock },
+    auditLog: { create: auditLogCreateMock },
   },
 }))
 
@@ -53,7 +56,7 @@ function makeFormData(fields: Record<string, string>): FormData {
 describe("createDiscipline", () => {
   beforeEach(() => {
     vi.resetAllMocks()
-    createMock.mockResolvedValue({})
+    createMock.mockResolvedValue({ id: "d1" })
   })
 
   it("liefert Fehler ohne Session", async () => {
@@ -114,6 +117,7 @@ describe("createDiscipline", () => {
     expect(result).toEqual({ success: true })
     expect(createMock).toHaveBeenCalledWith({
       data: { name: "Luftpistole", scoringType: "WHOLE", teilerFaktor: 0.333 },
+      select: { id: true },
     })
     expect(revalidatePathMock).toHaveBeenCalled()
   })
@@ -205,13 +209,13 @@ describe("deleteDiscipline", () => {
 
   it("liefert Fehler wenn kein Admin", async () => {
     getAuthSessionMock.mockResolvedValue(userSession)
-    findUniqueMock.mockResolvedValue({ id: "d1" })
+    findUniqueMock.mockResolvedValue({ id: "d1", name: "Luftpistole" })
     expect(await deleteDiscipline("d1")).toEqual({ error: "Keine Berechtigung" })
   })
 
   it("blockiert Löschen wenn Ligen vorhanden", async () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
-    findUniqueMock.mockResolvedValue({ id: "d1" })
+    findUniqueMock.mockResolvedValue({ id: "d1", name: "Luftpistole" })
     competitionCountMock.mockResolvedValue(1)
 
     const result = await deleteDiscipline("d1")
@@ -222,7 +226,7 @@ describe("deleteDiscipline", () => {
 
   it("löscht Disziplin ohne Ligen", async () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
-    findUniqueMock.mockResolvedValue({ id: "d1" })
+    findUniqueMock.mockResolvedValue({ id: "d1", name: "Luftpistole" })
     competitionCountMock.mockResolvedValue(0)
 
     const result = await deleteDiscipline("d1")
@@ -248,13 +252,13 @@ describe("setDisciplineArchived", () => {
 
   it("liefert Fehler wenn kein Admin", async () => {
     getAuthSessionMock.mockResolvedValue(userSession)
-    findUniqueMock.mockResolvedValue({ id: "d1", isArchived: false })
+    findUniqueMock.mockResolvedValue({ id: "d1", name: "Luftpistole", isArchived: false })
     expect(await setDisciplineArchived("d1", true)).toEqual({ error: "Keine Berechtigung" })
   })
 
   it("ist idempotent — kein Update wenn Status bereits korrekt", async () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
-    findUniqueMock.mockResolvedValue({ id: "d1", isArchived: true })
+    findUniqueMock.mockResolvedValue({ id: "d1", name: "Luftpistole", isArchived: true })
 
     const result = await setDisciplineArchived("d1", true)
 
@@ -264,7 +268,7 @@ describe("setDisciplineArchived", () => {
 
   it("archiviert eine aktive Disziplin", async () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
-    findUniqueMock.mockResolvedValue({ id: "d1", isArchived: false })
+    findUniqueMock.mockResolvedValue({ id: "d1", name: "Luftpistole", isArchived: false })
 
     const result = await setDisciplineArchived("d1", true)
 
