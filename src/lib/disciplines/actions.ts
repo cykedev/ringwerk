@@ -126,15 +126,17 @@ export async function setDisciplineArchived(id: string, archive: boolean): Promi
 
   await db.discipline.update({ where: { id }, data: { isArchived: archive } })
 
-  await db.auditLog.create({
-    data: {
-      eventType: "DISCIPLINE_ARCHIVED" satisfies AuditEventType,
-      entityType: "DISCIPLINE",
-      entityId: id,
-      userId: session.user.id,
-      details: { name: discipline.name },
-    },
-  })
+  if (archive) {
+    await db.auditLog.create({
+      data: {
+        eventType: "DISCIPLINE_ARCHIVED" satisfies AuditEventType,
+        entityType: "DISCIPLINE",
+        entityId: id,
+        userId: session.user.id,
+        details: { name: discipline.name },
+      },
+    })
+  }
 
   revalidateDisciplinePaths()
   return { success: true }
