@@ -83,15 +83,15 @@ Jeder Wettbewerb hat:
 
 ### Wertungsmodi (Scoring-Engine)
 
-| Modus           | Formel                                | Gewinner    | Faktor              |
-| --------------- | ------------------------------------- | ----------- | ------------------- |
-| RINGTEILER      | MaxRinge - Ringe + (Teiler \* Faktor) | Niedrigster | Ja                  |
-| RINGS           | Gesamtringe (ganzzahlig)              | Höchster    | Nein                |
-| RINGS_DECIMAL   | Gesamtringe (Zehntelwertung)          | Höchster    | Nein                |
-| TEILER          | Teiler \* Faktor                      | Niedrigster | Ja                  |
-| DECIMAL_REST    | Nachkommastelle der Ringe summiert    | Höchster    | Nein                |
-| TARGET_ABSOLUTE | Abweichung vom Zielwert               | Geringste   | Wenn Teiler-basiert |
-| TARGET_UNDER    | ≤ Zielwert bevorzugt, dann Abweichung | Geringste   | Wenn Teiler-basiert |
+| Modus           | Formel                                 | Gewinner    | Faktor              |
+| --------------- | -------------------------------------- | ----------- | ------------------- |
+| RINGTEILER      | MaxRinge - Ringe + (Teiler \* Faktor)  | Niedrigster | Ja                  |
+| RINGS           | Gesamtringe (ganzzahlig)               | Höchster    | Nein                |
+| RINGS_DECIMAL   | Gesamtringe (Zehntelwertung)           | Höchster    | Nein                |
+| TEILER          | Teiler \* Faktor                       | Niedrigster | Ja                  |
+| DECIMAL_REST    | Nachkommastelle der Ringe summiert     | Höchster    | Nein                |
+| TARGET_ABSOLUTE | Abweichung vom Zielwert                | Geringste   | Wenn Teiler-basiert |
+| TARGET_UNDER    | ≤ Zielwert bevorzugt, dann Abweichung  | Geringste   | Wenn Teiler-basiert |
 | TARGET_OVER     | >= Zielwert bevorzugt, dann Abweichung | Geringste   | Wenn Teiler-basiert |
 
 Formeln und Details: siehe `data-model.md` → Berechnungsregeln.
@@ -434,28 +434,67 @@ Die Seite `/competitions` zeigt Wettbewerbe in Karten mit:
 ## Audit-Log (Protokoll)
 
 - Alle sicherheits- und verwaltungsrelevanten Aktionen werden protokolliert
-- `competitionId` als Referenz (statt `leagueId`)
-- Ereignistypen (erweiterbar für Event/Saison):
+- `competitionId` als Referenz — gesetzt wenn die Aktion einen Wettbewerb betrifft, sonst null (nur globales Protokoll)
+- Ereignisse sind nach Kategorie gruppiert: `participant`, `result`, `playoff`, `destructive`, `admin`
+
+### Kategorie: Teilnehmer (participant)
+
+| Ereignis              | Auslöser                           |
+| --------------------- | ---------------------------------- |
+| PARTICIPANT_WITHDRAWN | Rückzug eines Teilnehmers aus Liga |
+| WITHDRAWAL_REVOKED    | Rückzug rückgängig gemacht         |
+
+### Kategorie: Ergebnis (result)
+
+| Ereignis                | Auslöser                     |
+| ----------------------- | ---------------------------- |
+| RESULT_ENTERED          | Liga-Ergebnis eingetragen    |
+| RESULT_CORRECTED        | Liga-Ergebnis korrigiert     |
+| EVENT_SERIES_ENTERED    | Serie bei Event eingetragen  |
+| EVENT_SERIES_CORRECTED  | Serie bei Event korrigiert   |
+| SEASON_SERIES_ENTERED   | Serie bei Saison eingetragen |
+| SEASON_SERIES_CORRECTED | Serie bei Saison korrigiert  |
+
+### Kategorie: Playoff (playoff)
 
 | Ereignis                 | Auslöser                           |
 | ------------------------ | ---------------------------------- |
-| PARTICIPANT_WITHDRAWN    | Rückzug eines Teilnehmers          |
-| WITHDRAWAL_REVOKED       | Rückzug rückgängig                 |
-| RESULT_ENTERED           | Ergebnis eingetragen               |
-| RESULT_CORRECTED         | Ergebnis korrigiert                |
 | PLAYOFFS_STARTED         | Playoff-Phase gestartet            |
 | PLAYOFF_RESULT_ENTERED   | Playoff-Duell-Ergebnis eingetragen |
 | PLAYOFF_RESULT_CORRECTED | Playoff-Duell korrigiert           |
-| PLAYOFF_DUEL_DELETED     | Playoff-Duell gelöscht             |
-| EVENT_SERIES_ENTERED     | Serie bei Event eingetragen        |
-| EVENT_SERIES_CORRECTED   | Serie bei Event korrigiert         |
-| EVENT_SERIES_DELETED     | Serie bei Event gelöscht           |
-| SEASON_SERIES_ENTERED    | Serie bei Saison eingetragen       |
-| SEASON_SERIES_CORRECTED  | Serie bei Saison korrigiert        |
-| SEASON_SERIES_DELETED    | Serie bei Saison gelöscht          |
+
+### Kategorie: Destruktiv (destructive)
+
+| Ereignis              | Auslöser                  |
+| --------------------- | ------------------------- |
+| PLAYOFF_DUEL_DELETED  | Playoff-Duell gelöscht    |
+| EVENT_SERIES_DELETED  | Serie bei Event gelöscht  |
+| SEASON_SERIES_DELETED | Serie bei Saison gelöscht |
+
+### Kategorie: Admin (admin)
+
+Stammdaten-Änderungen — erscheinen nur im globalen Protokoll (kein competitionId), außer Competition-Events.
+
+| Ereignis                   | Auslöser                                  | competitionId |
+| -------------------------- | ----------------------------------------- | ------------- |
+| USER_CREATED               | Neuer Nutzer angelegt                     | null          |
+| USER_UPDATED               | Nutzerdaten geändert                      | null          |
+| USER_DEACTIVATED           | Nutzer deaktiviert                        | null          |
+| USER_REACTIVATED           | Nutzer reaktiviert                        | null          |
+| PARTICIPANT_CREATED        | Neuer Teilnehmer angelegt                 | null          |
+| PARTICIPANT_UPDATED        | Teilnehmerdaten geändert                  | null          |
+| PARTICIPANT_DEACTIVATED    | Teilnehmer deaktiviert                    | null          |
+| PARTICIPANT_REACTIVATED    | Teilnehmer reaktiviert                    | null          |
+| DISCIPLINE_CREATED         | Neue Disziplin angelegt                   | null          |
+| DISCIPLINE_UPDATED         | Disziplin geändert                        | null          |
+| DISCIPLINE_ARCHIVED        | Disziplin archiviert                      | null          |
+| DISCIPLINE_DELETED         | Disziplin gelöscht                        | null          |
+| COMPETITION_CREATED        | Neuer Wettbewerb angelegt                 | neue ID       |
+| COMPETITION_UPDATED        | Wettbewerbsdaten geändert                 | bestehende ID |
+| COMPETITION_STATUS_CHANGED | Wettbewerb-Status geändert (z.B. → Aktiv) | bestehende ID |
 
 - Details-JSON als Snapshot (denormalisiert, kein Verweis)
-- Wettbewerb-Protokoll: pro Wettbewerb; Globales Protokoll: alle Wettbewerbe
+- Wettbewerb-Protokoll: pro Wettbewerb (nur Events mit competitionId); Globales Protokoll: alle Wettbewerbe
 
 ---
 

@@ -49,14 +49,14 @@
 
 #### Event-spezifisch (EVENT)
 
-| Feld            | Typ              | Default | Beschreibung                                              |
-| --------------- | ---------------- | ------- | --------------------------------------------------------- |
-| eventDate       | DateTime?        | null    | Veranstaltungsdatum                                       |
-| allowGuests     | Boolean?         | false   | Gastteilnehmer erlaubt                                    |
-| teamSize        | Int?             | null    | null = Einzel; 2+ = Teamgrösse (Anzahl Mitglieder/Team)  |
-| teamScoring     | TeamScoring?     | null    | SUM = Summe; BEST = Bestes; nur wenn teamSize >= 2        |
+| Feld            | Typ              | Default | Beschreibung                                                |
+| --------------- | ---------------- | ------- | ----------------------------------------------------------- |
+| eventDate       | DateTime?        | null    | Veranstaltungsdatum                                         |
+| allowGuests     | Boolean?         | false   | Gastteilnehmer erlaubt                                      |
+| teamSize        | Int?             | null    | null = Einzel; 2+ = Teamgrösse (Anzahl Mitglieder/Team)     |
+| teamScoring     | TeamScoring?     | null    | SUM = Summe; BEST = Bestes; nur wenn teamSize >= 2          |
 | targetValue     | Decimal?         | null    | Zielwert (nur TARGET_ABSOLUTE / TARGET_UNDER / TARGET_OVER) |
-| targetValueType | TargetValueType? | null    | TEILER, RINGS oder RINGS_DECIMAL                          |
+| targetValueType | TargetValueType? | null    | TEILER, RINGS oder RINGS_DECIMAL                            |
 
 #### Saison-spezifisch (SEASON)
 
