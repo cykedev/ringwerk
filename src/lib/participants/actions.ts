@@ -5,6 +5,7 @@ import { z } from "zod"
 import { db } from "@/lib/db"
 import { getAuthSession } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
+import type { AuditEventType } from "@/lib/auditLog/types"
 
 const ParticipantSchema = z.object({
   firstName: z.string().min(1, "Vorname ist erforderlich").max(100, "Vorname zu lang"),
@@ -48,12 +49,26 @@ export async function createParticipant(
     if (existing) return { error: "Diese Kontaktangabe wird bereits verwendet." }
   }
 
-  await db.participant.create({
+  const newParticipant = await db.participant.create({
     data: {
       firstName: parsed.data.firstName.trim(),
       lastName: parsed.data.lastName.trim(),
       contact,
       createdByUserId: session.user.id,
+    },
+    select: { id: true },
+  })
+
+  await db.auditLog.create({
+    data: {
+      eventType: "PARTICIPANT_CREATED" satisfies AuditEventType,
+      entityType: "PARTICIPANT",
+      entityId: newParticipant.id,
+      userId: session.user.id,
+      details: {
+        firstName: parsed.data.firstName.trim(),
+        lastName: parsed.data.lastName.trim(),
+      },
     },
   })
 
@@ -103,6 +118,19 @@ export async function updateParticipant(
     },
   })
 
+  await db.auditLog.create({
+    data: {
+      eventType: "PARTICIPANT_UPDATED" satisfies AuditEventType,
+      entityType: "PARTICIPANT",
+      entityId: id,
+      userId: session.user.id,
+      details: {
+        firstName: parsed.data.firstName.trim(),
+        lastName: parsed.data.lastName.trim(),
+      },
+    },
+  })
+
   revalidateParticipantPaths()
   return { success: true }
 }
@@ -118,7 +146,7 @@ export async function setParticipantActive(id: string, isActive: boolean): Promi
 
   const participant = await db.participant.findUnique({
     where: { id },
-    select: { id: true, isActive: true },
+    select: { id: true, firstName: true, lastName: true, isActive: true },
   })
   if (!participant) return { error: "Teilnehmer nicht gefunden." }
   if (participant.isActive === isActive) return { success: true }
@@ -136,6 +164,21 @@ export async function setParticipantActive(id: string, isActive: boolean): Promi
   }
 
   await db.participant.update({ where: { id }, data: { isActive } })
+
+  const eventType: AuditEventType = isActive ? "PARTICIPANT_REACTIVATED" : "PARTICIPANT_DEACTIVATED"
+  await db.auditLog.create({
+    data: {
+      eventType,
+      entityType: "PARTICIPANT",
+      entityId: id,
+      userId: session.user.id,
+      details: {
+        firstName: participant.firstName,
+        lastName: participant.lastName,
+      },
+    },
+  })
+
   revalidateParticipantPaths()
   return { success: true }
 }
