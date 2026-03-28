@@ -11,7 +11,7 @@ Basis: Kritischer Vollreview (Security, Konsistenz, Simplicity, Best Practices, 
 | ---- | --------------------------------- | ---- | ---------------------------------------- |
 | R-01 | Error Boundaries                  | 🔴   | ✅ erledigt (2026-03-27)                 |
 | R-02 | console.error(error)              | 🔴   | ✅ erledigt (2026-03-27)                 |
-| R-03 | Audit Log Lücken                  | 🟠   | 🔄 Spec fertig, Plan ausstehend          |
+| R-03 | Audit Log Lücken                  | 🟠   | ✅ erledigt (2026-03-28)                 |
 | R-04 | Fehlende Tests (Actions)          | 🟠   | ⬜ offen                                 |
 | R-05 | playoffs/actions.ts aufteilen     | 🟠   | ⬜ offen                                 |
 | R-06 | competitions/actions.ts aufteilen | 🟠   | ⬜ offen                                 |
@@ -79,18 +79,9 @@ console.error("Fehler beim Starten der Playoffs:", msg)
 
 ## 🟠 HOCH — Bald adressieren
 
-### R-03 · Audit Log: User- und Participant-Ops nicht geloggt
+### ✅ R-03 · Audit Log: User- und Participant-Ops nicht geloggt
 
-**Problem:** `createUser`, `updateUser`, `createParticipant`, `updateParticipant` und alle `disciplines/actions.ts`-Ops schreiben keinen AuditLog-Eintrag. Damit fehlt der Nachweis wer wann Stammdaten verändert hat.
-
-**Fehlende Einträge:**
-
-- `USER_CREATED`, `USER_UPDATED`, `USER_DEACTIVATED`
-- `PARTICIPANT_CREATED`, `PARTICIPANT_UPDATED`, `PARTICIPANT_DEACTIVATED`
-- `DISCIPLINE_CREATED`, `DISCIPLINE_UPDATED`, `DISCIPLINE_ARCHIVED`
-- `COMPETITION_CREATED`, `COMPETITION_UPDATED` (Wettbewerb-Anlage/-Änderung)
-
-**Umsetzung:** Jede Action die Stammdaten verändert bekommt ein `db.auditLog.create()` am Ende — analog zu `series/actions.ts` als Referenz.
+**Erledigt:** 2026-03-28 — 15 neue Admin-Event-Typen (USER, PARTICIPANT, DISCIPLINE, COMPETITION), Badge-Kategorie `admin`, vollständige `formatAuditDetails`/`getAuditDescription`-Cases. Spec: `.claude/docs/superpowers/specs/2026-03-28-audit-log-gaps-design.md`
 
 ---
 
@@ -259,7 +250,7 @@ Technisch sicher (statische CSS-Variable-Strings), aber Best Practice wäre ein 
 | ---- | --------------------------------- | ---- | ------------------ |
 | R-01 | Error Boundaries                  | 🔴   | UX / Robustheit    |
 | R-02 | console.error(error)              | 🔴   | Security           |
-| R-03 | Audit Log Lücken                  | 🟠   | Audit / Compliance |
+| R-03 | Audit Log Lücken                  | 🟠   | ✅ erledigt        |
 | R-04 | Fehlende Tests (Actions)          | 🟠   | Testabdeckung      |
 | R-05 | playoffs/actions.ts aufteilen     | 🟠   | Maintainability    |
 | R-06 | competitions/actions.ts aufteilen | 🟠   | Maintainability    |
