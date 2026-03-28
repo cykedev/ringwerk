@@ -239,7 +239,7 @@ export async function updateCompetition(
   if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
 
   const [competition, matchupCount] = await Promise.all([
-    db.competition.findUnique({ where: { id }, select: { id: true, type: true } }),
+    db.competition.findUnique({ where: { id }, select: { id: true, type: true, scoringMode: true } }),
     db.matchup.count({ where: { competitionId: id } }),
   ])
   if (!competition) return { error: "Wettbewerb nicht gefunden." }
@@ -317,7 +317,7 @@ export async function updateCompetition(
       details: {
         name: parsed.data.name,
         type: competition.type,
-        scoringMode: parsed.data.scoringMode,
+        scoringMode: rulesetLocked ? competition.scoringMode : parsed.data.scoringMode,
       },
     },
   })
