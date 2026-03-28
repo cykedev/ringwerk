@@ -4,9 +4,35 @@
 
 ## Hard Rules (non-negotiable, always active)
 
-1. **NEVER create a git commit.** The user commits manually. Not under any circumstances.
-2. **Commit messages MUST be displayed as a fenced code block** so the user can copy them easily.
-3. **Finalize is mandatory** — if the user gives feedback or asks questions mid-implementation, incorporate them and still complete all wrap-up steps (lessons, commit-msg). Nothing may be left pending.
+1. **Feature branches are mandatory.** Every new feature/session starts on a new branch. Propose a name (`feat/<topic>`), wait for user confirmation, then `git checkout -b`.
+2. **Never commit directly to `main`.** All commits go on the feature branch.
+3. **Never rebase or merge to `main` without explicit user confirmation.**
+4. **Commit messages must never include `Co-Authored-By` lines.** No attribution trailers of any kind.
+5. **Commit messages MUST be displayed as a fenced code block** before committing, so the user can review them.
+6. **Finalize is mandatory** — if the user gives feedback or asks questions mid-implementation, incorporate them and still complete all wrap-up steps. Nothing may be left pending.
+
+---
+
+## Branch & Commit Workflow
+
+### Starting a session
+
+1. Propose a branch name (`feat/<topic>`) and wait for user confirmation.
+2. `git checkout -b feat/<topic>`
+3. Commit spec + plan files as the first commit on the branch (before implementation starts).
+
+### During implementation
+
+- **Subagents** commit after each task — one small, focused commit per task.
+- **Main agent** commits: checklist/review-plan updates, formatting housekeeping.
+- Every commit that changes behavior must include its tests in the same commit.
+- Plans must contain explicit test steps (new tests + updates to existing test mocks).
+
+### Completing a session
+
+- Run `/check` — all gates must be green.
+- Present a summary of all commits on the branch.
+- Ask user for confirmation before rebasing onto `main`.
 
 ---
 
