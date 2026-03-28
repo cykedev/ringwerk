@@ -5,14 +5,36 @@ Basis: Kritischer Vollreview (Security, Konsistenz, Simplicity, Best Practices, 
 
 ---
 
+## Status-Übersicht
+
+| #    | Titel                             | Prio | Status                                   |
+| ---- | --------------------------------- | ---- | ---------------------------------------- |
+| R-01 | Error Boundaries                  | 🔴   | ✅ erledigt (2026-03-27)                 |
+| R-02 | console.error(error)              | 🔴   | ✅ erledigt (2026-03-27)                 |
+| R-03 | Audit Log Lücken                  | 🟠   | 🔄 Spec fertig, Plan ausstehend          |
+| R-04 | Fehlende Tests (Actions)          | 🟠   | ⬜ offen                                 |
+| R-05 | playoffs/actions.ts aufteilen     | 🟠   | ⬜ offen                                 |
+| R-06 | competitions/actions.ts aufteilen | 🟠   | ⬜ offen                                 |
+| R-07 | Zod ↔ Prisma Enum sync            | 🟠   | ✅ erledigt (bereits via z.nativeEnum)   |
+| R-08 | Loading States                    | 🟡   | ✅ erledigt (2026-03-27)                 |
+| R-09 | ScoringMode Labels zentralisieren | 🟡   | ⬜ offen                                 |
+| R-10 | `use client` Audit                | 🟡   | ⬜ offen                                 |
+| R-11 | Deprecated Type entfernen         | 🟡   | ✅ erledigt (2026-03-27)                 |
+| R-12 | isGuestRecord Filter Audit        | 🟡   | ✅ erledigt (2026-03-27, kein Fix nötig) |
+| R-13 | dangerouslySetInnerHTML           | 🟢   | ✅ erledigt (2026-03-27)                 |
+| R-14 | CSRF Dokumentation                | 🟢   | ✅ erledigt (2026-03-27)                 |
+| R-15 | Optimistic Updates                | 🟢   | ⬜ offen (nach Launch)                   |
+
+---
+
 ## Legende
 
-| Prio | Bedeutung |
-|------|-----------|
-| 🔴 KRITISCH | Vor Launch zwingend |
-| 🟠 HOCH | Sollte bald adressiert werden |
-| 🟡 MITTEL | Wichtig, aber kein Blocker |
-| 🟢 NIEDRIG | Nice-to-have, Tech-Debt |
+| Prio        | Bedeutung                     |
+| ----------- | ----------------------------- |
+| 🔴 KRITISCH | Vor Launch zwingend           |
+| 🟠 HOCH     | Sollte bald adressiert werden |
+| 🟡 MITTEL   | Wichtig, aber kein Blocker    |
+| 🟢 NIEDRIG  | Nice-to-have, Tech-Debt       |
 
 ---
 
@@ -23,6 +45,7 @@ Basis: Kritischer Vollreview (Security, Konsistenz, Simplicity, Best Practices, 
 **Problem:** Kein einziges `error.tsx` im gesamten `src/app/`-Baum. Bei einem unbehandelten Server-Component-Fehler sieht der User einen weißen Bildschirm oder einen rohen Next.js-Stacktrace.
 
 **Scope:**
+
 - `src/app/error.tsx` — globale Fallback-Seite
 - `src/app/(app)/error.tsx` — für den eingeloggten Bereich
 - `src/app/(public)/error.tsx` — für Login-Bereich
@@ -36,11 +59,13 @@ Basis: Kritischer Vollreview (Security, Konsistenz, Simplicity, Best Practices, 
 **Problem:** An 5 Stellen wird das rohe Exception-Objekt in `console.error` geloggt. Im Production-Log landen damit potenziell interne Pfade, DB-Fehlermeldungen oder Stacktraces.
 
 **Dateien & Zeilen:**
+
 - `src/lib/competitions/actions.ts:454`
 - `src/lib/playoffs/actions.ts:96, 348, 768`
 - `src/lib/results/actions.ts:160`
 
 **Fix:** Error-Nachricht separat extrahieren, niemals das Objekt selbst loggen:
+
 ```ts
 // Vorher
 console.error("Fehler beim Starten der Playoffs:", error)
@@ -59,6 +84,7 @@ console.error("Fehler beim Starten der Playoffs:", msg)
 **Problem:** `createUser`, `updateUser`, `createParticipant`, `updateParticipant` und alle `disciplines/actions.ts`-Ops schreiben keinen AuditLog-Eintrag. Damit fehlt der Nachweis wer wann Stammdaten verändert hat.
 
 **Fehlende Einträge:**
+
 - `USER_CREATED`, `USER_UPDATED`, `USER_DEACTIVATED`
 - `PARTICIPANT_CREATED`, `PARTICIPANT_UPDATED`, `PARTICIPANT_DEACTIVATED`
 - `DISCIPLINE_CREATED`, `DISCIPLINE_UPDATED`, `DISCIPLINE_ARCHIVED`
@@ -73,6 +99,7 @@ console.error("Fehler beim Starten der Playoffs:", msg)
 **Problem:** Die Scoring-Engine ist gut getestet, aber die entscheidenden Mutations — `saveSeriesResult`, `createUser`, `updateUser`, `enrollParticipant` (Edge Cases), `unenrollParticipant` — haben wenig bis keine Tests.
 
 **Priorisierte Lücken:**
+
 1. `src/lib/series/actions.ts` — gar keine Tests
 2. `src/lib/users/actions.ts` — gar keine Tests
 3. `src/lib/results/actions.ts` — gar keine Tests
@@ -87,6 +114,7 @@ console.error("Fehler beim Starten der Playoffs:", msg)
 **Problem:** Die Datei ist zu groß für einfaches Reasoning und Code-Review. Playwright-Fehler, Merge-Konflikte und parallele Änderungen werden schwieriger.
 
 **Vorschlag:**
+
 ```
 src/lib/playoffs/
   actions/
@@ -106,6 +134,7 @@ src/lib/playoffs/
 **Problem:** Analog zu R-05 — Create, Update, Status, Delete und Force-Delete in einer Datei.
 
 **Vorschlag:**
+
 ```
 src/lib/competitions/
   actions/
@@ -122,6 +151,7 @@ src/lib/competitions/
 **Bekannt aus Lessons (2026-03-26):** Das Zod-Enum für `scoringMode` in `competitions/actions.ts` (~Zeile 28) ist eine manuelle Liste, die bei jedem neuen `ScoringMode`-Wert manuell aktualisiert werden muss.
 
 **Fix:** Aus dem Prisma-generierten Enum ableiten statt manuell pflegen:
+
 ```ts
 import { ScoringMode } from "@/generated/prisma"
 // ...
@@ -139,6 +169,7 @@ Das eliminiert die Fehlerklasse "neuer Prisma-Enum-Wert, aber Zod kennt ihn nich
 **Problem:** Keine einzige `loading.tsx` im App-Verzeichnis. Bei langsamen DB-Queries (z.B. Standings-Berechnung, Playoffs-Ansicht) sieht der User einen leeren Bildschirm.
 
 **Scope:** Mindestens für die schweren Routen:
+
 - `src/app/(app)/competitions/[id]/standings/loading.tsx`
 - `src/app/(app)/competitions/[id]/playoffs/loading.tsx`
 - `src/app/(app)/competitions/[id]/ranking/loading.tsx`
@@ -162,6 +193,7 @@ Das eliminiert die Fehlerklasse "neuer Prisma-Enum-Wert, aber Zod kennt ihn nich
 **Problem:** 44 Dateien haben `"use client"`. Einige davon sind vermutlich unnötig (reine Datenanzeige ohne State/Events).
 
 **Vorgehen:** Jede Datei im `src/components/app/`-Verzeichnis prüfen ob sie:
+
 - Keine Hooks nutzt
 - Keine Event-Handler hat
 - Nur Props rendert
@@ -223,23 +255,23 @@ Technisch sicher (statische CSS-Variable-Strings), aber Best Practice wäre ein 
 
 ## Zusammenfassung nach Kategorie
 
-| # | Titel | Prio | Kategorie |
-|---|-------|------|-----------|
-| R-01 | Error Boundaries | 🔴 | UX / Robustheit |
-| R-02 | console.error(error) | 🔴 | Security |
-| R-03 | Audit Log Lücken | 🟠 | Audit / Compliance |
-| R-04 | Fehlende Tests (Actions) | 🟠 | Testabdeckung |
-| R-05 | playoffs/actions.ts aufteilen | 🟠 | Maintainability |
-| R-06 | competitions/actions.ts aufteilen | 🟠 | Maintainability |
-| R-07 | Zod ↔ Prisma Enum sync | 🟠 | Konsistenz / Bugs |
-| R-08 | Loading States | 🟡 | UX |
-| R-09 | ScoringMode Labels zentralisieren | 🟡 | Konsistenz |
-| R-10 | `use client` Audit | 🟡 | Performance |
-| R-11 | Deprecated Type entfernen | 🟡 | Code Quality |
-| R-12 | isGuestRecord Filter Audit | 🟡 | Korrektheit |
-| R-13 | dangerouslySetInnerHTML | 🟢 | Security (Low) |
-| R-14 | CSRF Dokumentation | 🟢 | Security / Docs |
-| R-15 | Optimistic Updates | 🟢 | Performance / UX |
+| #    | Titel                             | Prio | Kategorie          |
+| ---- | --------------------------------- | ---- | ------------------ |
+| R-01 | Error Boundaries                  | 🔴   | UX / Robustheit    |
+| R-02 | console.error(error)              | 🔴   | Security           |
+| R-03 | Audit Log Lücken                  | 🟠   | Audit / Compliance |
+| R-04 | Fehlende Tests (Actions)          | 🟠   | Testabdeckung      |
+| R-05 | playoffs/actions.ts aufteilen     | 🟠   | Maintainability    |
+| R-06 | competitions/actions.ts aufteilen | 🟠   | Maintainability    |
+| R-07 | Zod ↔ Prisma Enum sync            | 🟠   | Konsistenz / Bugs  |
+| R-08 | Loading States                    | 🟡   | UX                 |
+| R-09 | ScoringMode Labels zentralisieren | 🟡   | Konsistenz         |
+| R-10 | `use client` Audit                | 🟡   | Performance        |
+| R-11 | Deprecated Type entfernen         | 🟡   | Code Quality       |
+| R-12 | isGuestRecord Filter Audit        | 🟡   | Korrektheit        |
+| R-13 | dangerouslySetInnerHTML           | 🟢   | Security (Low)     |
+| R-14 | CSRF Dokumentation                | 🟢   | Security / Docs    |
+| R-15 | Optimistic Updates                | 🟢   | Performance / UX   |
 
 ---
 
