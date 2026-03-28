@@ -13,6 +13,7 @@ import {
   MAX_USER_EMAIL_LENGTH,
 } from "@/lib/authValidation"
 import type { ActionResult } from "@/lib/types"
+import type { AuditEventType } from "@/lib/auditLog/types"
 
 const BCRYPT_COST = 12
 
@@ -67,8 +68,23 @@ export async function createUser(
   if (existing) return { error: "Diese E-Mail-Adresse wird bereits verwendet." }
 
   const passwordHash = await bcrypt.hash(parsed.data.tempPassword, BCRYPT_COST)
-  await db.user.create({
+  const newUser = await db.user.create({
     data: { name: parsed.data.name, email, passwordHash, role: parsed.data.role },
+    select: { id: true },
+  })
+
+  await db.auditLog.create({
+    data: {
+      eventType: "USER_CREATED" satisfies AuditEventType,
+      entityType: "USER",
+      entityId: newUser.id,
+      userId: session.user.id,
+      details: {
+        fullName: parsed.data.name ?? null,
+        email,
+        role: parsed.data.role,
+      },
+    },
   })
 
   revalidateUserPaths()
@@ -145,6 +161,21 @@ export async function updateUser(
   }
 
   await db.user.update({ where: { id }, data: updateData })
+
+  await db.auditLog.create({
+    data: {
+      eventType: "USER_UPDATED" satisfies AuditEventType,
+      entityType: "USER",
+      entityId: id,
+      userId: session.user.id,
+      details: {
+        fullName: parsed.data.name ?? null,
+        email,
+        role: parsed.data.role,
+      },
+    },
+  })
+
   revalidateUserPaths()
   return { success: true }
 }
@@ -156,7 +187,7 @@ export async function setUserActive(id: string, isActive: boolean): Promise<Acti
 
   const user = await db.user.findUnique({
     where: { id },
-    select: { id: true, role: true, isActive: true },
+    select: { id: true, name: true, email: true, role: true, isActive: true },
   })
   if (!user) return { error: "Nutzer nicht gefunden." }
 
@@ -176,6 +207,21 @@ export async function setUserActive(id: string, isActive: boolean): Promise<Acti
   }
 
   await db.user.update({ where: { id }, data: { isActive } })
+
+  const eventType: AuditEventType = isActive ? "USER_REACTIVATED" : "USER_DEACTIVATED"
+  await db.auditLog.create({
+    data: {
+      eventType,
+      entityType: "USER",
+      entityId: id,
+      userId: session.user.id,
+      details: {
+        fullName: user.name ?? null,
+        email: user.email,
+      },
+    },
+  })
+
   revalidateUserPaths()
   return { success: true }
 }
