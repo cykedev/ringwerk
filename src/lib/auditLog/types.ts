@@ -13,6 +13,21 @@ export type AuditEventType =
   | "SEASON_SERIES_ENTERED"
   | "SEASON_SERIES_CORRECTED"
   | "SEASON_SERIES_DELETED"
+  | "USER_CREATED"
+  | "USER_UPDATED"
+  | "USER_DEACTIVATED"
+  | "USER_REACTIVATED"
+  | "PARTICIPANT_CREATED"
+  | "PARTICIPANT_UPDATED"
+  | "PARTICIPANT_DEACTIVATED"
+  | "PARTICIPANT_REACTIVATED"
+  | "DISCIPLINE_CREATED"
+  | "DISCIPLINE_UPDATED"
+  | "DISCIPLINE_ARCHIVED"
+  | "DISCIPLINE_DELETED"
+  | "COMPETITION_CREATED"
+  | "COMPETITION_UPDATED"
+  | "COMPETITION_STATUS_CHANGED"
 
 export const AUDIT_EVENT_LABELS: Record<string, string> = {
   PARTICIPANT_WITHDRAWN: "Teilnehmer zurückgezogen",
@@ -29,9 +44,24 @@ export const AUDIT_EVENT_LABELS: Record<string, string> = {
   SEASON_SERIES_ENTERED: "Saison-Serie erfasst",
   SEASON_SERIES_CORRECTED: "Saison-Serie korrigiert",
   SEASON_SERIES_DELETED: "Saison-Serie gelöscht",
+  USER_CREATED: "Nutzer angelegt",
+  USER_UPDATED: "Nutzer bearbeitet",
+  USER_DEACTIVATED: "Nutzer deaktiviert",
+  USER_REACTIVATED: "Nutzer reaktiviert",
+  PARTICIPANT_CREATED: "Teilnehmer angelegt",
+  PARTICIPANT_UPDATED: "Teilnehmer bearbeitet",
+  PARTICIPANT_DEACTIVATED: "Teilnehmer deaktiviert",
+  PARTICIPANT_REACTIVATED: "Teilnehmer reaktiviert",
+  DISCIPLINE_CREATED: "Disziplin angelegt",
+  DISCIPLINE_UPDATED: "Disziplin bearbeitet",
+  DISCIPLINE_ARCHIVED: "Disziplin archiviert",
+  DISCIPLINE_DELETED: "Disziplin gelöscht",
+  COMPETITION_CREATED: "Wettbewerb angelegt",
+  COMPETITION_UPDATED: "Wettbewerb bearbeitet",
+  COMPETITION_STATUS_CHANGED: "Wettbewerb-Status geändert",
 }
 
-export type AuditEventCategory = "participant" | "result" | "playoff" | "destructive"
+export type AuditEventCategory = "participant" | "result" | "playoff" | "destructive" | "admin"
 
 export const AUDIT_EVENT_CATEGORY: Record<string, AuditEventCategory> = {
   PARTICIPANT_WITHDRAWN: "participant",
@@ -48,6 +78,21 @@ export const AUDIT_EVENT_CATEGORY: Record<string, AuditEventCategory> = {
   SEASON_SERIES_ENTERED: "result",
   SEASON_SERIES_CORRECTED: "result",
   SEASON_SERIES_DELETED: "destructive",
+  USER_CREATED: "admin",
+  USER_UPDATED: "admin",
+  USER_DEACTIVATED: "admin",
+  USER_REACTIVATED: "admin",
+  PARTICIPANT_CREATED: "admin",
+  PARTICIPANT_UPDATED: "admin",
+  PARTICIPANT_DEACTIVATED: "admin",
+  PARTICIPANT_REACTIVATED: "admin",
+  DISCIPLINE_CREATED: "admin",
+  DISCIPLINE_UPDATED: "admin",
+  DISCIPLINE_ARCHIVED: "admin",
+  DISCIPLINE_DELETED: "admin",
+  COMPETITION_CREATED: "admin",
+  COMPETITION_UPDATED: "admin",
+  COMPETITION_STATUS_CHANGED: "admin",
 }
 
 const ROUND_LABELS: Record<string, string> = {
@@ -148,6 +193,52 @@ export function formatAuditDetails(eventType: string, details: unknown): DetailR
       rows.push({ label: "Ringe", value: rings(d.rings) })
       rows.push({ label: "Teiler", value: teiler(d.teiler) })
       break
+
+    case "USER_CREATED":
+    case "USER_UPDATED":
+      if (d.fullName) rows.push({ label: "Name", value: str(d.fullName) })
+      rows.push({ label: "E-Mail", value: str(d.email) })
+      rows.push({ label: "Rolle", value: str(d.role) })
+      break
+
+    case "USER_DEACTIVATED":
+    case "USER_REACTIVATED":
+      if (d.fullName) rows.push({ label: "Name", value: str(d.fullName) })
+      rows.push({ label: "E-Mail", value: str(d.email) })
+      break
+
+    case "PARTICIPANT_CREATED":
+    case "PARTICIPANT_UPDATED":
+    case "PARTICIPANT_DEACTIVATED":
+    case "PARTICIPANT_REACTIVATED":
+      rows.push({ label: "Vorname", value: str(d.firstName) })
+      rows.push({ label: "Nachname", value: str(d.lastName) })
+      break
+
+    case "DISCIPLINE_CREATED":
+    case "DISCIPLINE_UPDATED":
+      rows.push({ label: "Name", value: str(d.name) })
+      rows.push({ label: "Wertungsart", value: str(d.scoringType) })
+      if (d.teilerFaktor != null) rows.push({ label: "Teiler-Faktor", value: str(d.teilerFaktor) })
+      break
+
+    case "DISCIPLINE_ARCHIVED":
+    case "DISCIPLINE_DELETED":
+      rows.push({ label: "Name", value: str(d.name) })
+      break
+
+    case "COMPETITION_CREATED":
+    case "COMPETITION_UPDATED":
+      rows.push({ label: "Name", value: str(d.name) })
+      rows.push({ label: "Typ", value: str(d.type) })
+      rows.push({ label: "Wertungsmodus", value: str(d.scoringMode) })
+      break
+
+    case "COMPETITION_STATUS_CHANGED":
+      rows.push({ label: "Wettbewerb", value: str(d.name) })
+      rows.push({ label: "Von", value: str(d.from) })
+      rows.push({ label: "Nach", value: str(d.to) })
+      break
   }
 
   return rows
@@ -190,6 +281,31 @@ export function getAuditDescription(eventType: string, details: unknown): string
     case "SEASON_SERIES_CORRECTED":
     case "SEASON_SERIES_DELETED":
       return d.participantName ? s(d.participantName) : null
+
+    case "USER_CREATED":
+    case "USER_UPDATED":
+    case "USER_DEACTIVATED":
+    case "USER_REACTIVATED":
+      return d.fullName ? s(d.fullName) : (d.email ? s(d.email) : null)
+
+    case "PARTICIPANT_CREATED":
+    case "PARTICIPANT_UPDATED":
+    case "PARTICIPANT_DEACTIVATED":
+    case "PARTICIPANT_REACTIVATED":
+      return d.firstName && d.lastName ? `${s(d.firstName)} ${s(d.lastName)}` : null
+
+    case "DISCIPLINE_CREATED":
+    case "DISCIPLINE_UPDATED":
+    case "DISCIPLINE_ARCHIVED":
+    case "DISCIPLINE_DELETED":
+      return d.name ? s(d.name) : null
+
+    case "COMPETITION_CREATED":
+    case "COMPETITION_UPDATED":
+      return d.name ? s(d.name) : null
+
+    case "COMPETITION_STATUS_CHANGED":
+      return d.name ? `${s(d.name)}: ${s(d.from)} → ${s(d.to)}` : null
 
     default:
       return null

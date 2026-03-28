@@ -15,6 +15,7 @@ const CATEGORY_BADGE_CLASS: Record<AuditEventCategory, string> = {
   result: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
   playoff: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
   destructive: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+  admin: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
 }
 
 function formatDateTime(date: Date): string {
