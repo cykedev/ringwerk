@@ -7,6 +7,7 @@ import { getAuthSession } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import { ScoringMode } from "@/generated/prisma/client"
 import type { CompetitionStatus } from "@/generated/prisma/client"
+import type { AuditEventType } from "@/lib/auditLog/types"
 
 // ─── Shared helpers ────────────────────────────────────────────────────────
 
@@ -205,6 +206,21 @@ export async function createCompetition(
     select: { id: true },
   })
 
+  await db.auditLog.create({
+    data: {
+      eventType: "COMPETITION_CREATED" satisfies AuditEventType,
+      entityType: "COMPETITION",
+      entityId: competition.id,
+      userId: session.user.id,
+      competitionId: competition.id,
+      details: {
+        name,
+        type,
+        scoringMode,
+      },
+    },
+  })
+
   revalidateCompetitionPaths()
   return { success: true, data: { id: competition.id } }
 }
@@ -291,6 +307,21 @@ export async function updateCompetition(
     },
   })
 
+  await db.auditLog.create({
+    data: {
+      eventType: "COMPETITION_UPDATED" satisfies AuditEventType,
+      entityType: "COMPETITION",
+      entityId: id,
+      userId: session.user.id,
+      competitionId: id,
+      details: {
+        name: parsed.data.name,
+        type: competition.type,
+        scoringMode: parsed.data.scoringMode,
+      },
+    },
+  })
+
   revalidateCompetitionPaths()
   return { success: true }
 }
@@ -317,7 +348,7 @@ export async function setCompetitionStatus(
 
   const competition = await db.competition.findUnique({
     where: { id },
-    select: { id: true, status: true },
+    select: { id: true, name: true, status: true },
   })
   if (!competition) return { error: "Wettbewerb nicht gefunden." }
 
@@ -328,6 +359,22 @@ export async function setCompetitionStatus(
   }
 
   await db.competition.update({ where: { id }, data: { status } })
+
+  await db.auditLog.create({
+    data: {
+      eventType: "COMPETITION_STATUS_CHANGED" satisfies AuditEventType,
+      entityType: "COMPETITION",
+      entityId: id,
+      userId: session.user.id,
+      competitionId: id,
+      details: {
+        name: competition.name,
+        from: competition.status,
+        to: status,
+      },
+    },
+  })
+
   revalidateCompetitionPaths()
   return { success: true }
 }
