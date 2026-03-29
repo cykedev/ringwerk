@@ -115,14 +115,23 @@ Every plan MUST include a `## Required Docs` section listing any task-specific d
 
 Use superpowers skills for all development work:
 
-| Task type                  | Skill sequence                                                    |
-| -------------------------- | ----------------------------------------------------------------- |
-| New feature / change       | `brainstorming` → `writing-plans` → `subagent-driven-development` |
-| Bug                        | `systematic-debugging`                                            |
-| Branch completion          | `finishing-a-development-branch`                                  |
-| Parallel independent tasks | `dispatching-parallel-agents`                                     |
-| Requesting review          | `requesting-code-review`                                          |
-| Receiving review           | `receiving-code-review`                                           |
+| Task type                  | Skill sequence                                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------------------------- |
+| New feature / change       | `brainstorming` → `writing-plans` → **branch + plan-commit** → `subagent-driven-development`     |
+| Bug                        | `systematic-debugging`                                                                            |
+| Branch completion          | `finishing-a-development-branch`                                                                  |
+| Parallel independent tasks | `dispatching-parallel-agents`                                                                     |
+| Requesting review          | `requesting-code-review`                                                                          |
+| Receiving review           | `receiving-code-review`                                                                           |
+
+### MANDATORY GATE before any implementation
+
+**These two steps are REQUIRED between plan approval and the first line of code. "los" or any other confirmation does NOT skip them.**
+
+1. Propose `feat/<topic>` branch name → wait for user confirmation → `git checkout -b feat/<topic>`
+2. Show commit message as fenced code block → user commits spec + plan files as the **first commit on the branch**
+
+Only after both steps: invoke `subagent-driven-development` or `executing-plans`.
 
 ---
 
