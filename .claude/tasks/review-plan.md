@@ -13,8 +13,8 @@ Basis: Kritischer Vollreview (Security, Konsistenz, Simplicity, Best Practices, 
 | R-02 | console.error(error)              | 🔴   | ✅ erledigt (2026-03-27)                 |
 | R-03 | Audit Log Lücken                  | 🟠   | ✅ erledigt (2026-03-28)                 |
 | R-04 | Fehlende Tests (Actions)          | 🟠   | ✅ erledigt (2026-03-29)                 |
-| R-05 | playoffs/actions.ts aufteilen     | 🟠   | ⬜ offen                                 |
-| R-06 | competitions/actions.ts aufteilen | 🟠   | ⬜ offen                                 |
+| R-05 | playoffs/actions.ts aufteilen     | 🟠   | ✅ erledigt (2026-03-29)                 |
+| R-06 | competitions/actions.ts aufteilen | 🟠   | ✅ erledigt (2026-03-29)                 |
 | R-07 | Zod ↔ Prisma Enum sync            | 🟠   | ✅ erledigt (bereits via z.nativeEnum)   |
 | R-08 | Loading States                    | 🟡   | ✅ erledigt (2026-03-27)                 |
 | R-09 | ScoringMode Labels zentralisieren | 🟡   | ⬜ offen                                 |
