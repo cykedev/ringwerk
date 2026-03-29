@@ -1,6 +1,7 @@
 "use client"
 
-import { useActionState, useEffect, useState } from "react"
+import { useRef, useState, useTransition } from "react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -39,23 +40,14 @@ export function EnrollParticipantForm({
   eventTeams,
   action,
 }: Props) {
-  const [state, formAction, isPending] = useActionState(action, null)
+  const [isPending, startTransition] = useTransition()
   const [isGuest, setIsGuest] = useState(false)
   const [newTeam, setNewTeam] = useState(false)
+  const [formKey, setFormKey] = useState(0)
+  const formRef = useRef<HTMLFormElement>(null)
 
   const isMixed = disciplines && disciplines.length > 0
   const isTeamEvent = (teamSize ?? 0) >= 2
-
-  useEffect(() => {
-    if (state && "success" in state && state.success) {
-      // Seite wird durch revalidatePath neu geladen — kein Router-Push nötig
-    }
-  }, [state])
-
-  const fieldErrors =
-    state && "error" in state && typeof state.error === "object" ? state.error : null
-  const generalError =
-    state && "error" in state && typeof state.error === "string" ? state.error : null
 
   const noRegularParticipants = availableParticipants.length === 0
 
@@ -70,8 +62,25 @@ export function EnrollParticipantForm({
 
   const incompleteTeams = (eventTeams ?? []).filter((t) => t.members.length < (teamSize ?? 0))
 
+  function handleSubmit() {
+    if (!formRef.current) return
+    // FormData vor dem State-Reset erfassen — hidden inputs haben noch ihre aktuellen Werte
+    const formData = new FormData(formRef.current)
+
+    setIsGuest(false)
+    setNewTeam(false)
+    setFormKey((k) => k + 1)
+
+    startTransition(async () => {
+      const result = await action(null, formData)
+      if ("error" in result) {
+        toast.error(typeof result.error === "string" ? result.error : "Fehler beim Einschreiben.")
+      }
+    })
+  }
+
   return (
-    <form action={formAction} className="space-y-3">
+    <form key={formKey} ref={formRef} className="space-y-3">
       {allowGuests && (
         <div className="flex items-center gap-2">
           <Checkbox
@@ -100,9 +109,6 @@ export function EnrollParticipantForm({
               disabled={isPending}
               autoComplete="off"
             />
-            {fieldErrors?.guestName && (
-              <p className="text-xs text-destructive">{fieldErrors.guestName[0]}</p>
-            )}
           </div>
         ) : (
           <>
@@ -127,9 +133,6 @@ export function EnrollParticipantForm({
                     ))}
                   </SelectContent>
                 </Select>
-                {fieldErrors?.participantId && (
-                  <p className="text-xs text-destructive">{fieldErrors.participantId[0]}</p>
-                )}
               </div>
             )}
           </>
@@ -152,14 +155,16 @@ export function EnrollParticipantForm({
                 ))}
               </SelectContent>
             </Select>
-            {fieldErrors?.disciplineId && (
-              <p className="text-xs text-destructive">{fieldErrors.disciplineId[0]}</p>
-            )}
           </div>
         )}
 
         {(isGuest || !noRegularParticipants) && !isTeamEvent && (
-          <Button type="submit" disabled={isPending} className="w-full sm:w-auto sm:shrink-0">
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isPending}
+            className="w-full sm:w-auto sm:shrink-0"
+          >
             {isPending ? "Lädt…" : "Einschreiben"}
           </Button>
         )}
@@ -206,14 +211,12 @@ export function EnrollParticipantForm({
                   )}
                 </SelectContent>
               </Select>
-              {fieldErrors?.teamId && (
-                <p className="text-xs text-destructive">{fieldErrors.teamId[0]}</p>
-              )}
             </div>
           )}
 
           <Button
-            type="submit"
+            type="button"
+            onClick={handleSubmit}
             disabled={isPending || (!newTeam && incompleteTeams.length === 0)}
             className="w-full sm:w-auto"
           >
@@ -221,8 +224,6 @@ export function EnrollParticipantForm({
           </Button>
         </div>
       )}
-
-      {generalError && <p className="text-sm text-destructive">{generalError}</p>}
     </form>
   )
 }
