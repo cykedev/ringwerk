@@ -32,11 +32,12 @@ Jede Datei folgt dem etablierten Muster aus `competitions/actions.test.ts`:
 
 ## Scope pro Datei
 
-### 1. `src/lib/series/actions.test.ts` *(neu)*
+### 1. `src/lib/series/actions.test.ts` _(neu)_
 
 **Mocks:** `getAuthSession`, `revalidatePath`, `db.competition.findUnique`, `db.competitionParticipant.findUnique`, `db.competitionParticipant.findFirst`, `db.discipline.findUnique`, `db.series.findUnique`, `db.series.create`, `db.series.update`, `db.series.delete`, `db.auditLog.create`
 
 #### `saveEventSeries`
+
 - Fehler ohne Session
 - Fehler ohne Admin-Rolle
 - Fehler: Competition nicht gefunden
@@ -51,6 +52,7 @@ Jede Datei folgt dem etablierten Muster aus `competitions/actions.test.ts`:
 - Disziplin aus Competition verwenden (wenn `cp.disciplineId` null)
 
 #### `deleteEventSeries`
+
 - Fehler ohne Session
 - Fehler ohne Admin-Rolle
 - Fehler: Serie nicht gefunden
@@ -58,6 +60,7 @@ Jede Datei folgt dem etablierten Muster aus `competitions/actions.test.ts`:
 - Erfolg: Serie gelöscht, auditLog geschrieben, revalidatePath aufgerufen
 
 #### `saveSeasonSeries`
+
 - Fehler ohne Session
 - Fehler ohne Admin-Rolle
 - Fehler: Competition nicht gefunden
@@ -70,6 +73,7 @@ Jede Datei folgt dem etablierten Muster aus `competitions/actions.test.ts`:
 - Erfolg: Serie erstellt, auditLog geschrieben
 
 #### `updateSeasonSeries`
+
 - Fehler ohne Session
 - Fehler: Serie nicht gefunden
 - Fehler: Serie gehört nicht zur angegebenen competitionId
@@ -77,6 +81,7 @@ Jede Datei folgt dem etablierten Muster aus `competitions/actions.test.ts`:
 - Erfolg: Serie aktualisiert, auditLog geschrieben
 
 #### `deleteSeasonSeries`
+
 - Fehler ohne Session
 - Fehler: Serie nicht gefunden
 - Fehler: Serie gehört nicht zur angegebenen competitionId
@@ -84,13 +89,14 @@ Jede Datei folgt dem etablierten Muster aus `competitions/actions.test.ts`:
 
 ---
 
-### 2. `src/lib/users/actions.test.ts` *(neu)*
+### 2. `src/lib/users/actions.test.ts` _(neu)_
 
 **Mocks:** `getAuthSession`, `revalidatePath`, `bcrypt.hash`, `bcrypt.compare`, `db.user.findUnique`, `db.user.findFirst`, `db.user.create`, `db.user.update`, `db.user.count`, `db.auditLog.create`
 
 **Hinweis:** `bcrypt` wird via `vi.mock("bcryptjs", ...)` gemockt, damit Tests schnell bleiben (kein echter Hash).
 
 #### `createUser`
+
 - Fehler ohne Session
 - Fehler ohne Admin-Rolle
 - Fehler: Validierung — ungültige E-Mail
@@ -99,6 +105,7 @@ Jede Datei folgt dem etablierten Muster aus `competitions/actions.test.ts`:
 - Erfolg: User erstellt, auditLog mit `USER_CREATED` geschrieben
 
 #### `updateUser`
+
 - Fehler ohne Session
 - Fehler: User nicht gefunden
 - Fehler: E-Mail-Konflikt mit einem anderen User
@@ -110,6 +117,7 @@ Jede Datei folgt dem etablierten Muster aus `competitions/actions.test.ts`:
 - auditLog `USER_UPDATED` geschrieben
 
 #### `setUserActive`
+
 - Fehler ohne Session
 - Fehler: User nicht gefunden
 - No-op: isActive ist bereits gleich dem gewünschten Wert → `{ success: true }`, kein DB-Update
@@ -119,6 +127,7 @@ Jede Datei folgt dem etablierten Muster aus `competitions/actions.test.ts`:
 - Erfolg: reaktivieren → auditLog `USER_REACTIVATED`
 
 #### `changeOwnPassword`
+
 - Fehler ohne Session
 - Fehler: Passwörter stimmen nicht überein (via `validatePasswordChangeInput`)
 - Fehler: User nicht in DB gefunden
@@ -127,11 +136,12 @@ Jede Datei folgt dem etablierten Muster aus `competitions/actions.test.ts`:
 
 ---
 
-### 3. `src/lib/results/actions.test.ts` *(neu)*
+### 3. `src/lib/results/actions.test.ts` _(neu)_
 
 **Mocks:** `getAuthSession`, `revalidatePath`, `db.matchup.findUnique`, `db.$transaction`, `db.auditLog.create`
 
 #### `saveMatchResult`
+
 - Fehler ohne Session
 - Fehler ohne Admin-Rolle
 - Fehler: Matchup nicht gefunden
@@ -144,13 +154,14 @@ Jede Datei folgt dem etablierten Muster aus `competitions/actions.test.ts`:
 
 ---
 
-### 4. `src/lib/competitionParticipants/actions.test.ts` *(erweitern)*
+### 4. `src/lib/competitionParticipants/actions.test.ts` _(erweitern)_
 
 Bestehende Tests für `enrollParticipant` und `unenrollParticipant` bleiben unverändert.
 
 **Neue Mocks ergänzen:** `competitionParticipantUpdateMock` (im `vi.hoisted`-Block), `playoffMatchCountMock` (bereits vorhanden)
 
 #### `withdrawParticipant`
+
 - Fehler ohne Session
 - Fehler ohne Admin-Rolle
 - Fehler: CP nicht gefunden
@@ -159,6 +170,7 @@ Bestehende Tests für `enrollParticipant` und `unenrollParticipant` bleiben unve
 - Erfolg: Status → WITHDRAWN, auditLog `PARTICIPANT_WITHDRAWN` geschrieben
 
 #### `revokeWithdrawal`
+
 - Fehler ohne Session
 - Fehler: CP nicht gefunden
 - Fehler: CP-Status ist nicht WITHDRAWN
@@ -166,6 +178,7 @@ Bestehende Tests für `enrollParticipant` und `unenrollParticipant` bleiben unve
 - Erfolg: Status → ACTIVE, auditLog `WITHDRAWAL_REVOKED` geschrieben
 
 #### `updateStartNumber`
+
 - Fehler ohne Session
 - Fehler: CP nicht gefunden
 - Erfolg: Startnummer gesetzt (Zahl)

@@ -12,11 +12,11 @@
 
 ## File Map
 
-| File | Action |
-|---|---|
-| `src/lib/series/actions.test.ts` | Create (Task 1) |
-| `src/lib/users/actions.test.ts` | Create (Task 2) |
-| `src/lib/results/actions.test.ts` | Create (Task 3) |
+| File                                              | Action                   |
+| ------------------------------------------------- | ------------------------ |
+| `src/lib/series/actions.test.ts`                  | Create (Task 1)          |
+| `src/lib/users/actions.test.ts`                   | Create (Task 2)          |
+| `src/lib/results/actions.test.ts`                 | Create (Task 3)          |
 | `src/lib/competitionParticipants/actions.test.ts` | Modify — extend (Task 4) |
 
 ---
@@ -24,6 +24,7 @@
 ## Task 1: series/actions.test.ts
 
 **Files:**
+
 - Create: `src/lib/series/actions.test.ts`
 
 - [ ] **Step 1: Create the test file**
@@ -233,9 +234,7 @@ describe("saveEventSeries", () => {
     seriesUpdateMock.mockResolvedValue({})
     const result = await saveEventSeries("c1", "cp1", null, validFormData)
     expect(result).toEqual({ success: true })
-    expect(seriesUpdateMock).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: "s1" } })
-    )
+    expect(seriesUpdateMock).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "s1" } }))
     expect(auditLogCreateMock).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ eventType: "EVENT_SERIES_CORRECTED" }),
@@ -475,9 +474,7 @@ describe("updateSeasonSeries", () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
     const result = await updateSeasonSeries("c2", "s1", null, validFormData)
     expect(result).toEqual({ success: true })
-    expect(seriesUpdateMock).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: "s1" } })
-    )
+    expect(seriesUpdateMock).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "s1" } }))
     expect(auditLogCreateMock).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ eventType: "SEASON_SERIES_CORRECTED" }),
@@ -565,6 +562,7 @@ git commit -m "test(r-04): add full test coverage for series/actions"
 ## Task 2: users/actions.test.ts
 
 **Files:**
+
 - Create: `src/lib/users/actions.test.ts`
 
 **Note on bcrypt mocking:** `users/actions.ts` uses `import bcrypt from "bcryptjs"` (default import). Mock the default export so `bcrypt.hash()` and `bcrypt.compare()` are controlled. Passwords must be ≥ 12 characters (`MIN_PASSWORD_LENGTH = 12`) to pass length validation.
@@ -789,9 +787,7 @@ describe("updateUser", () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
     const result = await updateUser("u3", null, validFormData)
     expect(result).toEqual({ success: true })
-    expect(userUpdateMock).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: "u3" } })
-    )
+    expect(userUpdateMock).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "u3" } }))
     expect(bcryptHashMock).not.toHaveBeenCalled()
     expect(auditLogCreateMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -826,7 +822,13 @@ describe("updateUser", () => {
 // ─── setUserActive ────────────────────────────────────────────────────────────
 
 describe("setUserActive", () => {
-  const activeUser = { id: "u3", name: "Max", email: "max@example.com", role: "USER", isActive: true }
+  const activeUser = {
+    id: "u3",
+    name: "Max",
+    email: "max@example.com",
+    role: "USER",
+    isActive: true,
+  }
   const inactiveUser = { ...activeUser, isActive: false }
   const activeAdmin = { ...activeUser, role: "ADMIN" }
 
@@ -876,7 +878,9 @@ describe("setUserActive", () => {
     userFindUniqueMock.mockResolvedValue(activeAdmin)
     userCountMock.mockResolvedValue(0)
     const result = await setUserActive("u3", false)
-    expect(result).toEqual({ error: "Der letzte aktive Administrator kann nicht deaktiviert werden." })
+    expect(result).toEqual({
+      error: "Der letzte aktive Administrator kann nicht deaktiviert werden.",
+    })
   })
 
   it("deaktiviert User und schreibt auditLog USER_DEACTIVATED", async () => {
@@ -1012,6 +1016,7 @@ git commit -m "test(r-04): add full test coverage for users/actions"
 ## Task 3: results/actions.test.ts
 
 **Files:**
+
 - Create: `src/lib/results/actions.test.ts`
 
 **Note on `$transaction`:** `saveMatchResult` uses a function-based transaction `db.$transaction(async (tx) => {...})`. The mock must implement the callback pattern so the inner `tx.series.upsert` and `tx.matchup.update` calls execute. Use a fresh `vi.fn()` per call inside the implementation to avoid state leakage between tests.
@@ -1197,9 +1202,11 @@ git commit -m "test(r-04): add full test coverage for results/actions"
 ## Task 4: Extend competitionParticipants/actions.test.ts
 
 **Files:**
+
 - Modify: `src/lib/competitionParticipants/actions.test.ts`
 
 **What needs to change:**
+
 1. In `vi.hoisted`: add `competitionParticipantUpdateMock` and `auditLogCreateMock`
 2. In `vi.mock("@/lib/db", ...)`: add `competitionParticipant.update` and `auditLog.create`
 3. In import statement: add `withdrawParticipant`, `revokeWithdrawal`, `updateStartNumber`
@@ -1486,6 +1493,7 @@ git commit -m "test(r-04): add tests for withdrawParticipant, revokeWithdrawal, 
 ## Task 5: Full verification and review plan update
 
 **Files:**
+
 - Modify: `.claude/tasks/review-plan.md`
 
 - [ ] **Step 1: Run full quality gates**

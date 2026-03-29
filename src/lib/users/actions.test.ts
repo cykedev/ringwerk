@@ -215,9 +215,7 @@ describe("updateUser", () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
     const result = await updateUser("u3", null, validFormData)
     expect(result).toEqual({ success: true })
-    expect(userUpdateMock).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: "u3" } })
-    )
+    expect(userUpdateMock).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "u3" } }))
     expect(bcryptHashMock).not.toHaveBeenCalled()
     expect(auditLogCreateMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -252,7 +250,13 @@ describe("updateUser", () => {
 // ─── setUserActive ────────────────────────────────────────────────────────────
 
 describe("setUserActive", () => {
-  const activeUser = { id: "u3", name: "Max", email: "max@example.com", role: "USER", isActive: true }
+  const activeUser = {
+    id: "u3",
+    name: "Max",
+    email: "max@example.com",
+    role: "USER",
+    isActive: true,
+  }
   const inactiveUser = { ...activeUser, isActive: false }
   const activeAdmin = { ...activeUser, role: "ADMIN" }
 
@@ -302,7 +306,9 @@ describe("setUserActive", () => {
     userFindUniqueMock.mockResolvedValue(activeAdmin)
     userCountMock.mockResolvedValue(0)
     const result = await setUserActive("u3", false)
-    expect(result).toEqual({ error: "Der letzte aktive Administrator kann nicht deaktiviert werden." })
+    expect(result).toEqual({
+      error: "Der letzte aktive Administrator kann nicht deaktiviert werden.",
+    })
   })
 
   it("deaktiviert User und schreibt auditLog USER_DEACTIVATED", async () => {

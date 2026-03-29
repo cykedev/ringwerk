@@ -202,9 +202,7 @@ describe("saveEventSeries", () => {
     seriesUpdateMock.mockResolvedValue({})
     const result = await saveEventSeries("c1", "cp1", null, validFormData)
     expect(result).toEqual({ success: true })
-    expect(seriesUpdateMock).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: "s1" } })
-    )
+    expect(seriesUpdateMock).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "s1" } }))
     expect(auditLogCreateMock).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ eventType: "EVENT_SERIES_CORRECTED" }),
@@ -444,9 +442,7 @@ describe("updateSeasonSeries", () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
     const result = await updateSeasonSeries("c2", "s1", null, validFormData)
     expect(result).toEqual({ success: true })
-    expect(seriesUpdateMock).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: "s1" } })
-    )
+    expect(seriesUpdateMock).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "s1" } }))
     expect(auditLogCreateMock).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ eventType: "SEASON_SERIES_CORRECTED" }),

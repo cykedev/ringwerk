@@ -246,23 +246,23 @@ Technisch sicher (statische CSS-Variable-Strings), aber Best Practice wäre ein 
 
 ## Zusammenfassung nach Kategorie
 
-| #    | Titel                             | Prio | Kategorie          |
-| ---- | --------------------------------- | ---- | ------------------ |
-| R-01 | Error Boundaries                  | 🔴   | UX / Robustheit    |
-| R-02 | console.error(error)              | 🔴   | Security           |
-| R-03 | Audit Log Lücken                  | 🟠   | ✅ erledigt        |
-| R-04 | Fehlende Tests (Actions)          | 🟠   | ✅ erledigt        |
-| R-05 | playoffs/actions.ts aufteilen     | 🟠   | Maintainability    |
-| R-06 | competitions/actions.ts aufteilen | 🟠   | Maintainability    |
-| R-07 | Zod ↔ Prisma Enum sync            | 🟠   | Konsistenz / Bugs  |
-| R-08 | Loading States                    | 🟡   | UX                 |
-| R-09 | ScoringMode Labels zentralisieren | 🟡   | Konsistenz         |
-| R-10 | `use client` Audit                | 🟡   | Performance        |
-| R-11 | Deprecated Type entfernen         | 🟡   | Code Quality       |
-| R-12 | isGuestRecord Filter Audit        | 🟡   | Korrektheit        |
-| R-13 | dangerouslySetInnerHTML           | 🟢   | Security (Low)     |
-| R-14 | CSRF Dokumentation                | 🟢   | Security / Docs    |
-| R-15 | Optimistic Updates                | 🟢   | Performance / UX   |
+| #    | Titel                             | Prio | Kategorie         |
+| ---- | --------------------------------- | ---- | ----------------- |
+| R-01 | Error Boundaries                  | 🔴   | UX / Robustheit   |
+| R-02 | console.error(error)              | 🔴   | Security          |
+| R-03 | Audit Log Lücken                  | 🟠   | ✅ erledigt       |
+| R-04 | Fehlende Tests (Actions)          | 🟠   | ✅ erledigt       |
+| R-05 | playoffs/actions.ts aufteilen     | 🟠   | Maintainability   |
+| R-06 | competitions/actions.ts aufteilen | 🟠   | Maintainability   |
+| R-07 | Zod ↔ Prisma Enum sync            | 🟠   | Konsistenz / Bugs |
+| R-08 | Loading States                    | 🟡   | UX                |
+| R-09 | ScoringMode Labels zentralisieren | 🟡   | Konsistenz        |
+| R-10 | `use client` Audit                | 🟡   | Performance       |
+| R-11 | Deprecated Type entfernen         | 🟡   | Code Quality      |
+| R-12 | isGuestRecord Filter Audit        | 🟡   | Korrektheit       |
+| R-13 | dangerouslySetInnerHTML           | 🟢   | Security (Low)    |
+| R-14 | CSRF Dokumentation                | 🟢   | Security / Docs   |
+| R-15 | Optimistic Updates                | 🟢   | Performance / UX  |
 
 ---
 
