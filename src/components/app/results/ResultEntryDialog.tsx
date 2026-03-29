@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { toast } from "sonner"
 import { Pencil, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -66,7 +67,6 @@ export function ResultEntryDialog({
 
   function handleOpen(isOpen: boolean) {
     if (isOpen) {
-      // Beim Öffnen: existierende Werte neu laden
       setHome({
         rings: existingHome ? String(existingHome.rings) : "",
         teiler: existingHome ? String(existingHome.teiler) : "",
@@ -101,7 +101,7 @@ export function ResultEntryDialog({
       return
     }
 
-    setError(null)
+    setOpen(false)
 
     startTransition(async () => {
       const result = await saveMatchResult(matchupId, {
@@ -110,9 +110,7 @@ export function ResultEntryDialog({
       })
 
       if ("error" in result) {
-        setError(typeof result.error === "string" ? result.error : "Fehler beim Speichern.")
-      } else {
-        setOpen(false)
+        toast.error(typeof result.error === "string" ? result.error : "Fehler beim Speichern.")
       }
     })
   }
@@ -153,7 +151,6 @@ export function ResultEntryDialog({
                   value={home.rings}
                   onChange={(e) => setHome((p) => ({ ...p, rings: e.target.value }))}
                   placeholder="z.B. 96"
-                  disabled={isPending}
                 />
               </div>
               <div className="space-y-1">
@@ -168,7 +165,6 @@ export function ResultEntryDialog({
                   value={home.teiler}
                   onChange={(e) => setHome((p) => ({ ...p, teiler: e.target.value }))}
                   placeholder="z.B. 3.7"
-                  disabled={isPending}
                 />
               </div>
             </div>
@@ -197,7 +193,6 @@ export function ResultEntryDialog({
                   value={away.rings}
                   onChange={(e) => setAway((p) => ({ ...p, rings: e.target.value }))}
                   placeholder="z.B. 94"
-                  disabled={isPending}
                 />
               </div>
               <div className="space-y-1">
@@ -212,7 +207,6 @@ export function ResultEntryDialog({
                   value={away.teiler}
                   onChange={(e) => setAway((p) => ({ ...p, teiler: e.target.value }))}
                   placeholder="z.B. 5.0"
-                  disabled={isPending}
                 />
               </div>
             </div>
@@ -222,11 +216,11 @@ export function ResultEntryDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={isPending}>
+          <Button variant="outline" onClick={() => setOpen(false)}>
             Abbrechen
           </Button>
           <Button onClick={handleSubmit} disabled={isPending}>
-            {isPending ? "Speichern…" : "Speichern"}
+            Speichern
           </Button>
         </DialogFooter>
       </DialogContent>
