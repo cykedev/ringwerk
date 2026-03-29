@@ -5,102 +5,15 @@ import { db } from "@/lib/db"
 import { getAuthSession } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import { calculateRingteiler, MAX_RINGS } from "@/lib/results/calculateResult"
-import { getStandingsForCompetition } from "@/lib/standings/queries"
 import {
-  createFirstRoundMatchups,
-  createNextRoundMatchups,
   determineFinaleRoundWinner,
   determinePlayoffDuelWinner,
   finaleNeedsTeiler,
   getNextRound,
   isPlayoffMatchComplete,
   requiredWinsFromBestOf,
-} from "./calculatePlayoffs"
-import type { PlayoffRound, SavePlayoffDuelResultInput } from "./types"
-
-/**
- * Startet die Playoff-Phase für eine Liga.
- * Erstellt die erste Runde (VF oder HF) basierend auf der aktuellen Tabelle.
- *
- * Voraussetzungen:
- * - Meisterschaft muss ACTIVE sein
- * - Playoffs noch nicht gestartet
- * - ≥ 4 aktive (nicht zurückgezogene) Teilnehmer
- * - Keine PENDING-Paarungen in der Gruppenphase
- */
-export async function startPlayoffs(competitionId: string): Promise<ActionResult> {
-  const session = await getAuthSession()
-  if (!session) return { error: "Nicht angemeldet." }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung." }
-
-  const competition = await db.competition.findUnique({
-    where: { id: competitionId },
-    select: {
-      id: true,
-      status: true,
-      playoffBestOf: true,
-      playoffHasViertelfinale: true,
-      playoffHasAchtelfinale: true,
-    },
-  })
-  if (!competition) return { error: "Meisterschaft nicht gefunden." }
-  if (competition.status !== "ACTIVE")
-    return { error: "Playoffs können nur für aktive Meisterschaften gestartet werden." }
-
-  const [existingCount, pendingCount] = await Promise.all([
-    db.playoffMatch.count({ where: { competitionId } }),
-    db.matchup.count({ where: { competitionId, status: "PENDING" } }),
-  ])
-
-  if (existingCount > 0) return { error: "Playoffs wurden bereits gestartet." }
-  if (pendingCount > 0) return { error: "Es gibt noch ausstehende Paarungen in der Gruppenphase." }
-
-  const standings = await getStandingsForCompetition(competitionId)
-  const activeStandings = standings.filter((r) => !r.withdrawn)
-
-  const minRequired = competition.playoffHasAchtelfinale
-    ? 16
-    : competition.playoffHasViertelfinale
-      ? 8
-      : 4
-  if (activeStandings.length < minRequired) {
-    return { error: `Mindestens ${minRequired} aktive Teilnehmer für Playoffs erforderlich.` }
-  }
-
-  const matchups = createFirstRoundMatchups(standings, {
-    playoffHasViertelfinale: competition.playoffHasViertelfinale,
-    playoffHasAchtelfinale: competition.playoffHasAchtelfinale,
-  })
-
-  try {
-    await db.playoffMatch.createMany({
-      data: matchups.map((m) => ({
-        competitionId,
-        round: m.round,
-        participantAId: m.participantAId,
-        participantBId: m.participantBId,
-      })),
-    })
-
-    await db.auditLog.create({
-      data: {
-        eventType: "PLAYOFFS_STARTED",
-        entityType: "COMPETITION",
-        entityId: competitionId,
-        userId: session.user.id,
-        competitionId,
-        details: { participantCount: activeStandings.length },
-      },
-    })
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error)
-    console.error("Fehler beim Starten der Playoffs:", msg)
-    return { error: "Playoffs konnten nicht gestartet werden." }
-  }
-
-  revalidatePath(`/competitions/${competitionId}/playoffs`)
-  return { success: true }
-}
+} from "../calculatePlayoffs"
+import type { PlayoffRound, SavePlayoffDuelResultInput } from "../types"
 
 /**
  * Speichert das Ergebnis eines Playoff-Einzel-Duells.
@@ -596,118 +509,6 @@ async function cascadeDeleteEmptyNextRound(match: {
 }
 
 /**
- * Setzt manuell die nächste Runde an, wenn alle Matches der aktuellen Runde abgeschlossen sind.
- * Nur Admin; ersetzt das frühere automatische Seeding.
- */
-export async function advanceRound(competitionId: string): Promise<ActionResult> {
-  const session = await getAuthSession()
-  if (!session) return { error: "Nicht angemeldet." }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung." }
-
-  const matches = await db.playoffMatch.findMany({
-    where: { competitionId },
-    select: {
-      id: true,
-      round: true,
-      status: true,
-      winsA: true,
-      winsB: true,
-      participantAId: true,
-      participantBId: true,
-    },
-  })
-
-  if (matches.length === 0) return { error: "Keine Playoffs gefunden." }
-
-  // Höchste Runde ohne Folge-Runde ermitteln
-  const hasEF = matches.some((m) => m.round === "EIGHTH_FINAL")
-  const hasQF = matches.some((m) => m.round === "QUARTER_FINAL")
-  const hasSF = matches.some((m) => m.round === "SEMI_FINAL")
-  const hasFinal = matches.some((m) => m.round === "FINAL")
-
-  let roundToAdvance: PlayoffRound | null = null
-  if (hasEF && !hasQF) {
-    roundToAdvance = "EIGHTH_FINAL"
-  } else if (hasQF && !hasSF) {
-    roundToAdvance = "QUARTER_FINAL"
-  } else if (hasSF && !hasFinal) {
-    roundToAdvance = "SEMI_FINAL"
-  }
-
-  if (!roundToAdvance) return { error: "Keine Runde zum Anlegen der nächsten Runde." }
-
-  const currentRoundMatches = matches.filter((m) => m.round === roundToAdvance)
-  if (!currentRoundMatches.every((m) => m.status === "COMPLETED")) {
-    return { error: "Noch nicht alle Matches der aktuellen Runde abgeschlossen." }
-  }
-
-  await handleMatchCompletion(currentRoundMatches[0].id, competitionId, roundToAdvance)
-
-  revalidatePath(`/competitions/${competitionId}/playoffs`)
-  return { success: true }
-}
-
-/**
- * Nach Abschluss eines PlayoffMatch: prüft ob alle Matches der Runde done sind.
- * Falls ja → nächste Runde erstellen.
- * Bei FINAL → keine weitere Runde.
- */
-async function handleMatchCompletion(
-  matchId: string,
-  competitionId: string,
-  round: PlayoffRound
-): Promise<void> {
-  if (round === "FINAL") return
-
-  const allMatchesInRound = await db.playoffMatch.findMany({
-    where: { competitionId, round },
-    select: {
-      id: true,
-      status: true,
-      winsA: true,
-      winsB: true,
-      participantAId: true,
-      participantBId: true,
-    },
-  })
-
-  const allComplete = allMatchesInRound.every((m) => m.status === "COMPLETED")
-  if (!allComplete) return
-
-  const winners = allMatchesInRound.map((m) =>
-    m.winsA > m.winsB ? m.participantAId : m.participantBId
-  )
-
-  const nextRound = getNextRound(round)!
-
-  if (nextRound === "FINAL") {
-    await db.playoffMatch.create({
-      data: {
-        competitionId,
-        round: "FINAL",
-        participantAId: winners[0],
-        participantBId: winners[1],
-      },
-    })
-    return
-  }
-
-  // Re-Seeding nach Original-Gruppenrang
-  const standings = await getStandingsForCompetition(competitionId)
-  const rankMap = new Map(standings.map((s) => [s.participantId, s.rank]))
-  const nextMatchups = createNextRoundMatchups(winners, rankMap)
-
-  await db.playoffMatch.createMany({
-    data: nextMatchups.map((m) => ({
-      competitionId,
-      round: nextRound,
-      participantAId: m.participantAId,
-      participantBId: m.participantBId,
-    })),
-  })
-}
-
-/**
  * Legt ein weiteres Duell nach Gleichstand an.
  * isSuddenDeath=true für Finale-Verlängerung, false für VF/HF-Nachschuss.
  */
@@ -725,50 +526,4 @@ async function addExtraDuel(playoffMatchId: string, isSuddenDeath: boolean): Pro
       isSuddenDeath,
     },
   })
-}
-
-/**
- * Legt das nächste Duell in einem PlayoffMatch an.
- * Wird für VF/HF aufgerufen wenn der Admin ein weiteres Duell starten will.
- */
-export async function addPlayoffDuel(
-  playoffMatchId: string
-): Promise<ActionResult<{ duelId: string }>> {
-  const session = await getAuthSession()
-  if (!session) return { error: "Nicht angemeldet." }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung." }
-
-  const match = await db.playoffMatch.findUnique({
-    where: { id: playoffMatchId },
-    select: {
-      id: true,
-      status: true,
-      competitionId: true,
-      duels: { orderBy: { duelNumber: "desc" }, take: 1, select: { duelNumber: true } },
-    },
-  })
-
-  if (!match) return { error: "Playoff-Paarung nicht gefunden." }
-  if (match.status === "COMPLETED")
-    return { error: "Diese Playoff-Paarung ist bereits abgeschlossen." }
-
-  const nextDuelNumber = (match.duels[0]?.duelNumber ?? 0) + 1
-
-  try {
-    const duel = await db.playoffDuel.create({
-      data: {
-        playoffMatchId,
-        duelNumber: nextDuelNumber,
-        isSuddenDeath: false,
-      },
-      select: { id: true },
-    })
-
-    revalidatePath(`/competitions/${match.competitionId}/playoffs`)
-    return { success: true, data: { duelId: duel.id } }
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error)
-    console.error("Fehler beim Anlegen des Duells:", msg)
-    return { error: "Duell konnte nicht angelegt werden." }
-  }
 }
