@@ -1,6 +1,8 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
-import { ScoringMode } from "@/generated/prisma/client"
+import { ScoringMode, TeamScoring, TargetValueType } from "@/generated/prisma/client"
+
+const PLAYOFF_SCORING_MODES = ["RINGTEILER", "RINGS", "RINGS_DECIMAL", "TEILER"] as const
 
 export function parseDate(value: string | null | undefined): Date | null {
   if (!value || value.trim() === "") return null
@@ -46,7 +48,7 @@ export const BaseSchema = z
       .optional()
       .transform((v) => (v && v.trim() !== "" ? parseInt(v, 10) : null)),
     teamScoring: z
-      .enum(["SUM", "BEST"])
+      .nativeEnum(TeamScoring)
       .nullable()
       .optional()
       .transform((v) => v || null),
@@ -56,7 +58,7 @@ export const BaseSchema = z
       .optional()
       .transform((v) => (v && v.trim() !== "" ? parseFloat(v.replace(",", ".")) : null)),
     targetValueType: z
-      .enum(["TEILER", "RINGS", "RINGS_DECIMAL"])
+      .nativeEnum(TargetValueType)
       .nullable()
       .optional()
       .transform((v) => v || null),
@@ -86,15 +88,15 @@ export const BaseSchema = z
       .transform((v) => v === "true" || v === "on"),
     finalePrimary: z.preprocess(
       (v) => (!v || v === "" ? "RINGS" : v),
-      z.enum(["RINGTEILER", "RINGS", "RINGS_DECIMAL", "TEILER"])
+      z.enum(PLAYOFF_SCORING_MODES)
     ),
     finaleTiebreaker1: z.preprocess(
       (v) => (v === "none" || v === "" || !v ? null : v),
-      z.enum(["RINGTEILER", "RINGS", "RINGS_DECIMAL", "TEILER"]).nullable()
+      z.enum(PLAYOFF_SCORING_MODES).nullable()
     ),
     finaleTiebreaker2: z.preprocess(
       (v) => (v === "none" || v === "" || !v ? null : v),
-      z.enum(["RINGTEILER", "RINGS", "RINGS_DECIMAL", "TEILER"]).nullable()
+      z.enum(PLAYOFF_SCORING_MODES).nullable()
     ),
     finaleHasSuddenDeath: z
       .string()
