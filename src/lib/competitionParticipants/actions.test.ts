@@ -7,12 +7,14 @@ const {
   competitionParticipantFindUniqueMock,
   competitionParticipantCreateMock,
   competitionParticipantDeleteMock,
+  competitionParticipantUpdateMock,
   matchupCountMock,
   playoffMatchCountMock,
   participantCreateMock,
   participantDeleteMock,
   seriesDeleteManyMock,
   transactionMock,
+  auditLogCreateMock,
 } = vi.hoisted(() => ({
   getAuthSessionMock: vi.fn(),
   revalidatePathMock: vi.fn(),
@@ -20,12 +22,14 @@ const {
   competitionParticipantFindUniqueMock: vi.fn(),
   competitionParticipantCreateMock: vi.fn(),
   competitionParticipantDeleteMock: vi.fn(),
+  competitionParticipantUpdateMock: vi.fn(),
   matchupCountMock: vi.fn(),
   playoffMatchCountMock: vi.fn(),
   participantCreateMock: vi.fn(),
   participantDeleteMock: vi.fn(),
   seriesDeleteManyMock: vi.fn(),
   transactionMock: vi.fn(),
+  auditLogCreateMock: vi.fn(),
 }))
 
 vi.mock("@/lib/auth-helpers", () => ({ getAuthSession: getAuthSessionMock }))
@@ -38,6 +42,7 @@ vi.mock("@/lib/db", () => ({
       findFirst: competitionParticipantFindUniqueMock,
       create: competitionParticipantCreateMock,
       delete: competitionParticipantDeleteMock,
+      update: competitionParticipantUpdateMock,
     },
     matchup: { count: matchupCountMock },
     playoffMatch: { count: playoffMatchCountMock },
@@ -46,11 +51,18 @@ vi.mock("@/lib/db", () => ({
       delete: participantDeleteMock,
     },
     series: { deleteMany: seriesDeleteManyMock },
+    auditLog: { create: auditLogCreateMock },
     $transaction: transactionMock,
   },
 }))
 
-import { enrollParticipant, unenrollParticipant } from "@/lib/competitionParticipants/actions"
+import {
+  enrollParticipant,
+  unenrollParticipant,
+  withdrawParticipant,
+  revokeWithdrawal,
+  updateStartNumber,
+} from "@/lib/competitionParticipants/actions"
 
 const adminSession = { user: { id: "u1", role: "ADMIN" } }
 const userSession = { user: { id: "u2", role: "USER" } }
@@ -231,5 +243,174 @@ describe("unenrollParticipant", () => {
       })
     )
     expect(participantDeleteMock).toHaveBeenCalledWith({ where: { id: "gp1" } })
+  })
+})
+
+// ─── withdrawParticipant ──────────────────────────────────────────────────────
+
+describe("withdrawParticipant", () => {
+  const activeCp = {
+    id: "cp1",
+    competitionId: "c1",
+    participantId: "p1",
+    status: "ACTIVE",
+    participant: { firstName: "Max", lastName: "Mustermann" },
+  }
+
+  beforeEach(() => {
+    vi.resetAllMocks()
+    competitionParticipantFindUniqueMock.mockResolvedValue(activeCp)
+    playoffMatchCountMock.mockResolvedValue(0)
+    transactionMock.mockResolvedValue([{}, {}])
+  })
+
+  it("liefert Fehler ohne Session", async () => {
+    getAuthSessionMock.mockResolvedValue(null)
+    const result = await withdrawParticipant("cp1", null, makeFormData({}))
+    expect(result).toEqual({ error: "Nicht angemeldet" })
+  })
+
+  it("liefert Fehler wenn kein Admin", async () => {
+    getAuthSessionMock.mockResolvedValue(userSession)
+    const result = await withdrawParticipant("cp1", null, makeFormData({}))
+    expect(result).toEqual({ error: "Keine Berechtigung" })
+  })
+
+  it("liefert Fehler wenn Einschreibung nicht gefunden", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    competitionParticipantFindUniqueMock.mockResolvedValue(null)
+    const result = await withdrawParticipant("cp1", null, makeFormData({}))
+    expect(result).toEqual({ error: "Einschreibung nicht gefunden." })
+  })
+
+  it("liefert Fehler wenn bereits zurückgezogen", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    competitionParticipantFindUniqueMock.mockResolvedValue({ ...activeCp, status: "WITHDRAWN" })
+    const result = await withdrawParticipant("cp1", null, makeFormData({}))
+    expect(result).toEqual({ error: "Teilnehmer ist bereits zurückgezogen." })
+  })
+
+  it("liefert Fehler wenn Playoffs bereits begonnen haben", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    playoffMatchCountMock.mockResolvedValue(1)
+    const result = await withdrawParticipant("cp1", null, makeFormData({}))
+    expect(result).toEqual({ error: "Rückzug nicht möglich — Playoffs haben bereits begonnen." })
+  })
+
+  it("zieht Teilnehmer zurück und ruft Transaktion auf", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    const result = await withdrawParticipant("cp1", null, makeFormData({ reason: "Verletzt" }))
+    expect(result).toEqual({ success: true })
+    expect(transactionMock).toHaveBeenCalledWith(expect.any(Array))
+  })
+})
+
+// ─── revokeWithdrawal ─────────────────────────────────────────────────────────
+
+describe("revokeWithdrawal", () => {
+  const withdrawnCp = {
+    id: "cp1",
+    competitionId: "c1",
+    participantId: "p1",
+    status: "WITHDRAWN",
+    participant: { firstName: "Max", lastName: "Mustermann" },
+  }
+
+  beforeEach(() => {
+    vi.resetAllMocks()
+    competitionParticipantFindUniqueMock.mockResolvedValue(withdrawnCp)
+    playoffMatchCountMock.mockResolvedValue(0)
+    transactionMock.mockResolvedValue([{}, {}])
+  })
+
+  it("liefert Fehler ohne Session", async () => {
+    getAuthSessionMock.mockResolvedValue(null)
+    const result = await revokeWithdrawal("cp1")
+    expect(result).toEqual({ error: "Nicht angemeldet" })
+  })
+
+  it("liefert Fehler wenn kein Admin", async () => {
+    getAuthSessionMock.mockResolvedValue(userSession)
+    const result = await revokeWithdrawal("cp1")
+    expect(result).toEqual({ error: "Keine Berechtigung" })
+  })
+
+  it("liefert Fehler wenn Einschreibung nicht gefunden", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    competitionParticipantFindUniqueMock.mockResolvedValue(null)
+    const result = await revokeWithdrawal("cp1")
+    expect(result).toEqual({ error: "Einschreibung nicht gefunden." })
+  })
+
+  it("liefert Fehler wenn Teilnehmer nicht zurückgezogen", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    competitionParticipantFindUniqueMock.mockResolvedValue({ ...withdrawnCp, status: "ACTIVE" })
+    const result = await revokeWithdrawal("cp1")
+    expect(result).toEqual({ error: "Teilnehmer ist nicht zurückgezogen." })
+  })
+
+  it("liefert Fehler wenn Playoffs bereits begonnen haben", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    playoffMatchCountMock.mockResolvedValue(1)
+    const result = await revokeWithdrawal("cp1")
+    expect(result).toEqual({
+      error: "Rückzug kann nicht rückgängig gemacht werden — Playoffs haben bereits begonnen.",
+    })
+  })
+
+  it("macht Rückzug rückgängig und ruft Transaktion auf", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    const result = await revokeWithdrawal("cp1")
+    expect(result).toEqual({ success: true })
+    expect(transactionMock).toHaveBeenCalledWith(expect.any(Array))
+  })
+})
+
+// ─── updateStartNumber ────────────────────────────────────────────────────────
+
+describe("updateStartNumber", () => {
+  const cp = { id: "cp1", competitionId: "c1" }
+
+  beforeEach(() => {
+    vi.resetAllMocks()
+    competitionParticipantFindUniqueMock.mockResolvedValue(cp)
+    competitionParticipantUpdateMock.mockResolvedValue({})
+  })
+
+  it("liefert Fehler ohne Session", async () => {
+    getAuthSessionMock.mockResolvedValue(null)
+    const result = await updateStartNumber("cp1", 7)
+    expect(result).toEqual({ error: "Nicht angemeldet" })
+  })
+
+  it("liefert Fehler wenn kein Admin", async () => {
+    getAuthSessionMock.mockResolvedValue(userSession)
+    const result = await updateStartNumber("cp1", 7)
+    expect(result).toEqual({ error: "Keine Berechtigung" })
+  })
+
+  it("liefert Fehler wenn Einschreibung nicht gefunden", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    competitionParticipantFindUniqueMock.mockResolvedValue(null)
+    const result = await updateStartNumber("cp1", 7)
+    expect(result).toEqual({ error: "Einschreibung nicht gefunden." })
+  })
+
+  it("aktualisiert Startnummer auf eine Zahl", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    const result = await updateStartNumber("cp1", 7)
+    expect(result).toEqual({ success: true })
+    expect(competitionParticipantUpdateMock).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { startNumber: 7 } })
+    )
+  })
+
+  it("aktualisiert Startnummer auf null", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    const result = await updateStartNumber("cp1", null)
+    expect(result).toEqual({ success: true })
+    expect(competitionParticipantUpdateMock).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { startNumber: null } })
+    )
   })
 })
