@@ -1,5 +1,3 @@
-"use client"
-
 import type { ScoringMode } from "@/generated/prisma/client"
 import type { PlayoffBracketData, PlayoffMatchItem } from "@/lib/playoffs/types"
 import { cn } from "@/lib/utils"
