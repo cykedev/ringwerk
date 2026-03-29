@@ -17,6 +17,7 @@ import {
 import type { SerializableDiscipline } from "@/lib/disciplines/types"
 import type { CompetitionDetail } from "@/lib/competitions/types"
 import type { ActionResult } from "@/lib/types"
+import { SCORING_MODE_LABELS } from "@/lib/scoring/labels"
 
 interface Props {
   competition?: CompetitionDetail
@@ -24,17 +25,6 @@ interface Props {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   action: (prevState: ActionResult<any> | null, formData: FormData) => Promise<ActionResult<any>>
   hasMatchups?: boolean
-}
-
-const SCORING_MODE_LABELS: Record<string, string> = {
-  RINGTEILER: "Ringteiler (Standard)",
-  RINGS: "Ringe (ganzzahlig)",
-  RINGS_DECIMAL: "Ringe (Zehntelwertung)",
-  TEILER: "Teiler",
-  DECIMAL_REST: "Dezimalrest",
-  TARGET_ABSOLUTE: "Zielwert (absolut)",
-  TARGET_UNDER: "Zielwert (unter)",
-  TARGET_OVER: "Zielwert (über)",
 }
 
 // DECIMAL_REST benötigt Einzelschüsse — nur für Liga verfügbar

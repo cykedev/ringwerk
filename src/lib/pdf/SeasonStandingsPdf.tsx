@@ -2,6 +2,8 @@ import { Document, Page, View, Text } from "@react-pdf/renderer"
 import type { ReactElement } from "react"
 import type { SeasonStandingsEntry } from "@/lib/scoring/calculateSeasonStandings"
 import { styles, PDF_COLORS } from "@/lib/pdf/styles"
+import { SCORING_MODE_LABELS } from "@/lib/scoring/labels"
+import type { ScoringMode } from "@/lib/scoring/types"
 
 // ─── Typen ────────────────────────────────────────────────────────────────────
 
@@ -10,7 +12,7 @@ export interface SeasonStandingsPdfProps {
   disciplineName: string | null
   seasonStart: Date | null
   seasonEnd: Date | null
-  scoringMode: string
+  scoringMode: ScoringMode
   shotsPerSeries: number
   minSeries: number | null
   isMixed: boolean
@@ -22,17 +24,6 @@ export interface SeasonStandingsPdfProps {
 
 function formatDate(date: Date): string {
   return date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })
-}
-
-const SCORING_MODE_LABELS: Record<string, string> = {
-  RINGTEILER: "Ringteiler",
-  RINGS: "Ringe",
-  RINGS_DECIMAL: "Ringe (Zehntel)",
-  TEILER: "Teiler",
-  DECIMAL_REST: "Dezimalrest",
-  TARGET_ABSOLUTE: "Zielwert absolut",
-  TARGET_UNDER: "Zielwert unter",
-  TARGET_OVER: "Zielwert über",
 }
 
 function formatRings(value: number | null): string {

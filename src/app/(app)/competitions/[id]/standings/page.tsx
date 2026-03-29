@@ -9,20 +9,10 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { PdfDownloadButton } from "@/components/app/shared/PdfDownloadButton"
 import { formatDateOnly, getDisplayTimeZone } from "@/lib/dateTime"
+import { SCORING_MODE_LABELS } from "@/lib/scoring/labels"
 
 interface Props {
   params: Promise<{ id: string }>
-}
-
-const SCORING_MODE_LABELS: Record<string, string> = {
-  RINGTEILER: "Ringteiler",
-  RINGS: "Ringe",
-  RINGS_DECIMAL: "Ringe (Zehntel)",
-  TEILER: "Teiler",
-  DECIMAL_REST: "Dezimalrest",
-  TARGET_ABSOLUTE: "Zielwert absolut",
-  TARGET_UNDER: "Zielwert unter",
-  TARGET_OVER: "Zielwert über",
 }
 
 export default async function SeasonStandingsPage({ params }: Props) {
