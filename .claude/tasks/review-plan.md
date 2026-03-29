@@ -12,7 +12,7 @@ Basis: Kritischer Vollreview (Security, Konsistenz, Simplicity, Best Practices, 
 | R-01 | Error Boundaries                  | 🔴   | ✅ erledigt (2026-03-27)                 |
 | R-02 | console.error(error)              | 🔴   | ✅ erledigt (2026-03-27)                 |
 | R-03 | Audit Log Lücken                  | 🟠   | ✅ erledigt (2026-03-28)                 |
-| R-04 | Fehlende Tests (Actions)          | 🟠   | ⬜ offen                                 |
+| R-04 | Fehlende Tests (Actions)          | 🟠   | ✅ erledigt (2026-03-29)                 |
 | R-05 | playoffs/actions.ts aufteilen     | 🟠   | ⬜ offen                                 |
 | R-06 | competitions/actions.ts aufteilen | 🟠   | ⬜ offen                                 |
 | R-07 | Zod ↔ Prisma Enum sync            | 🟠   | ✅ erledigt (bereits via z.nativeEnum)   |
@@ -251,7 +251,7 @@ Technisch sicher (statische CSS-Variable-Strings), aber Best Practice wäre ein 
 | R-01 | Error Boundaries                  | 🔴   | UX / Robustheit    |
 | R-02 | console.error(error)              | 🔴   | Security           |
 | R-03 | Audit Log Lücken                  | 🟠   | ✅ erledigt        |
-| R-04 | Fehlende Tests (Actions)          | 🟠   | Testabdeckung      |
+| R-04 | Fehlende Tests (Actions)          | 🟠   | ✅ erledigt        |
 | R-05 | playoffs/actions.ts aufteilen     | 🟠   | Maintainability    |
 | R-06 | competitions/actions.ts aufteilen | 🟠   | Maintainability    |
 | R-07 | Zod ↔ Prisma Enum sync            | 🟠   | Konsistenz / Bugs  |
