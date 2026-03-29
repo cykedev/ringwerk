@@ -31,6 +31,7 @@
 ### Completing a session
 
 - Run `/check` — all gates must be green.
+- **Write lessons** — before `/consolidate-lessons`, add new entries to `.claude/tasks/lessons.md` for anything surprising, tricky, or worth remembering from this session. Format: `| YYYY-MM-DD | Was schiefgelaufen ist oder aufgefallen ist | Die Regel die es verhindert |`. Minimum 1 Eintrag pro Session — wenn nichts schiefgelaufen ist, dann eine Beobachtung über das Codebase oder einen nicht-offensichtlichen Entscheid.
 - Run `/consolidate-lessons` — promote new learnings to docs.
 - Doc sync: review session changes and update any stale docs in `.claude/docs/` (e.g. `features.md`, `data-model.md`, `architecture.md`, `reference-files.md`). Commit updates.
 - Present a summary of all commits on the branch.
