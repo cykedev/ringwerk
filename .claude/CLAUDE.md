@@ -31,6 +31,8 @@
 ### Completing a session
 
 - Run `/check` — all gates must be green.
+- Run `/consolidate-lessons` — promote new learnings to docs.
+- Doc sync: review session changes and update any stale docs in `.claude/docs/` (e.g. `features.md`, `data-model.md`, `architecture.md`, `reference-files.md`). Commit updates.
 - Present a summary of all commits on the branch.
 - Merge to `main` with `git merge --ff-only` (no merge commit), then delete the branch with `git branch -d`.
 
@@ -79,6 +81,21 @@
 | `referenceFiles`  | `.claude/docs/reference-files.md`  | Finding patterns, templates |
 | `worktrees`       | `.claude/docs/worktrees.md`        | Before using git worktrees  |
 
+### Subagent Required Reading
+
+If you are a subagent implementing a task, read these docs **before writing any code**:
+
+| Doc                                | When                                      |
+| ---------------------------------- | ----------------------------------------- |
+| `.claude/docs/code-conventions.md` | Always                                    |
+| `.claude/docs/reference-files.md`  | Always — find existing patterns first     |
+| `.claude/docs/data-model.md`       | Always — domain understanding             |
+| `.claude/docs/architecture.md`     | Always — layer order, directory structure |
+| `.claude/docs/features.md`         | Always — what features exist and how      |
+| `.claude/docs/ui-patterns.md`      | When creating or editing any `.tsx` file  |
+
+Additional task-specific docs are listed in the plan under `## Required Docs`.
+
 ---
 
 ## Superpowers Docs Location
@@ -89,6 +106,8 @@ All superpowers artifacts (specs, plans) MUST be saved under `.claude/docs/super
 - Plans → `.claude/docs/superpowers/plans/YYYY-MM-DD-<topic>-plan.md`
 
 Never write these to `docs/` at the project root.
+
+Every plan MUST include a `## Required Docs` section listing any task-specific docs subagents need beyond the baseline (e.g. `technical.md` for deployment changes, `worktrees.md` for worktree usage).
 
 ---
 

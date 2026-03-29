@@ -8,6 +8,10 @@
 
 **Tech Stack:** Vitest, `vi.hoisted`, `vi.mock`, `vi.fn()`, `vi.resetAllMocks()`
 
+## Required Docs
+
+Beyond the baseline, no additional docs required for this plan.
+
 ---
 
 ## File Map

@@ -8,6 +8,10 @@
 
 **Tech Stack:** Next.js App Router (error.tsx / loading.tsx Konventionen), shadcn/ui pattern, Tailwind CSS, Prisma
 
+## Required Docs
+
+Beyond the baseline, no additional docs required for this plan.
+
 ---
 
 ## AGENT 1 — Neue Dateien (R-01 + R-08)

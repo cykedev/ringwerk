@@ -8,6 +8,10 @@
 
 **Tech Stack:** Markdown (CLAUDE.md), JSON (settings.json), Bash (none after migration)
 
+## Required Docs
+
+Beyond the baseline, no additional docs required for this plan.
+
 ---
 
 ## File Structure

@@ -8,6 +8,10 @@
 
 **Tech Stack:** Next.js Server Actions, Prisma, TypeScript
 
+## Required Docs
+
+Beyond the baseline, no additional docs required for this plan.
+
 > **Hinweis zu Tests:** Für diese Actions existieren noch keine Tests (R-04). Da das gesamte Test-Setup für Actions noch aussteht, wird R-03 ohne neue Tests implementiert. R-04 deckt die Action-Tests ab.
 
 ---
