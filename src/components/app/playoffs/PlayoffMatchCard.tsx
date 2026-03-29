@@ -21,20 +21,14 @@ import { requiredWinsFromBestOf } from "@/lib/playoffs/calculatePlayoffs"
 import type { PlayoffMatchItem } from "@/lib/playoffs/types"
 import type { ScoringMode } from "@/generated/prisma/client"
 import { PlayoffDuelResultDialog } from "./PlayoffDuelResultDialog"
-
-const FINALE_CRITERIA_LABEL: Record<string, string> = {
-  RINGS: "Ringe",
-  RINGS_DECIMAL: "Ringe (Zehntel)",
-  RINGTEILER: "Ringteiler",
-  TEILER: "Teiler",
-}
+import { SCORING_MODE_LABELS } from "@/lib/scoring/labels"
 
 function finaleHintText(
   primary: ScoringMode,
   tb1: ScoringMode | null,
   tb2: ScoringMode | null
 ): string {
-  const label = (m: ScoringMode) => FINALE_CRITERIA_LABEL[m] ?? m
+  const label = (m: ScoringMode) => SCORING_MODE_LABELS[m] ?? m
   const parts = [`Primär: ${label(primary)}`]
   if (tb1) parts.push(`TB: ${label(tb1)}`)
   if (tb2) parts.push(`TB2: ${label(tb2)}`)

@@ -2,7 +2,7 @@ import { Document, Page, View, Text } from "@react-pdf/renderer"
 import type { ReactElement } from "react"
 import type { EventRankedEntry, EventTeamRankedEntry } from "@/lib/scoring/rankEventParticipants"
 import { styles, PDF_COLORS } from "@/lib/pdf/styles"
-import { SCORING_MODE_LABELS } from "@/lib/scoring/labels"
+import { SCORING_MODE_LABELS, SCORING_MODE_COLUMN_LABELS } from "@/lib/scoring/labels"
 import type { ScoringMode } from "@/lib/scoring/types"
 
 // ─── Typen ────────────────────────────────────────────────────────────────────
@@ -32,17 +32,6 @@ function rankBadgeColor(rank: number): string {
   if (rank === 2) return PDF_COLORS.silver
   if (rank === 3) return PDF_COLORS.orange
   return "#9ca3af"
-}
-
-const SCORE_LABEL: Record<string, string> = {
-  RINGTEILER: "Ringteiler",
-  RINGS: "Ringe",
-  RINGS_DECIMAL: "Ringe",
-  TEILER: "Teiler",
-  DECIMAL_REST: "Dezimalrest",
-  TARGET_ABSOLUTE: "Abweichung",
-  TARGET_UNDER: "Abweichung",
-  TARGET_OVER: "Abweichung",
 }
 
 function formatScore(score: number, mode: string): string {
@@ -79,7 +68,7 @@ function TeamRankingTable({
   scoringMode: ScoringMode
   teamScoring: "SUM" | "BEST"
 }): ReactElement {
-  const scoreLabel = SCORE_LABEL[scoringMode] ?? "Score"
+  const scoreLabel = SCORING_MODE_COLUMN_LABELS[scoringMode] ?? "Score"
 
   return (
     <View style={styles.table}>
@@ -137,7 +126,7 @@ function RankingTable({
   scoringMode: ScoringMode
   isMixed: boolean
 }): ReactElement {
-  const scoreLabel = SCORE_LABEL[scoringMode] ?? "Score"
+  const scoreLabel = SCORING_MODE_COLUMN_LABELS[scoringMode] ?? "Score"
   const teilerLabel = isMixed ? "Teiler korr." : "Teiler"
   const W = isMixed ? W_MIXED : W_SINGLE
 

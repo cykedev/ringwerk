@@ -1,4 +1,5 @@
 import type { EventRankedEntry } from "@/lib/scoring/rankEventParticipants"
+import { SCORING_MODE_COLUMN_LABELS } from "@/lib/scoring/labels"
 import { Badge } from "@/components/ui/badge"
 import { RankBadge } from "@/components/ui/rank-badge"
 
@@ -7,17 +8,6 @@ interface Props {
   scoringMode: string
   isMixed?: boolean
   showTeam?: boolean
-}
-
-const SCORE_LABEL: Record<string, string> = {
-  RINGTEILER: "Ringteiler",
-  RINGS: "Ringe",
-  RINGS_DECIMAL: "Ringe",
-  TEILER: "Teiler",
-  DECIMAL_REST: "Dezimalrest",
-  TARGET_ABSOLUTE: "Abweichung",
-  TARGET_UNDER: "Abweichung",
-  TARGET_OVER: "Abweichung",
 }
 
 export function EventRankingTable({
@@ -30,7 +20,7 @@ export function EventRankingTable({
     return <p className="text-sm text-muted-foreground">Noch keine Ergebnisse erfasst.</p>
   }
 
-  const scoreLabel = SCORE_LABEL[scoringMode] ?? "Score"
+  const scoreLabel = SCORING_MODE_COLUMN_LABELS[scoringMode as keyof typeof SCORING_MODE_COLUMN_LABELS] ?? "Score"
 
   return (
     <div className="overflow-hidden rounded-lg border bg-card">
