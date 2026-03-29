@@ -32,7 +32,7 @@
 
 - Run `/check` — all gates must be green.
 - Present a summary of all commits on the branch.
-- Ask user for confirmation before rebasing onto `main`.
+- Merge to `main` with `git merge --ff-only` (no merge commit), then delete the branch with `git branch -d`.
 
 ---
 
