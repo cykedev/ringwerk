@@ -42,8 +42,9 @@ interface Props {
 export function Navigation({ role }: Props) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const canManage = role === "ADMIN" || role === "MANAGER"
   const isAdmin = role === "ADMIN"
-  const visibleNavItems = isAdmin ? [...navItems, ...adminNavItems] : navItems
+  const visibleNavItems = canManage ? [...navItems, ...adminNavItems] : navItems
 
   return (
     <header className="border-b border-border bg-card">
