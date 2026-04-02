@@ -279,9 +279,13 @@ if (!session) redirect("/login")
 ### `(app)/admin/layout.tsx` – Rollen-Guard
 
 ```typescript
+import { getAuthSession, canManage, isAdmin } from "@/lib/auth-helpers"
+
 const session = await getAuthSession()
 if (!session) redirect("/login")
-if (session.user.role !== "ADMIN") redirect("/")
+if (!canManage(session.user.role)) redirect("/")  // ADMIN + MANAGER
+// oder für Admin-only Pages:
+if (!isAdmin(session.user.role)) redirect("/")
 ```
 
 ### In Server Actions
@@ -289,9 +293,13 @@ if (session.user.role !== "ADMIN") redirect("/")
 Immer in dieser Reihenfolge: **Auth → Rolle prüfen (falls nötig) → Validierung → DB**
 
 ```typescript
+import { getAuthSession, canManage, isAdmin } from "@/lib/auth-helpers"
+
 const session = await getAuthSession()
 if (!session) return { error: "Nicht angemeldet" }
-if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
+if (!canManage(session.user.role)) return { error: "Keine Berechtigung" }  // ADMIN + MANAGER
+// oder für Admin-only Operationen (Hard-Deletes, Nutzerverwaltung):
+if (!isAdmin(session.user.role)) return { error: "Keine Berechtigung" }
 ```
 
 ### `src/lib/startup.ts` – Erstinitialisierung
