@@ -59,7 +59,11 @@ export default async function AdminUsersPage() {
                       variant={user.role === "ADMIN" ? "default" : "secondary"}
                       className="text-xs"
                     >
-                      {user.role === "ADMIN" ? "Admin" : user.role === "MANAGER" ? "Manager" : "Benutzer"}
+                      {user.role === "ADMIN"
+                        ? "Admin"
+                        : user.role === "MANAGER"
+                          ? "Manager"
+                          : "Benutzer"}
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">{user.email}</p>
@@ -87,7 +91,11 @@ export default async function AdminUsersPage() {
                         variant={user.role === "ADMIN" ? "default" : "secondary"}
                         className="text-xs"
                       >
-                        {user.role === "ADMIN" ? "Admin" : user.role === "MANAGER" ? "Manager" : "Benutzer"}
+                        {user.role === "ADMIN"
+                          ? "Admin"
+                          : user.role === "MANAGER"
+                            ? "Manager"
+                            : "Benutzer"}
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground">{user.email}</p>
