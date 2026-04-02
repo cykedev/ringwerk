@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation"
-import { getAuthSession } from "@/lib/auth-helpers"
+import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import { getDisciplineById } from "@/lib/disciplines/queries"
 import { updateDiscipline } from "@/lib/disciplines/actions"
 import { DisciplineForm } from "@/components/app/disciplines/DisciplineForm"
@@ -14,7 +14,7 @@ export default async function EditDisciplinePage({ params }: Props) {
 
   const [session, discipline] = await Promise.all([getAuthSession(), getDisciplineById(id)])
 
-  if (session?.user.role !== "ADMIN") redirect("/")
+  if (!session || !canManage(session.user.role)) redirect("/")
   if (!discipline) notFound()
 
   // updateDiscipline braucht die id gebunden — partiell applizieren

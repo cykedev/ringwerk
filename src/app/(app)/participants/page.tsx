@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { Plus } from "lucide-react"
-import { getAuthSession } from "@/lib/auth-helpers"
+import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import { getParticipantsForManagement } from "@/lib/participants/queries"
 import { ParticipantRowActions } from "@/components/app/participants/ParticipantRowActions"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 
 export default async function ParticipantsPage() {
   const session = await getAuthSession()
-  if (session?.user.role !== "ADMIN") redirect("/")
+  if (!session || !canManage(session.user.role)) redirect("/")
 
   const participants = await getParticipantsForManagement()
   const active = participants.filter((p) => p.isActive)

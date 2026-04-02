@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation"
-import { getAuthSession } from "@/lib/auth-helpers"
+import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import { getDisciplines } from "@/lib/disciplines/queries"
 import { getCompetitionById } from "@/lib/competitions/queries"
 import { updateCompetition } from "@/lib/competitions/actions"
@@ -20,7 +20,7 @@ export default async function EditCompetitionPage({ params }: Props) {
     getDisciplines(),
   ])
 
-  if (session?.user.role !== "ADMIN") redirect("/")
+  if (!session || !canManage(session.user.role)) redirect("/")
   if (!competition) notFound()
 
   const hasMatchups = competition._count.matchups > 0

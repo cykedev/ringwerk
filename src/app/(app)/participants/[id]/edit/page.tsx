@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation"
-import { getAuthSession } from "@/lib/auth-helpers"
+import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import { getParticipantById } from "@/lib/participants/queries"
 import { updateParticipant } from "@/lib/participants/actions"
 import { ParticipantForm } from "@/components/app/participants/ParticipantForm"
@@ -10,7 +10,7 @@ interface Props {
 
 export default async function EditParticipantPage({ params }: Props) {
   const session = await getAuthSession()
-  if (session?.user.role !== "ADMIN") redirect("/")
+  if (!session || !canManage(session.user.role)) redirect("/")
 
   const { id } = await params
   const participant = await getParticipantById(id)

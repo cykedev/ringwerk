@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 import { ArrowLeft, BarChart2, Users } from "lucide-react"
-import { getAuthSession } from "@/lib/auth-helpers"
+import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import { getCompetitionById, getSeasonWithSeries } from "@/lib/competitions/queries"
 import { getCompetitionParticipants } from "@/lib/competitionParticipants/queries"
 import { getDisciplines } from "@/lib/disciplines/queries"
@@ -22,7 +22,7 @@ export default async function SeriesPage({ params }: Props) {
 
   const [session, competition] = await Promise.all([getAuthSession(), getCompetitionById(id)])
 
-  if (session?.user.role !== "ADMIN") redirect("/")
+  if (!session || !canManage(session.user.role)) redirect("/")
   if (!competition) notFound()
 
   if (competition.type === "SEASON") {

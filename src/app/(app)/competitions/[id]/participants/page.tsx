@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 import { ArrowLeft, BarChart2, CalendarDays, ListOrdered, Trophy, UserMinus } from "lucide-react"
-import { getAuthSession } from "@/lib/auth-helpers"
+import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import { getCompetitionById } from "@/lib/competitions/queries"
 import { getCompetitionParticipants } from "@/lib/competitionParticipants/queries"
 import {
@@ -34,7 +34,7 @@ export default async function CompetitionParticipantsPage({ params }: Props) {
       getDisciplines(),
     ])
 
-  if (session?.user.role !== "ADMIN") redirect("/")
+  if (!session || !canManage(session.user.role)) redirect("/")
   if (!competition) notFound()
 
   const isTeamEvent = (competition.teamSize ?? 0) >= 2

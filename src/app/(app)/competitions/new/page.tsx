@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation"
-import { getAuthSession } from "@/lib/auth-helpers"
+import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import { getDisciplines } from "@/lib/disciplines/queries"
 import { createCompetition } from "@/lib/competitions/actions"
 import { CompetitionForm } from "@/components/app/competitions/CompetitionForm"
 
 export default async function NewCompetitionPage() {
   const [session, disciplines] = await Promise.all([getAuthSession(), getDisciplines()])
-  if (session?.user.role !== "ADMIN") redirect("/")
+  if (!session || !canManage(session.user.role)) redirect("/")
 
   if (disciplines.length === 0) {
     return (

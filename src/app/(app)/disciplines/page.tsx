@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { Plus, Archive } from "lucide-react"
-import { getAuthSession } from "@/lib/auth-helpers"
+import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import { getDisciplinesForManagement } from "@/lib/disciplines/queries"
 import { DisciplineActions } from "@/components/app/disciplines/DisciplineActions"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 
 export default async function DisciplinesPage() {
   const session = await getAuthSession()
-  if (session?.user.role !== "ADMIN") redirect("/")
+  if (!session || !canManage(session.user.role)) redirect("/")
 
   const disciplines = await getDisciplinesForManagement()
 
