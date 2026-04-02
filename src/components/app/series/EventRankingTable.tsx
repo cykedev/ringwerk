@@ -20,7 +20,8 @@ export function EventRankingTable({
     return <p className="text-sm text-muted-foreground">Noch keine Ergebnisse erfasst.</p>
   }
 
-  const scoreLabel = SCORING_MODE_COLUMN_LABELS[scoringMode as keyof typeof SCORING_MODE_COLUMN_LABELS] ?? "Score"
+  const scoreLabel =
+    SCORING_MODE_COLUMN_LABELS[scoringMode as keyof typeof SCORING_MODE_COLUMN_LABELS] ?? "Score"
 
   return (
     <div className="overflow-hidden rounded-lg border bg-card">

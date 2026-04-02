@@ -13,7 +13,8 @@ export function EventTeamRankingTable({ entries, scoringMode, teamScoring }: Pro
     return <p className="text-sm text-muted-foreground">Noch keine Team-Ergebnisse erfasst.</p>
   }
 
-  const scoreLabel = SCORING_MODE_COLUMN_LABELS[scoringMode as keyof typeof SCORING_MODE_COLUMN_LABELS] ?? "Score"
+  const scoreLabel =
+    SCORING_MODE_COLUMN_LABELS[scoringMode as keyof typeof SCORING_MODE_COLUMN_LABELS] ?? "Score"
   const teamScoringLabel = teamScoring === "SUM" ? "Summe" : "Bestes"
 
   return (

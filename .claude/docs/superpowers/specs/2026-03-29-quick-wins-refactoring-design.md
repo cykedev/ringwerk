@@ -21,21 +21,21 @@ Die Analyse ergab drei Kategorien von Quick Wins:
 
 In `labels.ts` existiert `SCORING_MODE_LABELS` als zentraler Ort. Trotzdem definieren drei Dateien eigene lokale Maps:
 
-| Datei | Lokale Map |
-|---|---|
-| `components/app/series/EventRankingTable.tsx` | `SCORE_LABEL` |
-| `components/app/series/EventTeamRankingTable.tsx` | `TEAM_SCORE_LABEL` |
-| `lib/pdf/EventRankingPdf.tsx` | `SCORE_LABEL` (obwohl bereits `SCORING_MODE_LABELS` importiert) |
-| `components/app/playoffs/PlayoffMatchCard.tsx` | `FINALE_CRITERIA_LABEL` (4 von 8 Modi) |
+| Datei                                             | Lokale Map                                                      |
+| ------------------------------------------------- | --------------------------------------------------------------- |
+| `components/app/series/EventRankingTable.tsx`     | `SCORE_LABEL`                                                   |
+| `components/app/series/EventTeamRankingTable.tsx` | `TEAM_SCORE_LABEL`                                              |
+| `lib/pdf/EventRankingPdf.tsx`                     | `SCORE_LABEL` (obwohl bereits `SCORING_MODE_LABELS` importiert) |
+| `components/app/playoffs/PlayoffMatchCard.tsx`    | `FINALE_CRITERIA_LABEL` (4 von 8 Modi)                          |
 
 Die lokalen Maps nutzen **kürzere Spaltenkopf-Labels**, die sich semantisch von `SCORING_MODE_LABELS` unterscheiden:
 
-| Modus | `SCORING_MODE_LABELS` (Dropdown/Titel) | Spaltenkopf (lokal) |
-|---|---|---|
-| RINGS_DECIMAL | "Ringe (Zehntel)" | "Ringe" |
-| TARGET_ABSOLUTE | "Zielwert absolut" | "Abweichung" |
-| TARGET_UNDER | "Zielwert unter" | "Abweichung" |
-| TARGET_OVER | "Zielwert über" | "Abweichung" |
+| Modus           | `SCORING_MODE_LABELS` (Dropdown/Titel) | Spaltenkopf (lokal) |
+| --------------- | -------------------------------------- | ------------------- |
+| RINGS_DECIMAL   | "Ringe (Zehntel)"                      | "Ringe"             |
+| TARGET_ABSOLUTE | "Zielwert absolut"                     | "Abweichung"        |
+| TARGET_UNDER    | "Zielwert unter"                       | "Abweichung"        |
+| TARGET_OVER     | "Zielwert über"                        | "Abweichung"        |
 
 ### Lösung
 
@@ -72,7 +72,7 @@ Typisierung als `Record<ScoringMode, string>` stellt sicher, dass neue Modi nie 
 In `src/lib/competitions/actions/_shared.ts` sind drei Felder mit hardkodierten Strings validiert:
 
 ```ts
-teamScoring: z.enum(["SUM", "BEST"])            // Zeile 48
+teamScoring: z.enum(["SUM", "BEST"]) // Zeile 48
 targetValueType: z.enum(["TEILER", "RINGS", "RINGS_DECIMAL"]) // Zeile 58
 finalePrimary: z.enum(["RINGTEILER", "RINGS", "RINGS_DECIMAL", "TEILER"]) // Zeile 89
 finaleTiebreaker1: z.enum(["RINGTEILER", "RINGS", "RINGS_DECIMAL", "TEILER"]) // Zeile 93
@@ -88,8 +88,14 @@ Neuer Prisma-Enum-Wert → TypeScript weiß nichts davon → stille Validierungs
 ```ts
 import { ScoringMode, TeamScoring, TargetValueType } from "@/generated/prisma/client"
 
-teamScoring: z.nativeEnum(TeamScoring).nullable().optional().transform(v => v || null)
-targetValueType: z.nativeEnum(TargetValueType).nullable().optional().transform(v => v || null)
+teamScoring: z.nativeEnum(TeamScoring)
+  .nullable()
+  .optional()
+  .transform((v) => v || null)
+targetValueType: z.nativeEnum(TargetValueType)
+  .nullable()
+  .optional()
+  .transform((v) => v || null)
 ```
 
 **Playoff-Scoring-Modi** → Konstante extrahieren, 3× referenzieren:

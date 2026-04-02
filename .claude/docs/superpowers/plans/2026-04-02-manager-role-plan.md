@@ -20,39 +20,40 @@
 
 ## Dateien im Überblick
 
-| Datei | Aktion | Zweck |
-|-------|--------|-------|
-| `prisma/schema.prisma` | Modify | `MANAGER` zum `UserRole` Enum hinzufügen |
-| `prisma/migrations/…` | Create | Migration `add_manager_role` |
-| `src/lib/auth-helpers.ts` | Modify | `canManage()` und `isAdmin()` hinzufügen |
-| `src/lib/auth-helpers.test.ts` | Create | Tests für die neuen Helper-Funktionen |
-| `src/lib/competitions/actions/create.ts` | Modify | `isAdmin` → `canManage` |
-| `src/lib/competitions/actions/update.ts` | Modify | beide Checks → `canManage` |
-| `src/lib/competitions/actions/delete.ts` | Modify | `deleteCompetition` → `canManage`, `forceDeleteCompetition` → `isAdmin` |
-| `src/lib/disciplines/actions.ts` | Modify | create/update/archive → `canManage`, delete → `isAdmin` |
-| `src/lib/participants/actions.ts` | Modify | alle 3 Checks → `canManage` |
-| `src/lib/competitionParticipants/actions.ts` | Modify | alle 5 Checks → `canManage` |
-| `src/lib/series/actions.ts` | Modify | alle 5 Checks → `canManage` |
-| `src/lib/results/actions.ts` | Modify | 1 Check → `canManage` |
-| `src/lib/matchups/actions.ts` | Modify | 1 Check → `canManage` |
-| `src/lib/playoffs/actions/start.ts` | Modify | 1 Check → `canManage` |
-| `src/lib/playoffs/actions/match.ts` | Modify | 1 Check → `canManage` |
-| `src/lib/playoffs/actions/duel.ts` | Modify | 2 Checks → `canManage` |
-| `src/lib/playoffs/actions/manualDuel.ts` | Modify | 1 Check → `canManage` |
-| `src/lib/users/actions.ts` | Modify | Zod-Schema: `["ADMIN", "USER"]` → `["ADMIN", "MANAGER", "USER"]` |
-| `src/components/app/shell/Navigation.tsx` | Modify | `isAdmin` aufteilen in `canManage` + `isAdmin` |
-| `src/lib/competitions/actions.test.ts` | Modify | MANAGER-Tests: canManage-Aktionen ✓, forceDelete ✗ |
-| `src/lib/disciplines/actions.test.ts` | Modify | MANAGER-Tests: create/update/archive ✓, delete ✗ |
-| `src/lib/users/actions.test.ts` | Modify | MANAGER-Tests: createUser/updateUser/setUserActive ✗; MANAGER als Rolle im Formular ✓ |
-| `src/lib/competitionParticipants/actions.test.ts` | Modify | MANAGER-Tests: alle Aktionen ✓ |
-| `src/lib/series/actions.test.ts` | Modify | MANAGER-Tests: alle Aktionen ✓ |
-| `.claude/docs/data-model.md` | Modify | `UserRole` Enum-Beschreibung aktualisieren (implementiert) |
+| Datei                                             | Aktion | Zweck                                                                                 |
+| ------------------------------------------------- | ------ | ------------------------------------------------------------------------------------- |
+| `prisma/schema.prisma`                            | Modify | `MANAGER` zum `UserRole` Enum hinzufügen                                              |
+| `prisma/migrations/…`                             | Create | Migration `add_manager_role`                                                          |
+| `src/lib/auth-helpers.ts`                         | Modify | `canManage()` und `isAdmin()` hinzufügen                                              |
+| `src/lib/auth-helpers.test.ts`                    | Create | Tests für die neuen Helper-Funktionen                                                 |
+| `src/lib/competitions/actions/create.ts`          | Modify | `isAdmin` → `canManage`                                                               |
+| `src/lib/competitions/actions/update.ts`          | Modify | beide Checks → `canManage`                                                            |
+| `src/lib/competitions/actions/delete.ts`          | Modify | `deleteCompetition` → `canManage`, `forceDeleteCompetition` → `isAdmin`               |
+| `src/lib/disciplines/actions.ts`                  | Modify | create/update/archive → `canManage`, delete → `isAdmin`                               |
+| `src/lib/participants/actions.ts`                 | Modify | alle 3 Checks → `canManage`                                                           |
+| `src/lib/competitionParticipants/actions.ts`      | Modify | alle 5 Checks → `canManage`                                                           |
+| `src/lib/series/actions.ts`                       | Modify | alle 5 Checks → `canManage`                                                           |
+| `src/lib/results/actions.ts`                      | Modify | 1 Check → `canManage`                                                                 |
+| `src/lib/matchups/actions.ts`                     | Modify | 1 Check → `canManage`                                                                 |
+| `src/lib/playoffs/actions/start.ts`               | Modify | 1 Check → `canManage`                                                                 |
+| `src/lib/playoffs/actions/match.ts`               | Modify | 1 Check → `canManage`                                                                 |
+| `src/lib/playoffs/actions/duel.ts`                | Modify | 2 Checks → `canManage`                                                                |
+| `src/lib/playoffs/actions/manualDuel.ts`          | Modify | 1 Check → `canManage`                                                                 |
+| `src/lib/users/actions.ts`                        | Modify | Zod-Schema: `["ADMIN", "USER"]` → `["ADMIN", "MANAGER", "USER"]`                      |
+| `src/components/app/shell/Navigation.tsx`         | Modify | `isAdmin` aufteilen in `canManage` + `isAdmin`                                        |
+| `src/lib/competitions/actions.test.ts`            | Modify | MANAGER-Tests: canManage-Aktionen ✓, forceDelete ✗                                    |
+| `src/lib/disciplines/actions.test.ts`             | Modify | MANAGER-Tests: create/update/archive ✓, delete ✗                                      |
+| `src/lib/users/actions.test.ts`                   | Modify | MANAGER-Tests: createUser/updateUser/setUserActive ✗; MANAGER als Rolle im Formular ✓ |
+| `src/lib/competitionParticipants/actions.test.ts` | Modify | MANAGER-Tests: alle Aktionen ✓                                                        |
+| `src/lib/series/actions.test.ts`                  | Modify | MANAGER-Tests: alle Aktionen ✓                                                        |
+| `.claude/docs/data-model.md`                      | Modify | `UserRole` Enum-Beschreibung aktualisieren (implementiert)                            |
 
 ---
 
 ## Task 1: Schema — MANAGER zum UserRole Enum hinzufügen
 
 **Files:**
+
 - Modify: `prisma/schema.prisma`
 
 - [ ] **Step 1: Enum erweitern**
@@ -86,6 +87,7 @@ feat(schema): add MANAGER to UserRole enum
 ## Task 2: Helper-Funktionen — canManage und isAdmin (TDD)
 
 **Files:**
+
 - Create: `src/lib/auth-helpers.test.ts`
 - Modify: `src/lib/auth-helpers.ts`
 
@@ -177,6 +179,7 @@ feat(auth): add canManage and isAdmin role helpers
 **Hinweis:** Dieser Task berührt viele Dateien, gehört aber in einen einzigen isolierten Commit. Keine neuen Tests — bestehende Tests müssen weiterhin bestehen.
 
 **Files:**
+
 - Modify: `src/lib/competitions/actions/create.ts`
 - Modify: `src/lib/competitions/actions/update.ts`
 - Modify: `src/lib/competitions/actions/delete.ts`
@@ -200,6 +203,7 @@ import { getAuthSession, canManage, isAdmin } from "@/lib/auth-helpers"
 ```
 
 Betroffene Dateien:
+
 - `src/lib/competitions/actions/create.ts`
 - `src/lib/competitions/actions/update.ts`
 - `src/lib/competitions/actions/delete.ts`
@@ -218,28 +222,30 @@ Betroffene Dateien:
 
 In den folgenden Dateien jeden `session.user.role !== "ADMIN"` Check durch `!canManage(session.user.role)` ersetzen:
 
-| Datei | Funktionen |
-|-------|-----------|
-| `competitions/actions/create.ts` | `createCompetition` |
-| `competitions/actions/update.ts` | `updateCompetition`, `setCompetitionStatus` |
-| `competitions/actions/delete.ts` | `deleteCompetition` (nur diese — nicht `forceDeleteCompetition`) |
-| `disciplines/actions.ts` | `createDiscipline`, `updateDiscipline`, `setDisciplineArchived` (nicht `deleteDiscipline`) |
-| `participants/actions.ts` | `createParticipant`, `updateParticipant`, `setParticipantActive` |
+| Datei                                | Funktionen                                                                                                 |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `competitions/actions/create.ts`     | `createCompetition`                                                                                        |
+| `competitions/actions/update.ts`     | `updateCompetition`, `setCompetitionStatus`                                                                |
+| `competitions/actions/delete.ts`     | `deleteCompetition` (nur diese — nicht `forceDeleteCompetition`)                                           |
+| `disciplines/actions.ts`             | `createDiscipline`, `updateDiscipline`, `setDisciplineArchived` (nicht `deleteDiscipline`)                 |
+| `participants/actions.ts`            | `createParticipant`, `updateParticipant`, `setParticipantActive`                                           |
 | `competitionParticipants/actions.ts` | `enrollParticipant`, `unenrollParticipant`, `withdrawParticipant`, `revokeWithdrawal`, `updateStartNumber` |
-| `series/actions.ts` | `saveEventSeries`, `deleteEventSeries`, `saveSeasonSeries`, `updateSeasonSeries`, `deleteSeasonSeries` |
-| `results/actions.ts` | `saveMatchResult` |
-| `matchups/actions.ts` | alle Checks |
-| `playoffs/actions/start.ts` | alle Checks |
-| `playoffs/actions/match.ts` | alle Checks |
-| `playoffs/actions/duel.ts` | alle Checks |
-| `playoffs/actions/manualDuel.ts` | alle Checks |
+| `series/actions.ts`                  | `saveEventSeries`, `deleteEventSeries`, `saveSeasonSeries`, `updateSeasonSeries`, `deleteSeasonSeries`     |
+| `results/actions.ts`                 | `saveMatchResult`                                                                                          |
+| `matchups/actions.ts`                | alle Checks                                                                                                |
+| `playoffs/actions/start.ts`          | alle Checks                                                                                                |
+| `playoffs/actions/match.ts`          | alle Checks                                                                                                |
+| `playoffs/actions/duel.ts`           | alle Checks                                                                                                |
+| `playoffs/actions/manualDuel.ts`     | alle Checks                                                                                                |
 
 Vorher:
+
 ```typescript
 if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
 ```
 
 Nachher:
+
 ```typescript
 if (!canManage(session.user.role)) return { error: "Keine Berechtigung" }
 ```
@@ -248,23 +254,26 @@ if (!canManage(session.user.role)) return { error: "Keine Berechtigung" }
 
 In den folgenden Funktionen `session.user.role !== "ADMIN"` durch `!isAdmin(session.user.role)` ersetzen. Auch den Import in `users/actions.ts` erweitern: `import { getAuthSession, isAdmin } from "@/lib/auth-helpers"`.
 
-| Datei | Funktionen |
-|-------|-----------|
-| `competitions/actions/delete.ts` | `forceDeleteCompetition` |
-| `disciplines/actions.ts` | `deleteDiscipline` |
-| `users/actions.ts` | `createUser`, `updateUser`, `setUserActive` |
+| Datei                            | Funktionen                                  |
+| -------------------------------- | ------------------------------------------- |
+| `competitions/actions/delete.ts` | `forceDeleteCompetition`                    |
+| `disciplines/actions.ts`         | `deleteDiscipline`                          |
+| `users/actions.ts`               | `createUser`, `updateUser`, `setUserActive` |
 
 **Nicht anfassen (bewusst ausgelassen):**
+
 - `src/proxy.ts` — prüft `token.role === "ADMIN"` für `/admin/*`-Routen; bleibt unverändert
 - `src/app/(app)/admin/layout.tsx` — prüft `role !== "ADMIN"`; bleibt unverändert
 - `src/lib/admin/actions.ts` — kapselt den Check in `requireAdminSession()`; bleibt unverändert
 
 Vorher:
+
 ```typescript
 if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
 ```
 
 Nachher:
+
 ```typescript
 if (!isAdmin(session.user.role)) return { error: "Keine Berechtigung" }
 ```
@@ -288,6 +297,7 @@ refactor(auth): use canManage/isAdmin helpers in all server actions
 ## Task 4: MANAGER-Berechtigungstests in Aktions-Testdateien
 
 **Files:**
+
 - Modify: `src/lib/competitions/actions.test.ts`
 - Modify: `src/lib/disciplines/actions.test.ts`
 - Modify: `src/lib/competitionParticipants/actions.test.ts`
@@ -423,6 +433,7 @@ test(auth): add MANAGER permission tests for actions
 ## Task 5: users/actions.ts — MANAGER als wählbare Rolle
 
 **Files:**
+
 - Modify: `src/lib/users/actions.ts`
 - Modify: `src/lib/users/actions.test.ts`
 
@@ -431,11 +442,13 @@ test(auth): add MANAGER permission tests for actions
 In `src/lib/users/actions.ts` Zeile 30 (`CreateUserSchema`) und Zeile 39 (`UpdateUserSchema`):
 
 Vorher:
+
 ```typescript
 role: z.enum(["ADMIN", "USER"] as const, { message: "Ungültige Rolle" }),
 ```
 
 Nachher (in beiden Schemas):
+
 ```typescript
 role: z.enum(["ADMIN", "MANAGER", "USER"] as const, { message: "Ungültige Rolle" }),
 ```
@@ -483,6 +496,7 @@ it("verweigert MANAGER das Anlegen von Nutzern", async () => {
 ```
 
 Die `managerSession` Konstante am Anfang der Datei hinzufügen (nach `userSession`):
+
 ```typescript
 const managerSession = { user: { id: "u3", role: "MANAGER" } }
 ```
@@ -506,17 +520,20 @@ feat(users): allow MANAGER role in user creation form
 ## Task 6: Navigation — canManage/isAdmin aufteilen
 
 **Files:**
+
 - Modify: `src/components/app/shell/Navigation.tsx`
 
 - [ ] **Step 1: Zeile 45–46 in Navigation.tsx ersetzen**
 
 Vorher:
+
 ```typescript
 const isAdmin = role === "ADMIN"
 const visibleNavItems = isAdmin ? [...navItems, ...adminNavItems] : navItems
 ```
 
 Nachher:
+
 ```typescript
 const canManage = role === "ADMIN" || role === "MANAGER"
 const isAdmin = role === "ADMIN"
@@ -542,6 +559,7 @@ feat(navigation): show participants and disciplines for MANAGER
 ## Task 7: Doku aktualisieren
 
 **Files:**
+
 - Modify: `.claude/docs/data-model.md`
 
 - [ ] **Step 1: UserRole Enum-Eintrag in data-model.md prüfen und aktualisieren**
@@ -549,11 +567,13 @@ feat(navigation): show participants and disciplines for MANAGER
 In `.claude/docs/data-model.md` im Abschnitt `## Enums → Bestehende Enums`:
 
 Vorher:
+
 ```
 - Role: ADMIN | MANAGER | USER
 ```
 
 Nachher (falls noch ein Hinweis wie "geplant" vorhanden — sonst keine Änderung nötig):
+
 ```
 - Role: ADMIN | MANAGER | USER
 ```

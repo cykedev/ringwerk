@@ -116,14 +116,14 @@ Every plan MUST include a `## Required Docs` section listing any task-specific d
 
 Use superpowers skills for all development work:
 
-| Task type                  | Skill sequence                                                                                    |
-| -------------------------- | ------------------------------------------------------------------------------------------------- |
-| New feature / change       | `brainstorming` → `writing-plans` → **branch + plan-commit** → `subagent-driven-development`     |
-| Bug                        | `systematic-debugging`                                                                            |
-| Branch completion          | `finishing-a-development-branch`                                                                  |
-| Parallel independent tasks | `dispatching-parallel-agents`                                                                     |
-| Requesting review          | `requesting-code-review`                                                                          |
-| Receiving review           | `receiving-code-review`                                                                           |
+| Task type                  | Skill sequence                                                                               |
+| -------------------------- | -------------------------------------------------------------------------------------------- |
+| New feature / change       | `brainstorming` → `writing-plans` → **branch + plan-commit** → `subagent-driven-development` |
+| Bug                        | `systematic-debugging`                                                                       |
+| Branch completion          | `finishing-a-development-branch`                                                             |
+| Parallel independent tasks | `dispatching-parallel-agents`                                                                |
+| Requesting review          | `requesting-code-review`                                                                     |
+| Receiving review           | `receiving-code-review`                                                                      |
 
 ### MANDATORY GATE before any implementation
 

@@ -20,22 +20,23 @@
 
 ## Dateiübersicht
 
-| Datei | Aktion |
-|---|---|
-| `src/lib/scoring/labels.ts` | Modify: `SCORING_MODE_COLUMN_LABELS` hinzufügen |
-| `src/components/app/series/EventRankingTable.tsx` | Modify: lokales `SCORE_LABEL` entfernen, Import hinzufügen |
-| `src/components/app/series/EventTeamRankingTable.tsx` | Modify: lokales `TEAM_SCORE_LABEL` entfernen, Import hinzufügen |
-| `src/lib/pdf/EventRankingPdf.tsx` | Modify: lokales `SCORE_LABEL` entfernen, Import ergänzen |
-| `src/components/app/playoffs/PlayoffMatchCard.tsx` | Modify: lokales `FINALE_CRITERIA_LABEL` entfernen, Import hinzufügen |
-| `src/lib/competitions/actions/_shared.ts` | Modify: `z.nativeEnum` + `PLAYOFF_SCORING_MODES`-Konstante |
-| `src/lib/participants/formatters.ts` | Create: `formatParticipantName` |
-| `src/lib/participants/formatters.test.ts` | Create: Unit-Tests für `formatParticipantName` |
+| Datei                                                 | Aktion                                                               |
+| ----------------------------------------------------- | -------------------------------------------------------------------- |
+| `src/lib/scoring/labels.ts`                           | Modify: `SCORING_MODE_COLUMN_LABELS` hinzufügen                      |
+| `src/components/app/series/EventRankingTable.tsx`     | Modify: lokales `SCORE_LABEL` entfernen, Import hinzufügen           |
+| `src/components/app/series/EventTeamRankingTable.tsx` | Modify: lokales `TEAM_SCORE_LABEL` entfernen, Import hinzufügen      |
+| `src/lib/pdf/EventRankingPdf.tsx`                     | Modify: lokales `SCORE_LABEL` entfernen, Import ergänzen             |
+| `src/components/app/playoffs/PlayoffMatchCard.tsx`    | Modify: lokales `FINALE_CRITERIA_LABEL` entfernen, Import hinzufügen |
+| `src/lib/competitions/actions/_shared.ts`             | Modify: `z.nativeEnum` + `PLAYOFF_SCORING_MODES`-Konstante           |
+| `src/lib/participants/formatters.ts`                  | Create: `formatParticipantName`                                      |
+| `src/lib/participants/formatters.test.ts`             | Create: Unit-Tests für `formatParticipantName`                       |
 
 ---
 
 ## Task 1: `SCORING_MODE_COLUMN_LABELS` in `labels.ts` hinzufügen
 
 **Files:**
+
 - Modify: `src/lib/scoring/labels.ts`
 
 - [ ] **Schritt 1: `labels.ts` lesen und zweite Map ergänzen**
@@ -81,6 +82,7 @@ Erwartet: keine Fehler.
 ## Task 2: `EventRankingTable.tsx` – lokale Map ersetzen
 
 **Files:**
+
 - Modify: `src/components/app/series/EventRankingTable.tsx`
 
 - [ ] **Schritt 1: Import hinzufügen, lokale Map entfernen**
@@ -106,7 +108,8 @@ interface Props {
 Zeile 33 (vorher `const scoreLabel = SCORE_LABEL[scoringMode] ?? "Score"`):
 
 ```tsx
-const scoreLabel = SCORING_MODE_COLUMN_LABELS[scoringMode as keyof typeof SCORING_MODE_COLUMN_LABELS] ?? "Score"
+const scoreLabel =
+  SCORING_MODE_COLUMN_LABELS[scoringMode as keyof typeof SCORING_MODE_COLUMN_LABELS] ?? "Score"
 ```
 
 ---
@@ -114,6 +117,7 @@ const scoreLabel = SCORING_MODE_COLUMN_LABELS[scoringMode as keyof typeof SCORIN
 ## Task 3: `EventTeamRankingTable.tsx` – lokale Map ersetzen
 
 **Files:**
+
 - Modify: `src/components/app/series/EventTeamRankingTable.tsx`
 
 - [ ] **Schritt 1: Import hinzufügen, lokale Map entfernen**
@@ -137,7 +141,8 @@ interface Props {
 Zeile 26 (vorher `const scoreLabel = TEAM_SCORE_LABEL[scoringMode] ?? "Score"`):
 
 ```tsx
-const scoreLabel = SCORING_MODE_COLUMN_LABELS[scoringMode as keyof typeof SCORING_MODE_COLUMN_LABELS] ?? "Score"
+const scoreLabel =
+  SCORING_MODE_COLUMN_LABELS[scoringMode as keyof typeof SCORING_MODE_COLUMN_LABELS] ?? "Score"
 ```
 
 ---
@@ -145,16 +150,19 @@ const scoreLabel = SCORING_MODE_COLUMN_LABELS[scoringMode as keyof typeof SCORIN
 ## Task 4: `EventRankingPdf.tsx` – lokale Map entfernen
 
 **Files:**
+
 - Modify: `src/lib/pdf/EventRankingPdf.tsx`
 
 - [ ] **Schritt 1: Import in Zeile 5 ergänzen**
 
 Ersetze:
+
 ```ts
 import { SCORING_MODE_LABELS } from "@/lib/scoring/labels"
 ```
 
 Mit:
+
 ```ts
 import { SCORING_MODE_LABELS, SCORING_MODE_COLUMN_LABELS } from "@/lib/scoring/labels"
 ```
@@ -162,6 +170,7 @@ import { SCORING_MODE_LABELS, SCORING_MODE_COLUMN_LABELS } from "@/lib/scoring/l
 - [ ] **Schritt 2: Lokales `SCORE_LABEL` entfernen (Zeilen 37–46)**
 
 Entferne den Block:
+
 ```ts
 const SCORE_LABEL: Record<string, string> = {
   RINGTEILER: "Ringteiler",
@@ -178,11 +187,13 @@ const SCORE_LABEL: Record<string, string> = {
 - [ ] **Schritt 3: Alle Verwendungen von `SCORE_LABEL` ersetzen**
 
 Zeile 82 (in `TeamRankingTable`):
+
 ```tsx
 const scoreLabel = SCORING_MODE_COLUMN_LABELS[scoringMode] ?? "Score"
 ```
 
 Zeile 140 (in `RankingTable`):
+
 ```tsx
 const scoreLabel = SCORING_MODE_COLUMN_LABELS[scoringMode] ?? "Score"
 ```
@@ -192,11 +203,13 @@ const scoreLabel = SCORING_MODE_COLUMN_LABELS[scoringMode] ?? "Score"
 ## Task 5: `PlayoffMatchCard.tsx` – lokale Map ersetzen
 
 **Files:**
+
 - Modify: `src/components/app/playoffs/PlayoffMatchCard.tsx`
 
 - [ ] **Schritt 1: Import hinzufügen**
 
 Bestehende Imports (vor Zeile 25) ergänzen:
+
 ```tsx
 import { SCORING_MODE_LABELS } from "@/lib/scoring/labels"
 ```
@@ -204,6 +217,7 @@ import { SCORING_MODE_LABELS } from "@/lib/scoring/labels"
 - [ ] **Schritt 2: Lokales `FINALE_CRITERIA_LABEL` entfernen**
 
 Entferne Zeilen 25–30:
+
 ```ts
 const FINALE_CRITERIA_LABEL: Record<string, string> = {
   RINGS: "Ringe",
@@ -216,6 +230,7 @@ const FINALE_CRITERIA_LABEL: Record<string, string> = {
 - [ ] **Schritt 3: `finaleHintText` anpassen**
 
 Zeile 37 (vorher `const label = (m: ScoringMode) => FINALE_CRITERIA_LABEL[m] ?? m`):
+
 ```ts
 const label = (m: ScoringMode) => SCORING_MODE_LABELS[m] ?? m
 ```
@@ -248,11 +263,13 @@ EventRankingPdf and PlayoffMatchCard."
 ## Task 6: Zod-Enums in `_shared.ts` typsicher machen
 
 **Files:**
+
 - Modify: `src/lib/competitions/actions/_shared.ts`
 
 - [ ] **Schritt 1: Imports erweitern**
 
 Zeile 3 (vorher `import { ScoringMode } from "@/generated/prisma/client"`):
+
 ```ts
 import { ScoringMode, TeamScoring, TargetValueType } from "@/generated/prisma/client"
 ```
@@ -260,6 +277,7 @@ import { ScoringMode, TeamScoring, TargetValueType } from "@/generated/prisma/cl
 - [ ] **Schritt 2: `PLAYOFF_SCORING_MODES`-Konstante einfügen**
 
 Nach den Imports (vor `export function parseDate`), neue Konstante:
+
 ```ts
 const PLAYOFF_SCORING_MODES = ["RINGTEILER", "RINGS", "RINGS_DECIMAL", "TEILER"] as const
 ```
@@ -267,6 +285,7 @@ const PLAYOFF_SCORING_MODES = ["RINGTEILER", "RINGS", "RINGS_DECIMAL", "TEILER"]
 - [ ] **Schritt 3: `teamScoring`-Feld ersetzen (Zeilen 48–52)**
 
 Ersetze:
+
 ```ts
 teamScoring: z
   .enum(["SUM", "BEST"])
@@ -276,6 +295,7 @@ teamScoring: z
 ```
 
 Mit:
+
 ```ts
 teamScoring: z
   .nativeEnum(TeamScoring)
@@ -287,6 +307,7 @@ teamScoring: z
 - [ ] **Schritt 4: `targetValueType`-Feld ersetzen (Zeilen 58–62)**
 
 Ersetze:
+
 ```ts
 targetValueType: z
   .enum(["TEILER", "RINGS", "RINGS_DECIMAL"])
@@ -296,6 +317,7 @@ targetValueType: z
 ```
 
 Mit:
+
 ```ts
 targetValueType: z
   .nativeEnum(TargetValueType)
@@ -307,6 +329,7 @@ targetValueType: z
 - [ ] **Schritt 5: Playoff-Tiebreaker-Felder auf Konstante umstellen (Zeilen 87–98)**
 
 Ersetze:
+
 ```ts
 finalePrimary: z.preprocess(
   (v) => (!v || v === "" ? "RINGS" : v),
@@ -323,6 +346,7 @@ finaleTiebreaker2: z.preprocess(
 ```
 
 Mit:
+
 ```ts
 finalePrimary: z.preprocess(
   (v) => (!v || v === "" ? "RINGS" : v),
@@ -361,6 +385,7 @@ Replace hardcoded z.enum strings with z.nativeEnum where applicable."
 ## Task 7: `formatParticipantName` – TDD
 
 **Files:**
+
 - Create: `src/lib/participants/formatters.test.ts`
 - Create: `src/lib/participants/formatters.ts`
 
@@ -380,9 +405,9 @@ describe("formatParticipantName", () => {
   })
 
   it("Gastteilnehmer → nur Vorname", () => {
-    expect(
-      formatParticipantName({ firstName: "Gabi", lastName: "", isGuestRecord: true })
-    ).toBe("Gabi")
+    expect(formatParticipantName({ firstName: "Gabi", lastName: "", isGuestRecord: true })).toBe(
+      "Gabi"
+    )
   })
 
   it("Gastteilnehmer mit Nachname → trotzdem nur Vorname", () => {
