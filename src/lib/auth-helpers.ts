@@ -39,3 +39,11 @@ export async function getAuthSession(): Promise<Session | null> {
   session.user.role = user.role
   return session
 }
+
+export function canManage(role: string): boolean {
+  return role === "ADMIN" || role === "MANAGER"
+}
+
+export function isAdmin(role: string): boolean {
+  return role === "ADMIN"
+}
