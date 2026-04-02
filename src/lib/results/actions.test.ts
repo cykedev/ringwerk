@@ -31,6 +31,7 @@ import { saveMatchResult } from "@/lib/results/actions"
 
 const adminSession = { user: { id: "u1", role: "ADMIN" } }
 const userSession = { user: { id: "u2", role: "USER" } }
+const managerSession = { user: { id: "u3", role: "MANAGER" } }
 
 const matchupBase = {
   id: "m1",
@@ -88,6 +89,19 @@ describe("saveMatchResult", () => {
     getAuthSessionMock.mockResolvedValue(userSession)
     const result = await saveMatchResult("m1", resultInput)
     expect(result).toEqual({ error: "Keine Berechtigung." })
+  })
+
+  it("speichert Ergebnis mit MANAGER-Berechtigung", async () => {
+    getAuthSessionMock.mockResolvedValue(managerSession)
+    matchupFindUniqueMock.mockResolvedValue({ ...matchupBase, series: [] })
+    const result = await saveMatchResult("m1", resultInput)
+    expect(result).toEqual({ success: true })
+    expect(transactionMock).toHaveBeenCalled()
+    expect(auditLogCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ eventType: "RESULT_ENTERED" }),
+      })
+    )
   })
 
   it("liefert Fehler wenn Matchup nicht gefunden", async () => {
