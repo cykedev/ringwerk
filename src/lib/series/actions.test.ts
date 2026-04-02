@@ -59,6 +59,7 @@ import {
 
 const adminSession = { user: { id: "u1", role: "ADMIN" } }
 const userSession = { user: { id: "u2", role: "USER" } }
+const managerSession = { user: { id: "u3", role: "MANAGER" } }
 
 function makeFormData(fields: Record<string, string>): FormData {
   const fd = new FormData()
@@ -211,6 +212,15 @@ describe("saveEventSeries", () => {
         data: expect.objectContaining({ eventType: "EVENT_SERIES_CORRECTED" }),
       })
     )
+  })
+
+  it("erlaubt MANAGER das Speichern einer Event-Serie", async () => {
+    getAuthSessionMock.mockResolvedValue(managerSession)
+    seriesFindUniqueMock.mockResolvedValue(null)
+    seriesCreateMock.mockResolvedValue({ id: "s1" })
+    auditLogCreateMock.mockResolvedValue({})
+    const result = await saveEventSeries("c1", "cp1", null, validFormData)
+    expect(result).toEqual({ success: true })
   })
 
   it("verwendet Disziplin aus Competition wenn CP keine hat", async () => {
@@ -384,6 +394,14 @@ describe("saveSeasonSeries", () => {
     expect(disciplineFindUniqueMock).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: "d2" } })
     )
+  })
+
+  it("erlaubt MANAGER das Speichern einer Saison-Serie", async () => {
+    getAuthSessionMock.mockResolvedValue(managerSession)
+    seriesCreateMock.mockResolvedValue({ id: "s1" })
+    auditLogCreateMock.mockResolvedValue({})
+    const result = await saveSeasonSeries("c2", "p1", null, validFormData)
+    expect(result).toEqual({ success: true })
   })
 })
 

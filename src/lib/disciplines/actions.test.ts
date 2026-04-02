@@ -48,6 +48,7 @@ import {
 
 const adminSession = { user: { id: "u1", role: "ADMIN" } }
 const userSession = { user: { id: "u2", role: "USER" } }
+const managerSession = { user: { id: "u3", role: "MANAGER" } }
 
 function makeFormData(fields: Record<string, string>): FormData {
   const fd = new FormData()
@@ -81,6 +82,17 @@ describe("createDiscipline", () => {
     )
     expect(result).toEqual({ error: "Keine Berechtigung" })
     expect(createMock).not.toHaveBeenCalled()
+  })
+
+  it("erlaubt MANAGER das Erstellen", async () => {
+    getAuthSessionMock.mockResolvedValue(managerSession)
+    createMock.mockResolvedValue({ id: "d1" })
+    auditLogCreateMock.mockResolvedValue({})
+    const result = await createDiscipline(
+      null,
+      makeFormData({ name: "LP", scoringType: "WHOLE", teilerFaktor: "1.0" })
+    )
+    expect(result).toEqual({ success: true })
   })
 
   it("liefert Validierungsfehler bei leerem Namen", async () => {
@@ -217,6 +229,13 @@ describe("deleteDiscipline", () => {
     expect(await deleteDiscipline("d1")).toEqual({ error: "Keine Berechtigung" })
   })
 
+  it("verweigert MANAGER das Löschen", async () => {
+    getAuthSessionMock.mockResolvedValue(managerSession)
+    const result = await deleteDiscipline("d1")
+    expect(result).toEqual({ error: "Keine Berechtigung" })
+    expect(deleteMock).not.toHaveBeenCalled()
+  })
+
   it("blockiert Löschen wenn Ligen vorhanden", async () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
     findUniqueMock.mockResolvedValue({ id: "d1", name: "Luftpistole" })
@@ -258,6 +277,15 @@ describe("setDisciplineArchived", () => {
     getAuthSessionMock.mockResolvedValue(userSession)
     findUniqueMock.mockResolvedValue({ id: "d1", name: "Luftpistole", isArchived: false })
     expect(await setDisciplineArchived("d1", true)).toEqual({ error: "Keine Berechtigung" })
+  })
+
+  it("erlaubt MANAGER das Archivieren", async () => {
+    getAuthSessionMock.mockResolvedValue(managerSession)
+    findUniqueMock.mockResolvedValue({ id: "d1", name: "LP", isArchived: false })
+    updateMock.mockResolvedValue({})
+    auditLogCreateMock.mockResolvedValue({})
+    const result = await setDisciplineArchived("d1", true)
+    expect(result).toEqual({ success: true })
   })
 
   it("ist idempotent — kein Update wenn Status bereits korrekt", async () => {

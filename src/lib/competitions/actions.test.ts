@@ -63,6 +63,7 @@ import {
 
 const adminSession = { user: { id: "u1", role: "ADMIN" } }
 const userSession = { user: { id: "u2", role: "USER" } }
+const managerSession = { user: { id: "u3", role: "MANAGER" } }
 
 function makeFormData(fields: Record<string, string>): FormData {
   const fd = new FormData()
@@ -97,6 +98,22 @@ describe("createCompetition", () => {
     )
     expect(result).toEqual({ error: "Keine Berechtigung" })
     expect(competitionCreateMock).not.toHaveBeenCalled()
+  })
+
+  it("erlaubt MANAGER das Erstellen", async () => {
+    getAuthSessionMock.mockResolvedValue(managerSession)
+    disciplineFindUniqueMock.mockResolvedValue({ id: "d1", scoringType: "WHOLE" })
+    competitionCreateMock.mockResolvedValue({ id: "new1" })
+    auditLogCreateMock.mockResolvedValue({})
+    const fd = makeFormData({
+      name: "Testwettbewerb",
+      type: "EVENT",
+      scoringMode: "RINGS",
+      shotsPerSeries: "10",
+      disciplineId: "d1",
+    })
+    const result = await createCompetition(null, fd)
+    expect(result).toMatchObject({ success: true })
   })
 
   it("liefert Validierungsfehler bei leerem Namen", async () => {
@@ -345,6 +362,17 @@ describe("deleteCompetition", () => {
     expect(await deleteCompetition("c1")).toEqual({ error: "Keine Berechtigung" })
   })
 
+  it("erlaubt MANAGER das Löschen (ohne Daten)", async () => {
+    getAuthSessionMock.mockResolvedValue(managerSession)
+    competitionFindUniqueMock.mockResolvedValue({ id: "c1" })
+    competitionParticipantCountMock.mockResolvedValue(0)
+    matchupCountMock.mockResolvedValue(0)
+    playoffMatchCountMock.mockResolvedValue(0)
+    competitionDeleteMock.mockResolvedValue({})
+    const result = await deleteCompetition("c1")
+    expect(result).toEqual({ success: true })
+  })
+
   it("liefert Fehler wenn Wettbewerb nicht gefunden", async () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
     competitionFindUniqueMock.mockResolvedValue(null)
@@ -429,6 +457,12 @@ describe("forceDeleteCompetition", () => {
     const result = await forceDeleteCompetition("c1", "Winterliga 2026")
     expect(result).toEqual({ error: "Keine Berechtigung" })
     expect(transactionMock).not.toHaveBeenCalled()
+  })
+
+  it("verweigert MANAGER das endgültige Löschen", async () => {
+    getAuthSessionMock.mockResolvedValue(managerSession)
+    const result = await forceDeleteCompetition("c1", "Testbewerb")
+    expect(result).toEqual({ error: "Keine Berechtigung" })
   })
 
   it("liefert Fehler wenn Wettbewerb nicht gefunden", async () => {

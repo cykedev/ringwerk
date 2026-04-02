@@ -69,6 +69,7 @@ import {
 
 const adminSession = { user: { id: "u1", role: "ADMIN" } }
 const userSession = { user: { id: "u2", role: "USER" } }
+const managerSession = { user: { id: "u3", role: "MANAGER" } }
 
 function makeFormData(fields: Record<string, string>): FormData {
   const fd = new FormData()
@@ -116,6 +117,21 @@ describe("enrollParticipant", () => {
 
   it("schreibt regulären Teilnehmer ein", async () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
+    const result = await enrollParticipant(
+      "c1",
+      null,
+      makeFormData({ participantId: "p1", isGuest: "false" })
+    )
+    expect(result).toEqual({ success: true })
+    expect(competitionParticipantCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ participantId: "p1", isGuest: false }),
+      })
+    )
+  })
+
+  it("erlaubt MANAGER das Einschreiben", async () => {
+    getAuthSessionMock.mockResolvedValue(managerSession)
     const result = await enrollParticipant(
       "c1",
       null,
@@ -222,6 +238,19 @@ describe("unenrollParticipant", () => {
     expect(transactionMock).not.toHaveBeenCalled()
   })
 
+  it("erlaubt MANAGER das Abmelden", async () => {
+    getAuthSessionMock.mockResolvedValue(managerSession)
+    competitionParticipantFindUniqueMock.mockResolvedValue({
+      id: "cp1",
+      competitionId: "c1",
+      participantId: "p1",
+      isGuest: false,
+    })
+    const result = await unenrollParticipant("cp1")
+    expect(result).toEqual({ success: true })
+    expect(competitionParticipantDeleteMock).toHaveBeenCalledWith({ where: { id: "cp1" } })
+  })
+
   it("löscht Gast inklusive Serien und stillem Participant-Record", async () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
     competitionParticipantFindUniqueMock.mockResolvedValue({
@@ -306,6 +335,13 @@ describe("withdrawParticipant", () => {
     expect(result).toEqual({ success: true })
     expect(transactionMock).toHaveBeenCalledWith(expect.any(Array))
   })
+
+  it("erlaubt MANAGER den Rückzug", async () => {
+    getAuthSessionMock.mockResolvedValue(managerSession)
+    const result = await withdrawParticipant("cp1", null, makeFormData({ reason: "Verletzt" }))
+    expect(result).toEqual({ success: true })
+    expect(transactionMock).toHaveBeenCalledWith(expect.any(Array))
+  })
 })
 
 // ─── revokeWithdrawal ─────────────────────────────────────────────────────────
@@ -367,6 +403,13 @@ describe("revokeWithdrawal", () => {
     expect(result).toEqual({ success: true })
     expect(transactionMock).toHaveBeenCalledWith(expect.any(Array))
   })
+
+  it("erlaubt MANAGER das Rückgängigmachen des Rückzugs", async () => {
+    getAuthSessionMock.mockResolvedValue(managerSession)
+    const result = await revokeWithdrawal("cp1")
+    expect(result).toEqual({ success: true })
+    expect(transactionMock).toHaveBeenCalledWith(expect.any(Array))
+  })
 })
 
 // ─── updateStartNumber ────────────────────────────────────────────────────────
@@ -414,6 +457,15 @@ describe("updateStartNumber", () => {
     expect(result).toEqual({ success: true })
     expect(competitionParticipantUpdateMock).toHaveBeenCalledWith(
       expect.objectContaining({ data: { startNumber: null } })
+    )
+  })
+
+  it("erlaubt MANAGER das Aktualisieren der Startnummer", async () => {
+    getAuthSessionMock.mockResolvedValue(managerSession)
+    const result = await updateStartNumber("cp1", 7)
+    expect(result).toEqual({ success: true })
+    expect(competitionParticipantUpdateMock).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { startNumber: 7 } })
     )
   })
 })
