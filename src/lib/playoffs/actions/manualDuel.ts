@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
-import { getAuthSession } from "@/lib/auth-helpers"
+import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 
 /**
@@ -14,7 +14,7 @@ export async function addPlayoffDuel(
 ): Promise<ActionResult<{ duelId: string }>> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet." }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung." }
+  if (!canManage(session.user.role)) return { error: "Keine Berechtigung." }
 
   const match = await db.playoffMatch.findUnique({
     where: { id: playoffMatchId },

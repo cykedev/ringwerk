@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { db } from "@/lib/db"
-import { getAuthSession } from "@/lib/auth-helpers"
+import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 
 function revalidateCompetitionParticipantPaths(competitionId: string): void {
@@ -85,7 +85,7 @@ export async function enrollParticipant(
 ): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet" }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
+  if (!canManage(session.user.role)) return { error: "Keine Berechtigung" }
 
   const competition = await db.competition.findUnique({
     where: { id: competitionId },
@@ -221,7 +221,7 @@ export async function enrollParticipant(
 export async function unenrollParticipant(competitionParticipantId: string): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet" }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
+  if (!canManage(session.user.role)) return { error: "Keine Berechtigung" }
 
   const cp = await db.competitionParticipant.findUnique({
     where: { id: competitionParticipantId },
@@ -301,7 +301,7 @@ export async function withdrawParticipant(
 ): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet" }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
+  if (!canManage(session.user.role)) return { error: "Keine Berechtigung" }
 
   const cp = await db.competitionParticipant.findUnique({
     where: { id: competitionParticipantId },
@@ -359,7 +359,7 @@ export async function withdrawParticipant(
 export async function revokeWithdrawal(competitionParticipantId: string): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet" }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
+  if (!canManage(session.user.role)) return { error: "Keine Berechtigung" }
 
   const cp = await db.competitionParticipant.findUnique({
     where: { id: competitionParticipantId },
@@ -415,7 +415,7 @@ export async function updateStartNumber(
 ): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet" }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
+  if (!canManage(session.user.role)) return { error: "Keine Berechtigung" }
 
   const cp = await db.competitionParticipant.findUnique({
     where: { id: competitionParticipantId },

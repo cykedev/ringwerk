@@ -14,7 +14,10 @@ const {
   auditLogCreateMock: vi.fn(),
 }))
 
-vi.mock("@/lib/auth-helpers", () => ({ getAuthSession: getAuthSessionMock }))
+vi.mock("@/lib/auth-helpers", () => ({
+  getAuthSession: getAuthSessionMock,
+  canManage: (role: string) => role === "ADMIN" || role === "MANAGER",
+}))
 vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock }))
 vi.mock("@/lib/db", () => ({
   db: {

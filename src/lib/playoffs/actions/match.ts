@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
-import { getAuthSession } from "@/lib/auth-helpers"
+import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import { getStandingsForCompetition } from "@/lib/standings/queries"
 import { createNextRoundMatchups, getNextRound } from "../calculatePlayoffs"
@@ -15,7 +15,7 @@ import type { PlayoffRound } from "../types"
 export async function advanceRound(competitionId: string): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet." }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung." }
+  if (!canManage(session.user.role)) return { error: "Keine Berechtigung." }
 
   const matches = await db.playoffMatch.findMany({
     where: { competitionId },

@@ -24,7 +24,10 @@ const {
   bcryptCompareMock: vi.fn(),
 }))
 
-vi.mock("@/lib/auth-helpers", () => ({ getAuthSession: getAuthSessionMock }))
+vi.mock("@/lib/auth-helpers", () => ({
+  getAuthSession: getAuthSessionMock,
+  isAdmin: (role: string) => role === "ADMIN",
+}))
 vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock }))
 vi.mock("bcryptjs", () => ({
   default: { hash: bcryptHashMock, compare: bcryptCompareMock },

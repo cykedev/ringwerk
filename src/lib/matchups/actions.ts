@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
-import { getAuthSession } from "@/lib/auth-helpers"
+import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import { generateSchedule } from "./generateSchedule"
 
@@ -18,7 +18,7 @@ import { generateSchedule } from "./generateSchedule"
 export async function generateCompetitionSchedule(competitionId: string): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet." }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung." }
+  if (!canManage(session.user.role)) return { error: "Keine Berechtigung." }
 
   // Wettkampf laden und Voraussetzungen prüfen
   const competition = await db.competition.findUnique({

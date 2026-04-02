@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
-import { getAuthSession } from "@/lib/auth-helpers"
+import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import type { SaveMatchResultInput } from "./types"
 import { calculateRingteiler, MAX_RINGS } from "./calculateResult"
@@ -18,7 +18,7 @@ export async function saveMatchResult(
 ): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet." }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung." }
+  if (!canManage(session.user.role)) return { error: "Keine Berechtigung." }
 
   const matchup = await db.matchup.findUnique({
     where: { id: matchupId },

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { db } from "@/lib/db"
-import { getAuthSession } from "@/lib/auth-helpers"
+import { getAuthSession, canManage, isAdmin } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import type { AuditEventType } from "@/lib/auditLog/types"
 
@@ -27,7 +27,7 @@ export async function createDiscipline(
 ): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet" }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
+  if (!canManage(session.user.role)) return { error: "Keine Berechtigung" }
 
   const parsed = DisciplineSchema.safeParse({
     name: formData.get("name"),
@@ -66,7 +66,7 @@ export async function updateDiscipline(
 ): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet" }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
+  if (!canManage(session.user.role)) return { error: "Keine Berechtigung" }
 
   const discipline = await db.discipline.findUnique({
     where: { id },
@@ -115,7 +115,7 @@ export async function updateDiscipline(
 export async function setDisciplineArchived(id: string, archive: boolean): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet" }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
+  if (!canManage(session.user.role)) return { error: "Keine Berechtigung" }
 
   const discipline = await db.discipline.findUnique({
     where: { id },
@@ -145,7 +145,7 @@ export async function setDisciplineArchived(id: string, archive: boolean): Promi
 export async function deleteDiscipline(id: string): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet" }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
+  if (!isAdmin(session.user.role)) return { error: "Keine Berechtigung" }
 
   const discipline = await db.discipline.findUnique({
     where: { id },

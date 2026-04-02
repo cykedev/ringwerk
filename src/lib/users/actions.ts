@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import bcrypt from "bcryptjs"
 import { db } from "@/lib/db"
-import { getAuthSession } from "@/lib/auth-helpers"
+import { getAuthSession, isAdmin } from "@/lib/auth-helpers"
 import {
   normalizeLoginEmail,
   validatePasswordChangeInput,
@@ -51,7 +51,7 @@ export async function createUser(
 ): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet" }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
+  if (!isAdmin(session.user.role)) return { error: "Keine Berechtigung" }
 
   const parsed = CreateUserSchema.safeParse({
     name: formData.get("name"),
@@ -98,7 +98,7 @@ export async function updateUser(
 ): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet" }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
+  if (!isAdmin(session.user.role)) return { error: "Keine Berechtigung" }
 
   const user = await db.user.findUnique({
     where: { id },
@@ -183,7 +183,7 @@ export async function updateUser(
 export async function setUserActive(id: string, isActive: boolean): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet" }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
+  if (!isAdmin(session.user.role)) return { error: "Keine Berechtigung" }
 
   const user = await db.user.findUnique({
     where: { id },

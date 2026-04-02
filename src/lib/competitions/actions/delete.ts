@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { getAuthSession } from "@/lib/auth-helpers"
+import { getAuthSession, canManage, isAdmin } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import { revalidateCompetitionPaths } from "./_shared"
 
@@ -9,7 +9,7 @@ import { revalidateCompetitionPaths } from "./_shared"
 export async function deleteCompetition(id: string): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet" }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
+  if (!canManage(session.user.role)) return { error: "Keine Berechtigung" }
 
   const competition = await db.competition.findUnique({ where: { id }, select: { id: true } })
   if (!competition) return { error: "Wettbewerb nicht gefunden." }
@@ -39,7 +39,7 @@ export async function forceDeleteCompetition(
 ): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet" }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
+  if (!isAdmin(session.user.role)) return { error: "Keine Berechtigung" }
 
   const competition = await db.competition.findUnique({
     where: { id: competitionId },

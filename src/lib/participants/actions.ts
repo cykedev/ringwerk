@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { db } from "@/lib/db"
-import { getAuthSession } from "@/lib/auth-helpers"
+import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import type { AuditEventType } from "@/lib/auditLog/types"
 
@@ -33,7 +33,7 @@ export async function createParticipant(
 ): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet" }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
+  if (!canManage(session.user.role)) return { error: "Keine Berechtigung" }
 
   const parsed = ParticipantSchema.safeParse({
     firstName: formData.get("firstName"),
@@ -87,7 +87,7 @@ export async function updateParticipant(
 ): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet" }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
+  if (!canManage(session.user.role)) return { error: "Keine Berechtigung" }
 
   const participant = await db.participant.findUnique({ where: { id }, select: { id: true } })
   if (!participant) return { error: "Teilnehmer nicht gefunden." }
@@ -142,7 +142,7 @@ export async function updateParticipant(
 export async function setParticipantActive(id: string, isActive: boolean): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet" }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
+  if (!canManage(session.user.role)) return { error: "Keine Berechtigung" }
 
   const participant = await db.participant.findUnique({
     where: { id },

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
-import { getAuthSession } from "@/lib/auth-helpers"
+import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import { calculateRingteiler, MAX_RINGS } from "@/lib/results/calculateResult"
 import {
@@ -27,7 +27,7 @@ export async function savePlayoffDuelResult(
 ): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet." }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung." }
+  if (!canManage(session.user.role)) return { error: "Keine Berechtigung." }
 
   const duel = await db.playoffDuel.findUnique({
     where: { id: input.duelId },
@@ -315,7 +315,7 @@ export async function savePlayoffDuelResult(
 export async function deleteLastPlayoffDuel(duelId: string): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet." }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung." }
+  if (!canManage(session.user.role)) return { error: "Keine Berechtigung." }
 
   const duel = await db.playoffDuel.findUnique({
     where: { id: duelId },

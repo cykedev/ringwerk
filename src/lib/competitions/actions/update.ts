@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { getAuthSession } from "@/lib/auth-helpers"
+import { getAuthSession, canManage, isAdmin } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import type { CompetitionStatus } from "@/generated/prisma/client"
 import type { AuditEventType } from "@/lib/auditLog/types"
@@ -14,7 +14,7 @@ export async function updateCompetition(
 ): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet" }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
+  if (!canManage(session.user.role)) return { error: "Keine Berechtigung" }
 
   const [competition, matchupCount] = await Promise.all([
     db.competition.findUnique({
@@ -121,7 +121,7 @@ export async function setCompetitionStatus(
 ): Promise<ActionResult> {
   const session = await getAuthSession()
   if (!session) return { error: "Nicht angemeldet" }
-  if (session.user.role !== "ADMIN") return { error: "Keine Berechtigung" }
+  if (!canManage(session.user.role)) return { error: "Keine Berechtigung" }
 
   const competition = await db.competition.findUnique({
     where: { id },
