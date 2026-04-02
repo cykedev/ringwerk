@@ -82,7 +82,7 @@ export default async function DashboardPage() {
       </div>
 
       {active.length === 0 ? (
-        <p className="rounded-lg border px-4 py-8 text-center text-sm text-muted-foreground">
+        <p className="rounded-lg border bg-card px-4 py-8 text-center text-sm text-muted-foreground">
           Keine aktiven Wettbewerbe vorhanden.
         </p>
       ) : (
