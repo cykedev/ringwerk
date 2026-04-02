@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { getAuthSession, canManage, isAdmin } from "@/lib/auth-helpers"
+import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import type { CompetitionStatus } from "@/generated/prisma/client"
 import type { AuditEventType } from "@/lib/auditLog/types"
