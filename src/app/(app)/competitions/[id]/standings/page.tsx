@@ -24,7 +24,7 @@ export default async function SeasonStandingsPage({ params }: Props) {
   if (!data) notFound()
 
   const { competition, participants } = data
-  const isAdmin = session.user.role === "ADMIN" || session.user.role === "MANAGER"
+  const canManage = session.user.role === "ADMIN" || session.user.role === "MANAGER"
   const tz = getDisplayTimeZone()
 
   const standings = calculateSeasonStandings(
@@ -60,7 +60,7 @@ export default async function SeasonStandingsPage({ params }: Props) {
             )}
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            {isAdmin && (
+            {canManage && (
               <>
                 <Button asChild variant="outline" size="icon" className="h-9 w-9">
                   <Link href={`/competitions/${id}/participants`} title="Teilnehmer">

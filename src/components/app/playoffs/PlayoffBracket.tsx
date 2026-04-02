@@ -199,7 +199,7 @@ function RoundCol({
 function RoundDetail({
   title,
   matches,
-  isAdmin,
+  canManage,
   shotsPerSeries,
   playoffBestOf,
   finalePrimary,
@@ -208,7 +208,7 @@ function RoundDetail({
 }: {
   title: string
   matches: PlayoffMatchItem[]
-  isAdmin: boolean
+  canManage: boolean
   shotsPerSeries: number
   playoffBestOf: number | null
   finalePrimary: ScoringMode
@@ -229,7 +229,7 @@ function RoundDetail({
           <PlayoffMatchCard
             key={m.id}
             match={m}
-            isAdmin={isAdmin}
+            canManage={canManage}
             shotsPerSeries={shotsPerSeries}
             playoffBestOf={playoffBestOf}
             finalePrimary={finalePrimary}
@@ -264,7 +264,7 @@ function centeredTop(mid1: number, mid2: number): number {
 
 interface Props {
   bracket: PlayoffBracketData
-  isAdmin: boolean
+  canManage: boolean
   /** Nur visuelles Bracket, keine Detail-Karten */
   compact?: boolean
   shotsPerSeries?: number
@@ -276,7 +276,7 @@ interface Props {
 
 export function PlayoffBracket({
   bracket,
-  isAdmin,
+  canManage,
   compact = false,
   shotsPerSeries = 10,
   playoffBestOf = null,
@@ -516,7 +516,7 @@ export function PlayoffBracket({
             <RoundDetail
               title="Achtelfinale"
               matches={af}
-              isAdmin={isAdmin}
+              canManage={canManage}
               shotsPerSeries={shotsPerSeries}
               playoffBestOf={playoffBestOf}
               finalePrimary={finalePrimary}
@@ -528,7 +528,7 @@ export function PlayoffBracket({
             <RoundDetail
               title="Viertelfinale"
               matches={qf}
-              isAdmin={isAdmin}
+              canManage={canManage}
               shotsPerSeries={shotsPerSeries}
               playoffBestOf={playoffBestOf}
               finalePrimary={finalePrimary}
@@ -540,7 +540,7 @@ export function PlayoffBracket({
             <RoundDetail
               title="Halbfinale"
               matches={hf}
-              isAdmin={isAdmin}
+              canManage={canManage}
               shotsPerSeries={shotsPerSeries}
               playoffBestOf={playoffBestOf}
               finalePrimary={finalePrimary}
@@ -552,7 +552,7 @@ export function PlayoffBracket({
             <RoundDetail
               title="Finale"
               matches={[fin]}
-              isAdmin={isAdmin}
+              canManage={canManage}
               shotsPerSeries={shotsPerSeries}
               playoffBestOf={playoffBestOf}
               finalePrimary={finalePrimary}

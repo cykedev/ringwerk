@@ -110,7 +110,7 @@ export default async function DashboardPage() {
                       <Trophy className="h-4 w-4 text-muted-foreground" />
                       Playoffs
                     </div>
-                    <PlayoffBracket bracket={bracket} isAdmin={false} compact={true} />
+                    <PlayoffBracket bracket={bracket} canManage={false} compact={true} />
                     <div className="flex justify-end">
                       <Button asChild variant="outline" size="sm">
                         <Link href={`/competitions/${competition.id}/playoffs`}>Details →</Link>

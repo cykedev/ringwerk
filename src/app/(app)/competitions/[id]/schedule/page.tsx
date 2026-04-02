@@ -33,7 +33,7 @@ export default async function CompetitionSchedulePage({ params }: Props) {
   if (!competition) notFound()
   if (competition.type !== "LEAGUE") redirect(`/competitions/${id}/ranking`)
 
-  const isAdmin = session.user.role === "ADMIN" || session.user.role === "MANAGER"
+  const canManage = session.user.role === "ADMIN" || session.user.role === "MANAGER"
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
@@ -53,7 +53,7 @@ export default async function CompetitionSchedulePage({ params }: Props) {
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            {isAdmin && (
+            {canManage && (
               <Button asChild variant="outline" size="icon" className="h-9 w-9">
                 <Link href={`/competitions/${id}/participants`} title="Teilnehmer">
                   <Users className="h-4 w-4" />
@@ -68,7 +68,7 @@ export default async function CompetitionSchedulePage({ params }: Props) {
             {scheduleStatus.hasSchedule && (
               <PdfDownloadButton href={`/api/competitions/${id}/pdf/schedule`} />
             )}
-            {isAdmin && competition.status === "ACTIVE" && !scheduleStatus.hasSchedule && (
+            {canManage && competition.status === "ACTIVE" && !scheduleStatus.hasSchedule && (
               <GenerateScheduleButton competitionId={id} hasSchedule={scheduleStatus.hasSchedule} />
             )}
           </div>
@@ -76,7 +76,7 @@ export default async function CompetitionSchedulePage({ params }: Props) {
       </div>
 
       {/* Hinweis bei abgeschlossenen Paarungen */}
-      {isAdmin && scheduleStatus.hasCompletedMatchups && competition.status === "ACTIVE" && (
+      {canManage && scheduleStatus.hasCompletedMatchups && competition.status === "ACTIVE" && (
         <p className="text-sm text-muted-foreground">
           Der Spielplan kann nicht mehr neu generiert werden, da bereits{" "}
           {scheduleStatus.totalMatchups} Paarung(en) abgeschlossen sind.
@@ -89,7 +89,7 @@ export default async function CompetitionSchedulePage({ params }: Props) {
         hinrundeDeadline={competition.hinrundeDeadline}
         rueckrundeDeadline={competition.rueckrundeDeadline}
         competitionId={id}
-        isAdmin={isAdmin}
+        canManage={canManage}
         playoffsStarted={playoffsStarted}
         scoringMode={competition.scoringMode}
       />

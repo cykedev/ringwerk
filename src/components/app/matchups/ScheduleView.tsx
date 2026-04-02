@@ -11,7 +11,7 @@ interface Props {
   rueckrundeDeadline: Date | null
   competitionId: string
   /** Nur ADMIN darf Ergebnisse eintragen */
-  isAdmin: boolean
+  canManage: boolean
   /** Keine Erfassung/Korrektur mehr möglich wenn Playoffs laufen */
   playoffsStarted?: boolean
   scoringMode?: ScoringMode
@@ -66,13 +66,13 @@ function LegTable({
   title,
   matchups,
   deadline,
-  isAdmin,
+  canManage,
   scoringMode,
 }: {
   title: string
   matchups: MatchupListItem[]
   deadline: Date | null
-  isAdmin: boolean
+  canManage: boolean
   scoringMode: ScoringMode
 }) {
   const tz = getDisplayTimeZone()
@@ -101,7 +101,7 @@ function LegTable({
               <th className="w-10 px-2 py-2 text-center font-medium text-muted-foreground sm:w-24 sm:px-4">
                 Status
               </th>
-              {isAdmin && <th className="w-[60px] px-2 py-2 sm:w-[110px] sm:px-4" />}
+              {canManage && <th className="w-[60px] px-2 py-2 sm:w-[110px] sm:px-4" />}
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -164,7 +164,7 @@ function LegTable({
                   <td className="px-2 py-3 text-center sm:px-4">
                     <StatusBadge status={m.status} />
                   </td>
-                  {isAdmin && (
+                  {canManage && (
                     <td className="px-2 py-3 text-right sm:px-4">
                       {!isBye && m.awayParticipant && !isVoid && (
                         <ResultEntryDialog
@@ -222,7 +222,7 @@ export function ScheduleView({
   matchups,
   hinrundeDeadline,
   rueckrundeDeadline,
-  isAdmin,
+  canManage,
   playoffsStarted = false,
   scoringMode = "RINGTEILER",
 }: Props) {
@@ -249,7 +249,7 @@ export function ScheduleView({
           title="Hinrunde"
           matchups={firstLeg}
           deadline={hinrundeDeadline}
-          isAdmin={isAdmin && !playoffsStarted}
+          canManage={canManage && !playoffsStarted}
           scoringMode={scoringMode}
         />
       )}
@@ -258,7 +258,7 @@ export function ScheduleView({
           title="Rückrunde"
           matchups={secondLeg}
           deadline={rueckrundeDeadline}
-          isAdmin={isAdmin && !playoffsStarted}
+          canManage={canManage && !playoffsStarted}
           scoringMode={scoringMode}
         />
       )}

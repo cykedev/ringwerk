@@ -37,7 +37,7 @@ function finaleHintText(
 
 interface Props {
   match: PlayoffMatchItem
-  isAdmin: boolean
+  canManage: boolean
   shotsPerSeries: number
   playoffBestOf: number | null
   finalePrimary: ScoringMode
@@ -62,7 +62,7 @@ const WINNER_BADGE: Record<string, string> = {
 
 export function PlayoffMatchCard({
   match,
-  isAdmin,
+  canManage,
   shotsPerSeries,
   playoffBestOf,
   finalePrimary,
@@ -93,7 +93,7 @@ export function PlayoffMatchCard({
   // - Nicht-Finale: wenn kein offenes Duell vorhanden (deckt auch 0 Duelle ab)
   // - Finale: nur wenn noch gar kein Duell angelegt wurde (Folge-Duelle via SD automatisch)
   const canAddDuel =
-    isAdmin &&
+    canManage &&
     !isCompleted &&
     nextPendingDuel === undefined &&
     (!isFinal || match.duels.length === 0)
@@ -228,7 +228,7 @@ export function PlayoffMatchCard({
                             ? `${duel.resultB.totalRings}\u00A0Ringe`
                             : `RT\u00A0${(duel.resultB.ringteiler ?? 0).toFixed(1)}`}
                         </span>
-                        {isAdmin && match.canCorrect && (
+                        {canManage && match.canCorrect && (
                           <>
                             <PlayoffDuelResultDialog
                               duel={duel}
@@ -258,7 +258,7 @@ export function PlayoffMatchCard({
                     ) : (
                       <>
                         <span className="flex-1" />
-                        {isAdmin && duel.id === nextPendingDuel?.id && (
+                        {canManage && duel.id === nextPendingDuel?.id && (
                           <>
                             <PlayoffDuelResultDialog
                               duel={duel}

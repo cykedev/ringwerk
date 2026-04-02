@@ -28,17 +28,17 @@ function formatDate(date: Date | null, tz: string): string {
 const NAV_LINK =
   "flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
 
-function CompetitionCardLinks({ c, isAdmin }: { c: CompetitionListItem; isAdmin: boolean }) {
+function CompetitionCardLinks({ c, canManage }: { c: CompetitionListItem; canManage: boolean }) {
   if (c.type === "EVENT") {
     return (
       <>
-        {isAdmin && (
+        {canManage && (
           <Link href={`/competitions/${c.id}/participants`} className={NAV_LINK}>
             <Users className="h-3.5 w-3.5" />
             {c._count.participants} Teilnehmer
           </Link>
         )}
-        {isAdmin && (
+        {canManage && (
           <Link href={`/competitions/${c.id}/series`} className={NAV_LINK}>
             <ListOrdered className="h-3.5 w-3.5" />
             Serien
@@ -54,13 +54,13 @@ function CompetitionCardLinks({ c, isAdmin }: { c: CompetitionListItem; isAdmin:
   if (c.type === "SEASON") {
     return (
       <>
-        {isAdmin && (
+        {canManage && (
           <Link href={`/competitions/${c.id}/participants`} className={NAV_LINK}>
             <Users className="h-3.5 w-3.5" />
             {c._count.participants} Teilnehmer
           </Link>
         )}
-        {isAdmin && (
+        {canManage && (
           <Link href={`/competitions/${c.id}/series`} className={NAV_LINK}>
             <ListOrdered className="h-3.5 w-3.5" />
             Serien
@@ -76,7 +76,7 @@ function CompetitionCardLinks({ c, isAdmin }: { c: CompetitionListItem; isAdmin:
   // LEAGUE (default)
   return (
     <>
-      {isAdmin && (
+      {canManage && (
         <Link href={`/competitions/${c.id}/participants`} className={NAV_LINK}>
           <Users className="h-3.5 w-3.5" />
           {c._count.participants} Teilnehmer
@@ -144,7 +144,7 @@ export default async function CompetitionsPage() {
   const session = await getAuthSession()
   if (!session) redirect("/login")
 
-  const isAdmin = session.user.role === "ADMIN" || session.user.role === "MANAGER"
+  const canManage = session.user.role === "ADMIN" || session.user.role === "MANAGER"
   const tz = getDisplayTimeZone()
   const competitions = await getCompetitionsForManagement()
 
@@ -160,7 +160,7 @@ export default async function CompetitionsPage() {
           <h1 className="text-2xl font-semibold">Wettbewerbe</h1>
           <p className="mt-1 text-sm text-muted-foreground">Alle Wettbewerbe des Vereins</p>
         </div>
-        {isAdmin && (
+        {canManage && (
           <Button asChild size="sm">
             <Link href="/competitions/new">
               <Plus className="mr-1 h-4 w-4" />
@@ -186,10 +186,10 @@ export default async function CompetitionsPage() {
                     </Badge>
                   </div>
                   <div className="flex flex-wrap items-center gap-4">
-                    <CompetitionCardLinks c={c} isAdmin={isAdmin} />
+                    <CompetitionCardLinks c={c} canManage={canManage} />
                   </div>
                 </div>
-                {isAdmin && <CompetitionActions competition={c} />}
+                {canManage && <CompetitionActions competition={c} />}
               </CardContent>
             </Card>
           ))}
@@ -215,11 +215,11 @@ export default async function CompetitionsPage() {
                     </Badge>
                   </div>
                   <div className="flex flex-wrap items-center gap-4">
-                    <CompetitionCardLinks c={c} isAdmin={isAdmin} />
+                    <CompetitionCardLinks c={c} canManage={canManage} />
                   </div>
                   <CompetitionCardMeta c={c} tz={tz} />
                 </div>
-                {isAdmin && <CompetitionActions competition={c} />}
+                {canManage && <CompetitionActions competition={c} />}
               </CardContent>
             </Card>
           ))
@@ -246,10 +246,10 @@ export default async function CompetitionsPage() {
                       </Badge>
                     </div>
                     <div className="flex flex-wrap items-center gap-4">
-                      <CompetitionCardLinks c={c} isAdmin={isAdmin} />
+                      <CompetitionCardLinks c={c} canManage={canManage} />
                     </div>
                   </div>
-                  {isAdmin && <CompetitionActions competition={c} />}
+                  {canManage && <CompetitionActions competition={c} />}
                 </CardContent>
               </Card>
             ))}
@@ -275,7 +275,7 @@ export default async function CompetitionsPage() {
                       {c.discipline ? c.discipline.name : "Gemischt"}
                     </Badge>
                   </div>
-                  {isAdmin && <CompetitionActions competition={c} />}
+                  {canManage && <CompetitionActions competition={c} />}
                 </CardContent>
               </Card>
             ))}

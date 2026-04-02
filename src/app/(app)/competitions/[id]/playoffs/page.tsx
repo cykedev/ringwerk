@@ -31,7 +31,7 @@ export default async function CompetitionPlayoffsPage({ params }: Props) {
 
   if (!competition) notFound()
 
-  const isAdmin = session.user.role === "ADMIN" || session.user.role === "MANAGER"
+  const canManage = session.user.role === "ADMIN" || session.user.role === "MANAGER"
   const playoffsStarted =
     bracket.eighthFinals.length + bracket.quarterFinals.length + bracket.semiFinals.length > 0 ||
     bracket.final !== null
@@ -84,7 +84,7 @@ export default async function CompetitionPlayoffsPage({ params }: Props) {
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            {isAdmin && (
+            {canManage && (
               <Button asChild variant="outline" size="icon" className="h-9 w-9">
                 <Link href={`/competitions/${id}/participants`} title="Teilnehmer">
                   <Users className="h-4 w-4" />
@@ -102,7 +102,7 @@ export default async function CompetitionPlayoffsPage({ params }: Props) {
       </div>
 
       {/* Start-Button (nur Admin, wenn noch nicht gestartet) */}
-      {isAdmin && !playoffsStarted && (
+      {canManage && !playoffsStarted && (
         <div className="rounded-lg border p-4">
           <div className="flex items-start gap-3">
             <Trophy className="mt-0.5 h-5 w-5 text-muted-foreground" />
@@ -130,7 +130,7 @@ export default async function CompetitionPlayoffsPage({ params }: Props) {
       )}
 
       {/* Nächste Runde anlegen (nur Admin, wenn aktuelle Runde abgeschlossen) */}
-      {isAdmin && advanceLabel && (
+      {canManage && advanceLabel && (
         <div className="flex items-center justify-between rounded-lg border p-4">
           <p className="text-sm text-muted-foreground">
             Alle Matches der aktuellen Runde sind abgeschlossen.
@@ -143,7 +143,7 @@ export default async function CompetitionPlayoffsPage({ params }: Props) {
       {playoffsStarted ? (
         <PlayoffBracket
           bracket={bracket}
-          isAdmin={isAdmin}
+          canManage={canManage}
           shotsPerSeries={competition.shotsPerSeries}
           playoffBestOf={competition.playoffBestOf}
           finalePrimary={competition.finalePrimary}
@@ -151,7 +151,7 @@ export default async function CompetitionPlayoffsPage({ params }: Props) {
           finaleTiebreaker2={competition.finaleTiebreaker2}
         />
       ) : (
-        !isAdmin && (
+        !canManage && (
           <p className="text-sm text-muted-foreground">Die Playoffs wurden noch nicht gestartet.</p>
         )
       )}
