@@ -71,6 +71,7 @@ export function UserEditForm({ user, action }: Props) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="USER">Benutzer</SelectItem>
+            <SelectItem value="MANAGER">Manager</SelectItem>
             <SelectItem value="ADMIN">Administrator</SelectItem>
           </SelectContent>
         </Select>

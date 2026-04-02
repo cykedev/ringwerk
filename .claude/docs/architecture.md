@@ -283,7 +283,7 @@ import { getAuthSession, canManage, isAdmin } from "@/lib/auth-helpers"
 
 const session = await getAuthSession()
 if (!session) redirect("/login")
-if (!canManage(session.user.role)) redirect("/")  // ADMIN + MANAGER
+if (!canManage(session.user.role)) redirect("/") // ADMIN + MANAGER
 // oder für Admin-only Pages:
 if (!isAdmin(session.user.role)) redirect("/")
 ```
@@ -297,7 +297,7 @@ import { getAuthSession, canManage, isAdmin } from "@/lib/auth-helpers"
 
 const session = await getAuthSession()
 if (!session) return { error: "Nicht angemeldet" }
-if (!canManage(session.user.role)) return { error: "Keine Berechtigung" }  // ADMIN + MANAGER
+if (!canManage(session.user.role)) return { error: "Keine Berechtigung" } // ADMIN + MANAGER
 // oder für Admin-only Operationen (Hard-Deletes, Nutzerverwaltung):
 if (!isAdmin(session.user.role)) return { error: "Keine Berechtigung" }
 ```
