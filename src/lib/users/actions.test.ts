@@ -49,6 +49,7 @@ import { createUser, updateUser, setUserActive, changeOwnPassword } from "@/lib/
 
 const adminSession = { user: { id: "u1", role: "ADMIN" } }
 const userSession = { user: { id: "u2", role: "USER" } }
+const managerSession = { user: { id: "u3", role: "MANAGER" } }
 
 function makeFormData(fields: Record<string, string>): FormData {
   const fd = new FormData()
@@ -138,6 +139,38 @@ describe("createUser", () => {
         data: expect.objectContaining({ eventType: "USER_CREATED" }),
       })
     )
+  })
+
+  it("erstellt einen MANAGER-Nutzer", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    userFindUniqueMock.mockResolvedValue(null)
+    userCreateMock.mockResolvedValue({ id: "new1" })
+    bcryptHashMock.mockResolvedValue("hashed")
+    auditLogCreateMock.mockResolvedValue({})
+    const result = await createUser(
+      null,
+      makeFormData({
+        name: "Maria Manager",
+        email: "manager@example.com",
+        tempPassword: "sicheresPasswort1",
+        role: "MANAGER",
+      })
+    )
+    expect(result).toEqual({ success: true })
+  })
+
+  it("verweigert MANAGER das Anlegen von Nutzern", async () => {
+    getAuthSessionMock.mockResolvedValue(managerSession)
+    const result = await createUser(
+      null,
+      makeFormData({
+        name: "X",
+        email: "x@example.com",
+        tempPassword: "sicheresPasswort1",
+        role: "USER",
+      })
+    )
+    expect(result).toEqual({ error: "Keine Berechtigung" })
   })
 })
 

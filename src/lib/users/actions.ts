@@ -27,7 +27,7 @@ const CreateUserSchema = z.object({
     .string()
     .min(MIN_PASSWORD_LENGTH, `Mindestens ${MIN_PASSWORD_LENGTH} Zeichen`)
     .max(MAX_PASSWORD_LENGTH),
-  role: z.enum(["ADMIN", "USER"] as const, { message: "Ungültige Rolle" }),
+  role: z.enum(["ADMIN", "MANAGER", "USER"] as const, { message: "Ungültige Rolle" }),
 })
 
 const UpdateUserSchema = z.object({
@@ -36,7 +36,7 @@ const UpdateUserSchema = z.object({
     .max(100)
     .transform((v) => v.trim() || null),
   email: z.string().email({ message: "Ungültige E-Mail-Adresse" }).max(MAX_USER_EMAIL_LENGTH),
-  role: z.enum(["ADMIN", "USER"] as const, { message: "Ungültige Rolle" }),
+  role: z.enum(["ADMIN", "MANAGER", "USER"] as const, { message: "Ungültige Rolle" }),
   isActive: z.enum(["true", "false"]).transform((v) => v === "true"),
 })
 
