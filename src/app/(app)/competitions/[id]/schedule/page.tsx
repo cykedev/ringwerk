@@ -33,7 +33,7 @@ export default async function CompetitionSchedulePage({ params }: Props) {
   if (!competition) notFound()
   if (competition.type !== "LEAGUE") redirect(`/competitions/${id}/ranking`)
 
-  const isAdmin = session.user.role === "ADMIN"
+  const isAdmin = session.user.role === "ADMIN" || session.user.role === "MANAGER"
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">

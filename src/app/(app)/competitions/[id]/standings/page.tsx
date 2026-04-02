@@ -24,7 +24,7 @@ export default async function SeasonStandingsPage({ params }: Props) {
   if (!data) notFound()
 
   const { competition, participants } = data
-  const isAdmin = session.user.role === "ADMIN"
+  const isAdmin = session.user.role === "ADMIN" || session.user.role === "MANAGER"
   const tz = getDisplayTimeZone()
 
   const standings = calculateSeasonStandings(

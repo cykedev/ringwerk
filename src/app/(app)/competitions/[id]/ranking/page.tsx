@@ -25,7 +25,7 @@ export default async function EventRankingPage({ params }: Props) {
   if (!data) notFound()
 
   const { competition, series } = data
-  const isAdmin = session.user.role === "ADMIN"
+  const isAdmin = session.user.role === "ADMIN" || session.user.role === "MANAGER"
   const tz = getDisplayTimeZone()
 
   const eventConfig = {

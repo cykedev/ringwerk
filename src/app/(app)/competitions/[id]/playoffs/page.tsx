@@ -31,7 +31,7 @@ export default async function CompetitionPlayoffsPage({ params }: Props) {
 
   if (!competition) notFound()
 
-  const isAdmin = session.user.role === "ADMIN"
+  const isAdmin = session.user.role === "ADMIN" || session.user.role === "MANAGER"
   const playoffsStarted =
     bracket.eighthFinals.length + bracket.quarterFinals.length + bracket.semiFinals.length > 0 ||
     bracket.final !== null

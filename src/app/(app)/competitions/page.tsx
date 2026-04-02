@@ -144,7 +144,7 @@ export default async function CompetitionsPage() {
   const session = await getAuthSession()
   if (!session) redirect("/login")
 
-  const isAdmin = session.user.role === "ADMIN"
+  const isAdmin = session.user.role === "ADMIN" || session.user.role === "MANAGER"
   const tz = getDisplayTimeZone()
   const competitions = await getCompetitionsForManagement()
 
