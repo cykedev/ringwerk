@@ -108,7 +108,7 @@ export async function getEventWithSeries(id: string): Promise<{
       participantId: true,
       competitionParticipantId: true,
       disciplineId: true,
-      discipline: { select: { name: true, teilerFaktor: true } },
+      discipline: { select: { name: true, teilerFaktor: true, scoringType: true } },
       participant: {
         select: {
           id: true,
@@ -152,7 +152,7 @@ export async function getEventWithSeries(id: string): Promise<{
     participantId: s.participantId,
     competitionParticipantId: s.competitionParticipantId,
     disciplineId: s.disciplineId,
-    discipline: { name: s.discipline.name, teilerFaktor: s.discipline.teilerFaktor.toNumber() },
+    discipline: { name: s.discipline.name, teilerFaktor: s.discipline.teilerFaktor.toNumber(), scoringType: s.discipline.scoringType },
     participant: {
       id: s.participant.id,
       firstName: s.participant.firstName,

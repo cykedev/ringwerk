@@ -15,7 +15,7 @@ function makeSeries(
     participantId: overrides.participantId,
     competitionParticipantId: overrides.competitionParticipantId ?? null,
     disciplineId: overrides.disciplineId ?? "disc-1",
-    discipline: overrides.discipline ?? { name: "LG", teilerFaktor: 1.0 },
+    discipline: overrides.discipline ?? { name: "LG", teilerFaktor: 1.0, scoringType: "WHOLE" as const },
     participant: overrides.participant ?? {
       id: overrides.participantId,
       firstName: overrides.participantId,
@@ -89,13 +89,13 @@ describe("rankEventParticipants", () => {
         participantId: "LG",
         rings: 90,
         teiler: 10.0,
-        discipline: { name: "LG", teilerFaktor: 1.0 }, // korrigiert: 10.0
+        discipline: { name: "LG", teilerFaktor: 1.0, scoringType: "WHOLE" as const }, // korrigiert: 10.0
       }),
       makeSeries({
         participantId: "LP",
         rings: 90,
         teiler: 25.0,
-        discipline: { name: "LP", teilerFaktor: 0.333 }, // korrigiert: 8.325
+        discipline: { name: "LP", teilerFaktor: 0.333, scoringType: "WHOLE" as const }, // korrigiert: 8.325
       }),
     ]
     const result = rankEventParticipants(series, { ...BASE_CONFIG, scoringMode: "TEILER" })
@@ -164,6 +164,40 @@ describe("rankEventParticipants", () => {
     ]
     const result = rankEventParticipants(series, BASE_CONFIG)
     expect(result[0].participantName).toBe("Hans Gruber")
+  })
+
+  it("RINGTEILER: gemischter Event — DECIMAL-Disziplin verwendet maxRings=109", () => {
+    // Kranzl-2026-Szenario: LP (WHOLE) vs LPA (DECIMAL)
+    // Korrekt: LPA-RT = 109 − 100 + 6 = 15.0, LP-RT = 100 − 99 + 11.3 = 12.3
+    // → LP gewinnt (12.3 < 15.0)
+    const series = [
+      makeSeries({
+        participantId: "LPA",
+        rings: 100,
+        teiler: 6.0,
+        ringteiler: 15.0,
+        discipline: { name: "Luftpistole Auflage", teilerFaktor: 1.0, scoringType: "DECIMAL" as const },
+      }),
+      makeSeries({
+        participantId: "LP",
+        rings: 99,
+        teiler: 11.3,
+        ringteiler: 12.3,
+        discipline: { name: "Luftpistole", teilerFaktor: 1.0, scoringType: "WHOLE" as const },
+      }),
+    ]
+    const mixedConfig = {
+      scoringMode: "RINGTEILER" as const,
+      targetValue: null,
+      targetValueType: null,
+      discipline: null, // Gemischt — kein Competition-Level-scoringType
+    }
+    const result = rankEventParticipants(series, mixedConfig)
+    // LP (RT 12.3) muss vor LPA (RT 15.0) liegen
+    expect(result[0].participantId).toBe("LP")
+    expect(result[1].participantId).toBe("LPA")
+    expect(result[0].rank).toBe(1)
+    expect(result[1].rank).toBe(2)
   })
 
   it("Double-Enrollment: gleicher Teilnehmer in zwei Teams wird separat gerankt", () => {

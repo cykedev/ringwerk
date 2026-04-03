@@ -1,3 +1,5 @@
+import type { ScoringType } from "@/generated/prisma/client"
+
 export type EventSeriesItem = {
   id: string
   participantId: string
@@ -6,6 +8,7 @@ export type EventSeriesItem = {
   discipline: {
     name: string
     teilerFaktor: number
+    scoringType: ScoringType
   }
   participant: {
     id: string
