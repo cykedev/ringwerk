@@ -536,7 +536,7 @@ export async function createLeague(formData: FormData): Promise<ActionResult>
 
 ## Aus Lernlog übernommen
 
-<!-- Zuletzt konsolidiert: 2026-03-26 -->
+<!-- Zuletzt konsolidiert: 2026-04-03 -->
 
 ### Migration & Datenbankschema
 
@@ -560,6 +560,13 @@ export async function createLeague(formData: FormData): Promise<ActionResult>
 - **Neue Relationsfelder vor Core-Logic definieren**: Schema-Felder anlegen und migrieren, bevor Queries + Actions implementiert werden. Umgekehrte Reihenfolge zwingt zu manuellen Migrations-Workarounds.
 - **`db push` nur für schnelle Exploration**: Nie für Dev-Persistenz. Wenn Drift auftritt: `prisma migrate reset --force`, dann `migrate dev` neu aufsetzen.
 - **`$transaction` nur bei mehreren atomaren Operationen**: Einfache Einzellöschungen/-updates nie in `$transaction` wrappen — erhöht Komplexität ohne Nutzen.
+
+### Typen & Props
+
+- **Zod-Teilmengen mit `z.enum()` statt `z.nativeEnum()`**: Wenn nur eine Teilmenge eines Enums gültig ist, `z.enum(SUBSET as const)` verwenden. `z.nativeEnum()` akzeptiert immer alle Werte und lässt ungültige Eingaben durch.
+- **Prop-Typ nicht weiter als nötig fassen**: Wenn ein Cast wie `as keyof typeof MAP` nötig wird, ist der Prop-Typ zu weit gefasst (z.B. `string` statt `ScoringMode`). Den Typ im Props-Interface einschränken, dann entfällt der Cast.
+- **Rolle umwidmen = Prop-Namen mitändern**: Wenn eine Variable semantisch umgewidmet wird (z.B. `isAdmin` bedeutet neu "ADMIN oder MANAGER"), alle Prop-Namen und Interfaces durchsuchen und umbenennen. Sonst bleibt irreführende Benennung im Komponentenbaum.
+- **Duplikate vor dem Zusammenführen Wert-für-Wert vergleichen**: Gleiche Map-Keys bedeuten nicht gleiche Werte. Zwei semantische Kontexte (z.B. Form-Label vs. Spaltenkopf) rechtfertigen separate Maps, auch wenn die Keys identisch sind.
 
 ### Zod & FormData
 
