@@ -6,9 +6,7 @@ import { db } from "@/lib/db"
 import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import { calculateRingteiler } from "@/lib/results/calculateResult"
-import type { ScoringType } from "@/generated/prisma/client"
-
-const MAX_RINGS: Record<ScoringType, number> = { WHOLE: 100, DECIMAL: 109 }
+import { getEffectiveScoringType, getMaxRings } from "@/lib/series/scoring-format"
 
 const SeriesSchema = z.object({
   rings: z
@@ -59,6 +57,7 @@ export async function saveEventSeries(
       status: true,
       shotsPerSeries: true,
       disciplineId: true,
+      scoringMode: true,
     },
   })
   if (!competition) return { error: "Wettbewerb nicht gefunden." }
@@ -100,8 +99,24 @@ export async function saveEventSeries(
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
 
   const { rings, teiler } = parsed.data
+
+  // Effektiver Scoring-Typ bestimmt Ringformat und Maximum
+  const effectiveScoringType = getEffectiveScoringType(competition.scoringMode, discipline)
+  const maxRings = getMaxRings(effectiveScoringType, competition.shotsPerSeries)
+  if (rings > maxRings) {
+    return {
+      error: {
+        rings: [
+          `Maximal ${effectiveScoringType === "DECIMAL" ? maxRings.toFixed(1).replace(".", ",") : maxRings} Ringe erlaubt`,
+        ],
+      },
+    }
+  }
+  if (effectiveScoringType === "WHOLE" && !Number.isInteger(rings)) {
+    return { error: { rings: ["Nur ganze Ringe erlaubt"] } }
+  }
+
   const teilerFaktor = discipline.teilerFaktor.toNumber()
-  const maxRings = MAX_RINGS[discipline.scoringType]
   const ringteiler = calculateRingteiler(rings, teiler, teilerFaktor, maxRings)
 
   const sessionDate = new Date()
@@ -244,7 +259,7 @@ export async function saveSeasonSeries(
 
   const competition = await db.competition.findUnique({
     where: { id: competitionId },
-    select: { id: true, type: true, status: true, shotsPerSeries: true, disciplineId: true },
+    select: { id: true, type: true, status: true, shotsPerSeries: true, disciplineId: true, scoringMode: true },
   })
   if (!competition) return { error: "Wettbewerb nicht gefunden." }
   if (competition.type !== "SEASON") return { error: "Nur für Saison-Wettbewerbe." }
@@ -287,8 +302,24 @@ export async function saveSeasonSeries(
   if (!resolvedDisciplineId || !discipline) return { error: "Keine Disziplin konfiguriert." }
 
   const { rings, teiler, sessionDate } = parsed.data
+
+  // Effektiver Scoring-Typ bestimmt Ringformat und Maximum
+  const effectiveScoringType = getEffectiveScoringType(competition.scoringMode, discipline)
+  const maxRings = getMaxRings(effectiveScoringType, competition.shotsPerSeries)
+  if (rings > maxRings) {
+    return {
+      error: {
+        rings: [
+          `Maximal ${effectiveScoringType === "DECIMAL" ? maxRings.toFixed(1).replace(".", ",") : maxRings} Ringe erlaubt`,
+        ],
+      },
+    }
+  }
+  if (effectiveScoringType === "WHOLE" && !Number.isInteger(rings)) {
+    return { error: { rings: ["Nur ganze Ringe erlaubt"] } }
+  }
+
   const teilerFaktor = discipline.teilerFaktor.toNumber()
-  const maxRings = MAX_RINGS[discipline.scoringType]
   const ringteiler = calculateRingteiler(rings, teiler, teilerFaktor, maxRings)
 
   await db.series.create({
@@ -342,7 +373,7 @@ export async function updateSeasonSeries(
 
   const competition = await db.competition.findUnique({
     where: { id: competitionId },
-    select: { id: true, type: true, status: true, shotsPerSeries: true, disciplineId: true },
+    select: { id: true, type: true, status: true, shotsPerSeries: true, disciplineId: true, scoringMode: true },
   })
   if (!competition) return { error: "Wettbewerb nicht gefunden." }
   if (competition.type !== "SEASON") return { error: "Nur für Saison-Wettbewerbe." }
@@ -397,8 +428,24 @@ export async function updateSeasonSeries(
   if (!resolvedDisciplineId || !discipline) return { error: "Keine Disziplin konfiguriert." }
 
   const { rings, teiler, sessionDate } = parsed.data
+
+  // Effektiver Scoring-Typ bestimmt Ringformat und Maximum
+  const effectiveScoringType = getEffectiveScoringType(competition.scoringMode, discipline)
+  const maxRings = getMaxRings(effectiveScoringType, competition.shotsPerSeries)
+  if (rings > maxRings) {
+    return {
+      error: {
+        rings: [
+          `Maximal ${effectiveScoringType === "DECIMAL" ? maxRings.toFixed(1).replace(".", ",") : maxRings} Ringe erlaubt`,
+        ],
+      },
+    }
+  }
+  if (effectiveScoringType === "WHOLE" && !Number.isInteger(rings)) {
+    return { error: { rings: ["Nur ganze Ringe erlaubt"] } }
+  }
+
   const teilerFaktor = discipline.teilerFaktor.toNumber()
-  const maxRings = MAX_RINGS[discipline.scoringType]
   const ringteiler = calculateRingteiler(rings, teiler, teilerFaktor, maxRings)
 
   await db.series.update({

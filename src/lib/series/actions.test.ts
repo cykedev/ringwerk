@@ -234,6 +234,35 @@ describe("saveEventSeries", () => {
       expect.objectContaining({ where: { id: "d1" } })
     )
   })
+
+  it("liefert Fehler wenn Ringe über Maximum (WHOLE, 10 Schuss → max 100)", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    competitionFindUniqueMock.mockResolvedValue({ ...eventCompetition, scoringMode: "RINGTEILER", shotsPerSeries: 10 })
+    competitionParticipantFindUniqueMock.mockResolvedValue(cpWithDiscipline) // scoringType: WHOLE
+    const fd = makeFormData({ rings: "101", teiler: "3.7" })
+    const result = await saveEventSeries("c1", "cp1", null, fd)
+    expect(result).toMatchObject({ error: { rings: expect.arrayContaining([expect.stringContaining("100")]) } })
+  })
+
+  it("liefert Fehler wenn Ringe nicht ganzzahlig bei WHOLE-Disziplin", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    competitionFindUniqueMock.mockResolvedValue({ ...eventCompetition, scoringMode: "RINGTEILER", shotsPerSeries: 10 })
+    competitionParticipantFindUniqueMock.mockResolvedValue(cpWithDiscipline) // scoringType: WHOLE
+    const fd = makeFormData({ rings: "95.5", teiler: "3.7" })
+    const result = await saveEventSeries("c1", "cp1", null, fd)
+    expect(result).toMatchObject({ error: { rings: expect.arrayContaining([expect.stringContaining("ganze")]) } })
+  })
+
+  it("akzeptiert Dezimalringe bei DECIMAL-Disziplin", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    const decimalDiscipline = { ...discipline, scoringType: "DECIMAL" as const }
+    competitionFindUniqueMock.mockResolvedValue({ ...eventCompetition, scoringMode: "RINGTEILER", shotsPerSeries: 10 })
+    competitionParticipantFindUniqueMock.mockResolvedValue({ ...cpWithDiscipline, discipline: decimalDiscipline })
+    seriesFindUniqueMock.mockResolvedValue(null)
+    const fd = makeFormData({ rings: "104.5", teiler: "2.1" })
+    const result = await saveEventSeries("c1", "cp1", null, fd)
+    expect(result).not.toMatchObject({ error: { rings: expect.anything() } })
+  })
 })
 
 // ─── deleteEventSeries ────────────────────────────────────────────────────────
@@ -402,6 +431,35 @@ describe("saveSeasonSeries", () => {
     auditLogCreateMock.mockResolvedValue({})
     const result = await saveSeasonSeries("c2", "p1", null, validFormData)
     expect(result).toEqual({ success: true })
+  })
+
+  it("liefert Fehler wenn Ringe über Maximum (WHOLE, 10 Schuss → max 100)", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    competitionFindUniqueMock.mockResolvedValue({ ...seasonCompetition, scoringMode: "RINGTEILER", shotsPerSeries: 10 })
+    competitionParticipantFindFirstMock.mockResolvedValue(cpWithDiscipline) // scoringType: WHOLE
+    const fd = makeFormData({ rings: "101", teiler: "3.7", sessionDate: "2026-03-01" })
+    const result = await saveSeasonSeries("c2", "p1", null, fd)
+    expect(result).toMatchObject({ error: { rings: expect.arrayContaining([expect.stringContaining("100")]) } })
+  })
+
+  it("liefert Fehler wenn Ringe nicht ganzzahlig bei WHOLE-Disziplin", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    competitionFindUniqueMock.mockResolvedValue({ ...seasonCompetition, scoringMode: "RINGTEILER", shotsPerSeries: 10 })
+    competitionParticipantFindFirstMock.mockResolvedValue(cpWithDiscipline) // scoringType: WHOLE
+    const fd = makeFormData({ rings: "95.5", teiler: "3.7", sessionDate: "2026-03-01" })
+    const result = await saveSeasonSeries("c2", "p1", null, fd)
+    expect(result).toMatchObject({ error: { rings: expect.arrayContaining([expect.stringContaining("ganze")]) } })
+  })
+
+  it("akzeptiert Dezimalringe bei DECIMAL-Disziplin", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    const decimalDiscipline = { ...discipline, scoringType: "DECIMAL" as const }
+    competitionFindUniqueMock.mockResolvedValue({ ...seasonCompetition, scoringMode: "RINGTEILER", shotsPerSeries: 10 })
+    competitionParticipantFindFirstMock.mockResolvedValue({ ...cpWithDiscipline, discipline: decimalDiscipline })
+    seriesCreateMock.mockResolvedValue({ id: "s1" })
+    const fd = makeFormData({ rings: "104.5", teiler: "2.1", sessionDate: "2026-03-01" })
+    const result = await saveSeasonSeries("c2", "p1", null, fd)
+    expect(result).not.toMatchObject({ error: { rings: expect.anything() } })
   })
 })
 
