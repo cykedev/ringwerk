@@ -7,7 +7,10 @@ import type { ScoringType } from "@/generated/prisma/client"
 import { getRingsInputProps } from "@/lib/series/scoring-format"
 
 interface Props
-  extends Omit<ComponentProps<typeof Input>, "inputMode" | "step" | "placeholder"> {
+  extends Omit<
+    ComponentProps<typeof Input>,
+    "inputMode" | "step" | "placeholder" | "min" | "max"
+  > {
   scoringType: ScoringType
   shotsPerSeries: number
 }
