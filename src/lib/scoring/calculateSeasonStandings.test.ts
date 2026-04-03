@@ -103,17 +103,17 @@ describe("calculateSeasonStandings", () => {
     })
 
     it("gibt scoringType der bestRings-Serie zurück (WHOLE)", () => {
+      const series = [
+        makeSeries("p1", {
+          rings: 92,
+          teiler: 5.0,
+          ringteiler: 13.0,
+          discipline: { name: "LG", teilerFaktor: 1.0, scoringType: "DECIMAL" as const },
+        }),
+        makeSeries("p1", { rings: 96, teiler: 3.7, ringteiler: 7.7 }), // highest → WHOLE
+      ]
       const result = calculateSeasonStandings(
-        [
-          {
-            participantId: "p1",
-            participantName: "Müller, Max",
-            series: [
-              makeSeries("p1", { rings: 92, teiler: 5.0, ringteiler: 13.0 }),
-              makeSeries("p1", { rings: 96, teiler: 3.7, ringteiler: 7.7 }), // bestRings
-            ],
-          },
-        ],
+        [{ participantId: "p1", participantName: "Müller, Max", series }],
         null
       )
       expect(result[0].bestRingsScoringType).toBe("WHOLE")

@@ -61,6 +61,7 @@ export function calculateSeasonStandings(
     }
 
     // Beste Ringe — max
+    // Keep first occurrence on ties (first-in-list wins when rings are equal)
     const bestRingsSeries = p.series.reduce(
       (best, s) => (s.rings > best.rings ? s : best),
       p.series[0]
