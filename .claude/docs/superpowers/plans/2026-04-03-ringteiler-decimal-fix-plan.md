@@ -26,6 +26,7 @@
 **Zusätzlich:** Bestehende Serien mit DECIMAL-Disziplinen wurden mit `maxRings = 100` gespeichert (z.B. Kranzl 2026: LPA-Teilnehmer zeigt RT 6.0 statt korrekt 15.0).
 
 **Konkrete Werte aus Produktion:**
+
 - Markus Beyer (Luftpistole Auflage = DECIMAL): Ringe 100, Teiler 6.0
   - Gespeichert: RT = 6.0 = 100 − 100 + 6 ← FALSCH
   - Korrekt: RT = 15.0 = 109 − 100 + 6
@@ -34,6 +35,7 @@
 - Folge: Markus erscheint als Platz 1, Christian als Platz 2. Korrekt wäre Christian Platz 1 (RT 12.3 < 15.0).
 
 **Formel:** `Math.round((maxRings − rings + teiler × faktor) × 10) / 10`
+
 - WHOLE: maxRings = 100
 - DECIMAL: maxRings = 109
 
@@ -41,19 +43,20 @@
 
 ## Datei-Übersicht
 
-| Datei | Änderung |
-|---|---|
-| `src/lib/series/types.ts` | `scoringType: ScoringType` zu `EventSeriesItem.discipline` hinzufügen |
-| `src/lib/competitions/queries.ts` | `scoringType: true` in discipline-Select der Series-Query |
-| `src/lib/scoring/rankEventParticipants.ts` | `s.discipline.scoringType` statt `config.discipline?.scoringType ?? "WHOLE"` |
-| `src/lib/scoring/rankEventParticipants.test.ts` | `makeSeries`-Helper updaten + neuer Test für DECIMAL in gemischtem Event |
-| `prisma/migrations/<timestamp>_recompute_decimal_ringteiler/migration.sql` | Raw SQL: Ringteiler für DECIMAL-Serien neu berechnen |
+| Datei                                                                      | Änderung                                                                     |
+| -------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `src/lib/series/types.ts`                                                  | `scoringType: ScoringType` zu `EventSeriesItem.discipline` hinzufügen        |
+| `src/lib/competitions/queries.ts`                                          | `scoringType: true` in discipline-Select der Series-Query                    |
+| `src/lib/scoring/rankEventParticipants.ts`                                 | `s.discipline.scoringType` statt `config.discipline?.scoringType ?? "WHOLE"` |
+| `src/lib/scoring/rankEventParticipants.test.ts`                            | `makeSeries`-Helper updaten + neuer Test für DECIMAL in gemischtem Event     |
+| `prisma/migrations/<timestamp>_recompute_decimal_ringteiler/migration.sql` | Raw SQL: Ringteiler für DECIMAL-Serien neu berechnen                         |
 
 ---
 
 ## Task 1: Failing Test schreiben (DECIMAL-Disziplin in gemischtem Event)
 
 **Files:**
+
 - Modify: `src/lib/scoring/rankEventParticipants.test.ts`
 
 - [ ] **Schritt 1: Test hinzufügen — vor jeder Codeänderung**
@@ -71,7 +74,11 @@ it("RINGTEILER: gemischter Event — DECIMAL-Disziplin verwendet maxRings=109", 
       rings: 100,
       teiler: 6.0,
       ringteiler: 15.0,
-      discipline: { name: "Luftpistole Auflage", teilerFaktor: 1.0, scoringType: "DECIMAL" as const },
+      discipline: {
+        name: "Luftpistole Auflage",
+        teilerFaktor: 1.0,
+        scoringType: "DECIMAL" as const,
+      },
     }),
     makeSeries({
       participantId: "LP",
@@ -111,6 +118,7 @@ Erwartetes Ergebnis: TypeScript-Fehler (scoringType im Typ fehlt) oder Test schl
 ## Task 2: `scoringType` zu EventSeriesItem und Query hinzufügen
 
 **Files:**
+
 - Modify: `src/lib/series/types.ts`
 - Modify: `src/lib/competitions/queries.ts`
 
@@ -129,7 +137,7 @@ export type EventSeriesItem = {
   discipline: {
     name: string
     teilerFaktor: number
-    scoringType: ScoringType       // NEU
+    scoringType: ScoringType // NEU
   }
   participant: {
     id: string
@@ -188,17 +196,20 @@ Erwartetes Ergebnis: Keine Fehler.
 ## Task 3: `rankEventParticipants` — per-Serie scoringType verwenden
 
 **Files:**
+
 - Modify: `src/lib/scoring/rankEventParticipants.ts`
 
 - [ ] **Schritt 1: Zeile 57 fixen**
 
 Aktuell (buggy):
+
 ```typescript
 const scoringType: ScoringType = config.discipline?.scoringType ?? "WHOLE"
 const maxRings = MAX_RINGS[scoringType]
 ```
 
 Ersetzen durch:
+
 ```typescript
 const maxRings = MAX_RINGS[s.discipline.scoringType]
 ```
@@ -235,6 +246,7 @@ Requires scoringType in EventSeriesItem.discipline type and query.
 ## Task 4: Data-Migration — bestehende DECIMAL-Serien neu berechnen
 
 **Files:**
+
 - Create: `prisma/migrations/<timestamp>_recompute_decimal_ringteiler/migration.sql`
 
 Alle gespeicherten `ringteiler`-Werte in der `Series`-Tabelle, bei denen die zugehörige Disziplin `DECIMAL` ist, wurden fälschlicherweise mit maxRings=100 berechnet. Sie müssen auf 109 korrigiert werden.
@@ -264,7 +276,7 @@ WHERE s."disciplineId" = d."id"
   AND d."scoringType" = 'DECIMAL';
 ```
 
-> **Warum ROUND(x * 10) / 10:** PostgreSQL `ROUND` ohne zweites Argument rundet auf ganzzahlig. Wir multiplizieren mit 10, runden auf Integer, dividieren durch 10 — das entspricht exakt der TypeScript-Formel `Math.round(x * 10) / 10` mit 1 Nachkommastelle.
+> **Warum ROUND(x \* 10) / 10:** PostgreSQL `ROUND` ohne zweites Argument rundet auf ganzzahlig. Wir multiplizieren mit 10, runden auf Integer, dividieren durch 10 — das entspricht exakt der TypeScript-Formel `Math.round(x * 10) / 10` mit 1 Nachkommastelle.
 
 - [ ] **Schritt 3: Migration anwenden**
 
@@ -277,6 +289,7 @@ Erwartetes Ergebnis: Migration läuft durch, keine Fehler.
 - [ ] **Schritt 4: Ergebnis verifizieren (manuell in DB oder via Prisma Studio)**
 
 Prüfe ob die bekannten Werte aus Kranzl 2026 korrekt sind:
+
 - Markus Beyer (LPA, DECIMAL): `ringteiler` sollte jetzt **15.0** sein (vorher 6.0)
   - Formel: 109 − 100 + 6.0 = 15.0
 - Christian Eiden (LP, WHOLE): `ringteiler` sollte **unverändert 12.3** sein
