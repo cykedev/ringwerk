@@ -112,6 +112,7 @@ describe("getRingsInputProps", () => {
     expect(props.inputMode).toBe("numeric")
     expect(props.step).toBe("1")
     expect(props.placeholder).toBe("z.B. 96")
+    expect(props.min).toBe(0)
     expect(props.max).toBe(100)
   })
 
@@ -120,6 +121,7 @@ describe("getRingsInputProps", () => {
     expect(props.inputMode).toBe("decimal")
     expect(props.step).toBe("0.1")
     expect(props.placeholder).toBe("z.B. 96,5")
+    expect(props.min).toBe(0)
     expect(props.max).toBe(109)
   })
 

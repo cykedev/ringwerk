@@ -58,11 +58,12 @@ export function getRingsInputProps(
   inputMode: "numeric" | "decimal"
   placeholder: string
   step: string
+  min: number
   max: number
 } {
   const max = getMaxRings(scoringType, shotsPerSeries)
   if (scoringType === "DECIMAL") {
-    return { inputMode: "decimal", placeholder: "z.B. 96,5", step: "0.1", max }
+    return { inputMode: "decimal", placeholder: "z.B. 96,5", step: "0.1", min: 0, max }
   }
-  return { inputMode: "numeric", placeholder: "z.B. 96", step: "1", max }
+  return { inputMode: "numeric", placeholder: "z.B. 96", step: "1", min: 0, max }
 }
