@@ -59,8 +59,7 @@ export function rankEventParticipants(
   const entries = series.map((s) => {
     const faktor = s.discipline.teilerFaktor
     // Use per-series scoringType so mixed events correctly use 109 for DECIMAL disciplines.
-    // shotsPerSeries hardcoded to 10 — rankEventParticipants does not have access to the config value.
-    const maxRings = getMaxRings(s.discipline.scoringType, 10)
+    const maxRings = getMaxRings(s.discipline.scoringType, s.shotCount)
     const correctedTeiler = calculateCorrectedTeiler(s.teiler, faktor)
 
     const measuredValue = buildMeasuredValue(s, faktor, config.targetValueType)
