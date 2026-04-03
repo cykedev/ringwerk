@@ -78,6 +78,7 @@ const eventCompetition = {
   id: "c1",
   type: "EVENT",
   status: "ACTIVE",
+  scoringMode: "RINGTEILER" as const,
   shotsPerSeries: 30,
   disciplineId: "d1",
 }
@@ -86,6 +87,7 @@ const seasonCompetition = {
   id: "c2",
   type: "SEASON",
   status: "ACTIVE",
+  scoringMode: "RINGTEILER" as const,
   shotsPerSeries: 30,
   disciplineId: "d1",
 }
