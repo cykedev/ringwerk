@@ -208,6 +208,18 @@ describe("rankEventParticipants", () => {
     expect(result[1].rank).toBe(2)
   })
 
+  it("enthält disciplineScoringType aus der Disziplin der Serie", () => {
+    const series = [
+      makeSeries({ participantId: "p1", rings: 96, teiler: 3.7, discipline: { name: "LG", teilerFaktor: 1.0, scoringType: "WHOLE" as const } }),
+      makeSeries({ participantId: "p2", rings: 104.5, teiler: 2.1, discipline: { name: "LGA", teilerFaktor: 1.8, scoringType: "DECIMAL" as const } }),
+    ]
+    const result = rankEventParticipants(series, BASE_CONFIG)
+    const p1 = result.find((e) => e.participantId === "p1")!
+    const p2 = result.find((e) => e.participantId === "p2")!
+    expect(p1.disciplineScoringType).toBe("WHOLE")
+    expect(p2.disciplineScoringType).toBe("DECIMAL")
+  })
+
   it("Double-Enrollment: gleicher Teilnehmer in zwei Teams wird separat gerankt", () => {
     // Müller schießt zweimal — einmal für Team 1 (gut), einmal für Team 2 (schwächer)
     const series = [
@@ -261,6 +273,7 @@ describe("rankEventTeams", () => {
     participantId,
     participantName: participantId,
     disciplineName: "LG",
+    disciplineScoringType: "WHOLE" as const,
     isGuest: false,
     teamNumber,
     rings: 90,

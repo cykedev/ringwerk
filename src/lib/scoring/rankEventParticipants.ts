@@ -2,8 +2,7 @@ import type { ScoringMode, ScoringType, TargetValueType } from "@/generated/pris
 import type { EventSeriesItem } from "@/lib/series/types"
 import { calculateScore, calculateCorrectedTeiler } from "./calculateScore"
 import { rankByScore } from "./rankParticipants"
-
-const MAX_RINGS: Record<ScoringType, number> = { WHOLE: 100, DECIMAL: 109 }
+import { getMaxRings } from "@/lib/series/scoring-format"
 
 export type EventRankedEntry = {
   rank: number
@@ -12,6 +11,7 @@ export type EventRankedEntry = {
   participantId: string
   participantName: string
   disciplineName: string
+  disciplineScoringType: ScoringType
   isGuest: boolean
   teamNumber: number | null
   rings: number
@@ -58,8 +58,9 @@ export function rankEventParticipants(
 
   const entries = series.map((s) => {
     const faktor = s.discipline.teilerFaktor
-    // Use per-series scoringType so mixed events correctly use 109 for DECIMAL disciplines
-    const maxRings = MAX_RINGS[s.discipline.scoringType]
+    // Use per-series scoringType so mixed events correctly use 109 for DECIMAL disciplines.
+    // shotsPerSeries hardcoded to 10 — rankEventParticipants does not have access to the config value.
+    const maxRings = getMaxRings(s.discipline.scoringType, 10)
     const correctedTeiler = calculateCorrectedTeiler(s.teiler, faktor)
 
     const measuredValue = buildMeasuredValue(s, faktor, config.targetValueType)
@@ -80,6 +81,7 @@ export function rankEventParticipants(
       participantId: s.participantId,
       participantName: `${s.participant.firstName} ${s.participant.lastName}`,
       disciplineName: s.discipline.name,
+      disciplineScoringType: s.discipline.scoringType,
       isGuest: s.isGuest,
       teamNumber: s.teamNumber,
       rings: s.rings,
