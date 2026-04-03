@@ -108,7 +108,7 @@ export async function getEventWithSeries(id: string): Promise<{
       participantId: true,
       competitionParticipantId: true,
       disciplineId: true,
-      discipline: { select: { name: true, teilerFaktor: true, scoringType: true } },
+      discipline: { select: { name: true, teilerFaktor: true, scoringType: true } }, // needed for per-series maxRings in rankEventParticipants
       participant: {
         select: {
           id: true,

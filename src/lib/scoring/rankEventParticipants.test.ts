@@ -25,7 +25,7 @@ function makeSeries(
     teamNumber: overrides.teamNumber ?? null,
     rings: overrides.rings,
     teiler: overrides.teiler,
-    ringteiler: overrides.ringteiler ?? 100 - overrides.rings + overrides.teiler * 1.0,
+    ringteiler: overrides.ringteiler ?? 100 - overrides.rings + overrides.teiler * 1.0, // default assumes WHOLE (max 100) — override explicitly for DECIMAL tests
     shots: overrides.shots ?? [],
     shotCount: 10,
     sessionDate: new Date("2026-03-17"),

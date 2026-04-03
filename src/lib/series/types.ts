@@ -42,6 +42,8 @@ export type SeasonSeriesItem = {
   discipline: {
     name: string
     teilerFaktor: number
+    // scoringType intentionally omitted: season ranking uses pre-computed ringteiler values
+    // from the DB (calculated correctly at save time). No per-series maxRings lookup needed.
   }
   rings: number
   teiler: number

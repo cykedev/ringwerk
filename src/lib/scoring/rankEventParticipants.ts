@@ -38,6 +38,10 @@ type EventConfig = {
   scoringMode: ScoringMode
   targetValue: number | null
   targetValueType: TargetValueType | null
+  /**
+   * @deprecated No longer used for maxRings calculation — per-series discipline.scoringType is used instead.
+   * Kept for API compatibility with existing callers.
+   */
   discipline: { scoringType: ScoringType } | null
 }
 
