@@ -101,6 +101,52 @@ describe("calculateSeasonStandings", () => {
       expect(result.find((e) => e.participantId === "p1")?.bestRings_rank).toBe(1)
       expect(result.find((e) => e.participantId === "p2")?.bestRings_rank).toBe(1)
     })
+
+    it("gibt scoringType der bestRings-Serie zurück (WHOLE)", () => {
+      const result = calculateSeasonStandings(
+        [
+          {
+            participantId: "p1",
+            participantName: "Müller, Max",
+            series: [
+              makeSeries("p1", { rings: 92, teiler: 5.0, ringteiler: 13.0 }),
+              makeSeries("p1", { rings: 96, teiler: 3.7, ringteiler: 7.7 }), // bestRings
+            ],
+          },
+        ],
+        null
+      )
+      expect(result[0].bestRingsScoringType).toBe("WHOLE")
+    })
+
+    it("gibt scoringType der bestRings-Serie zurück (DECIMAL)", () => {
+      const result = calculateSeasonStandings(
+        [
+          {
+            participantId: "p1",
+            participantName: "Müller, Max",
+            series: [
+              makeSeries("p1", {
+                rings: 104.5,
+                teiler: 2.1,
+                ringteiler: 6.6,
+                discipline: { name: "LGA", teilerFaktor: 1.8, scoringType: "DECIMAL" as const },
+              }),
+            ],
+          },
+        ],
+        null
+      )
+      expect(result[0].bestRingsScoringType).toBe("DECIMAL")
+    })
+
+    it("gibt null zurück wenn keine Serien", () => {
+      const result = calculateSeasonStandings(
+        [{ participantId: "p1", participantName: "Müller, Max", series: [] }],
+        null
+      )
+      expect(result[0].bestRingsScoringType).toBeNull()
+    })
   })
 
   describe("Bester Teiler (korrigiert)", () => {

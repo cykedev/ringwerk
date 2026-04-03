@@ -1,5 +1,6 @@
 import { calculateCorrectedTeiler } from "./calculateScore"
 import type { SeasonSeriesItem } from "@/lib/series/types"
+import type { ScoringType } from "@/generated/prisma/client"
 
 export type SeasonStandingsEntry = {
   participantId: string
@@ -8,6 +9,7 @@ export type SeasonStandingsEntry = {
   meetsMinSeries: boolean
   // Beste Ringe (höchste Ringzahl einer einzelnen Serie)
   bestRings: number | null
+  bestRingsScoringType: ScoringType | null
   bestRings_rank: number | null
   // Bester Teiler (niedrigster korrigierter Teiler einer einzelnen Serie)
   bestCorrectedTeiler: number | null
@@ -52,13 +54,19 @@ export function calculateSeasonStandings(
         seriesCount,
         meetsMinSeries,
         bestRings: null,
+        bestRingsScoringType: null,
         bestCorrectedTeiler: null,
         bestRingteiler: null,
       }
     }
 
     // Beste Ringe — max
-    const bestRings = Math.max(...p.series.map((s) => s.rings))
+    const bestRingsSeries = p.series.reduce(
+      (best, s) => (s.rings > best.rings ? s : best),
+      p.series[0]
+    )
+    const bestRings = bestRingsSeries.rings
+    const bestRingsScoringType = bestRingsSeries.discipline.scoringType
 
     // Bester Teiler — min korrigierter Teiler
     const bestCorrectedTeiler = Math.min(
@@ -74,6 +82,7 @@ export function calculateSeasonStandings(
       seriesCount,
       meetsMinSeries,
       bestRings,
+      bestRingsScoringType,
       bestCorrectedTeiler,
       bestRingteiler,
     }
