@@ -15,7 +15,11 @@ function makeSeries(
     participantId: overrides.participantId,
     competitionParticipantId: overrides.competitionParticipantId ?? null,
     disciplineId: overrides.disciplineId ?? "disc-1",
-    discipline: overrides.discipline ?? { name: "LG", teilerFaktor: 1.0, scoringType: "WHOLE" as const },
+    discipline: overrides.discipline ?? {
+      name: "LG",
+      teilerFaktor: 1.0,
+      scoringType: "WHOLE" as const,
+    },
     participant: overrides.participant ?? {
       id: overrides.participantId,
       firstName: overrides.participantId,
@@ -176,7 +180,11 @@ describe("rankEventParticipants", () => {
         rings: 100,
         teiler: 6.0,
         ringteiler: 15.0,
-        discipline: { name: "Luftpistole Auflage", teilerFaktor: 1.0, scoringType: "DECIMAL" as const },
+        discipline: {
+          name: "Luftpistole Auflage",
+          teilerFaktor: 1.0,
+          scoringType: "DECIMAL" as const,
+        },
       }),
       makeSeries({
         participantId: "LP",

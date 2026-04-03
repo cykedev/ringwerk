@@ -152,7 +152,11 @@ export async function getEventWithSeries(id: string): Promise<{
     participantId: s.participantId,
     competitionParticipantId: s.competitionParticipantId,
     disciplineId: s.disciplineId,
-    discipline: { name: s.discipline.name, teilerFaktor: s.discipline.teilerFaktor.toNumber(), scoringType: s.discipline.scoringType },
+    discipline: {
+      name: s.discipline.name,
+      teilerFaktor: s.discipline.teilerFaktor.toNumber(),
+      scoringType: s.discipline.scoringType,
+    },
     participant: {
       id: s.participant.id,
       firstName: s.participant.firstName,
