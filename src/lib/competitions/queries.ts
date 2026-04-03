@@ -208,7 +208,7 @@ export async function getSeasonWithSeries(id: string): Promise<{
       id: true,
       participantId: true,
       disciplineId: true,
-      discipline: { select: { name: true, teilerFaktor: true } },
+      discipline: { select: { name: true, teilerFaktor: true, scoringType: true } },
       rings: true,
       teiler: true,
       ringteiler: true,
@@ -228,6 +228,7 @@ export async function getSeasonWithSeries(id: string): Promise<{
       discipline: {
         name: s.discipline.name,
         teilerFaktor: s.discipline.teilerFaktor.toNumber(),
+        scoringType: s.discipline.scoringType,
       },
       rings: s.rings.toNumber(),
       teiler: s.teiler.toNumber(),

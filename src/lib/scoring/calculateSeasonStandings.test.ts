@@ -10,7 +10,7 @@ function makeSeries(
     id: `series-${Math.random()}`,
     participantId,
     disciplineId: "disc-1",
-    discipline: { name: "LP", teilerFaktor: 1.0 },
+    discipline: { name: "LP", teilerFaktor: 1.0, scoringType: "WHOLE" as const },
     shotCount: 10,
     sessionDate: new Date("2026-01-15"),
     ...overrides,
