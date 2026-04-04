@@ -241,6 +241,8 @@ async function SeasonSeriesPageContent({ id }: { id: string }) {
                 }))}
                 minSeries={competition.minSeries}
                 isMixed={isMixed}
+                scoringMode={competition.scoringMode}
+                shotsPerSeries={competition.shotsPerSeries}
                 disciplines={isMixed ? allDisciplines : undefined}
                 defaultDisciplineId={cp.discipline?.id ?? competition.disciplineId}
               />

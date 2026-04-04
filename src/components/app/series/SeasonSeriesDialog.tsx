@@ -11,7 +11,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -20,8 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { RingsInput } from "@/components/app/series/RingsInput"
 import { saveSeasonSeries, updateSeasonSeries } from "@/lib/series/actions"
+import { getEffectiveScoringType } from "@/lib/series/scoring-format"
 import type { ActionResult } from "@/lib/types"
+import type { ScoringMode, ScoringType } from "@/generated/prisma/client"
+import { Input } from "@/components/ui/input"
 
 interface ExistingSeries {
   id: string
@@ -36,8 +39,10 @@ interface Props {
   competitionId: string
   participantId: string
   participantName: string
+  scoringMode: ScoringMode
+  shotsPerSeries: number
   /** Disziplinen für gemischte Saisons */
-  disciplines?: { id: string; name: string }[]
+  disciplines?: { id: string; name: string; scoringType: ScoringType }[]
   defaultDisciplineId?: string | null
   /** Wenn gesetzt: Edit-Modus für diese bestehende Serie */
   existingSeries?: ExistingSeries
@@ -47,6 +52,8 @@ export function SeasonSeriesDialog({
   competitionId,
   participantId,
   participantName,
+  scoringMode,
+  shotsPerSeries,
   disciplines,
   defaultDisciplineId,
   existingSeries,
@@ -54,6 +61,16 @@ export function SeasonSeriesDialog({
   const [open, setOpen] = useState(false)
   const isMixed = disciplines && disciplines.length > 0
   const isCorrection = !!existingSeries
+
+  const initialDisciplineId =
+    existingSeries?.disciplineId ?? defaultDisciplineId ?? disciplines?.[0]?.id ?? null
+  const [selectedDisciplineId, setSelectedDisciplineId] = useState<string | null>(
+    initialDisciplineId
+  )
+
+  // Compute effective scoring type based on currently selected discipline
+  const selectedDiscipline = disciplines?.find((d) => d.id === selectedDisciplineId) ?? null
+  const effectiveScoringType = getEffectiveScoringType(scoringMode, selectedDiscipline)
 
   const boundAction = isCorrection
     ? updateSeasonSeries.bind(null, competitionId, existingSeries.id)
@@ -116,9 +133,8 @@ export function SeasonSeriesDialog({
               <Label htmlFor="disciplineId">Disziplin</Label>
               <Select
                 name="disciplineId"
-                defaultValue={
-                  existingSeries?.disciplineId ?? defaultDisciplineId ?? disciplines[0]?.id
-                }
+                value={selectedDisciplineId ?? undefined}
+                onValueChange={setSelectedDisciplineId}
                 disabled={isPending}
               >
                 <SelectTrigger id="disciplineId">
@@ -137,12 +153,11 @@ export function SeasonSeriesDialog({
 
           <div className="space-y-2">
             <Label htmlFor="rings">Gesamtringe</Label>
-            <Input
+            <RingsInput
               id="rings"
               name="rings"
-              type="text"
-              inputMode="decimal"
-              placeholder="z.B. 96"
+              scoringType={effectiveScoringType}
+              shotsPerSeries={shotsPerSeries}
               defaultValue={existingSeries?.rings ?? ""}
               disabled={isPending}
             />
@@ -158,7 +173,7 @@ export function SeasonSeriesDialog({
               name="teiler"
               type="text"
               inputMode="decimal"
-              placeholder="z.B. 3.7"
+              placeholder="z.B. 3,7"
               defaultValue={existingSeries?.teiler ?? ""}
               disabled={isPending}
             />

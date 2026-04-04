@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { SeasonSeriesDialog } from "./SeasonSeriesDialog"
 import { DeleteSeasonSeriesButton } from "./DeleteSeasonSeriesButton"
+import type { ScoringMode, ScoringType } from "@/generated/prisma/client"
 
 interface Series {
   id: string
@@ -26,7 +27,9 @@ interface Props {
   series: Series[]
   minSeries: number | null
   isMixed: boolean
-  disciplines?: { id: string; name: string }[]
+  scoringMode: ScoringMode
+  shotsPerSeries: number
+  disciplines?: { id: string; name: string; scoringType: ScoringType }[]
   defaultDisciplineId?: string | null
 }
 
@@ -39,6 +42,8 @@ export function SeasonParticipantItem({
   series,
   minSeries,
   isMixed,
+  scoringMode,
+  shotsPerSeries,
   disciplines,
   defaultDisciplineId,
 }: Props) {
@@ -83,6 +88,8 @@ export function SeasonParticipantItem({
           competitionId={competitionId}
           participantId={participantId}
           participantName={`${firstName} ${lastName}`}
+          scoringMode={scoringMode}
+          shotsPerSeries={shotsPerSeries}
           disciplines={disciplines}
           defaultDisciplineId={defaultDisciplineId}
         />
@@ -108,6 +115,8 @@ export function SeasonParticipantItem({
                   competitionId={competitionId}
                   participantId={participantId}
                   participantName={`${firstName} ${lastName}`}
+                  scoringMode={scoringMode}
+                  shotsPerSeries={shotsPerSeries}
                   disciplines={disciplines}
                   existingSeries={{
                     id: s.id,
