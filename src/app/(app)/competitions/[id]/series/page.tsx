@@ -6,6 +6,7 @@ import { getCompetitionById, getSeasonWithSeries } from "@/lib/competitions/quer
 import { getCompetitionParticipants } from "@/lib/competitionParticipants/queries"
 import { getDisciplines } from "@/lib/disciplines/queries"
 import { db } from "@/lib/db"
+import { getEffectiveScoringType } from "@/lib/series/scoring-format"
 import { EventSeriesDialog } from "@/components/app/series/EventSeriesDialog"
 import { DeleteEventSeriesButton } from "@/components/app/series/DeleteEventSeriesButton"
 import { SeasonParticipantItem } from "@/components/app/series/SeasonParticipantItem"
@@ -142,6 +143,11 @@ export default async function SeriesPage({ params }: Props) {
                           ? cp.participant.firstName
                           : `${cp.participant.firstName} ${cp.participant.lastName}`
                       }
+                      scoringType={getEffectiveScoringType(
+                        competition.scoringMode,
+                        competition.discipline
+                      )}
+                      shotsPerSeries={competition.shotsPerSeries}
                       existingSeries={series}
                     />
                     {series && <DeleteEventSeriesButton seriesId={series.id} competitionId={id} />}

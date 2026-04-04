@@ -13,13 +13,17 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { RingsInput } from "@/components/app/series/RingsInput"
 import { saveEventSeries } from "@/lib/series/actions"
 import type { ActionResult } from "@/lib/types"
+import type { ScoringType } from "@/generated/prisma/client"
 
 interface Props {
   competitionId: string
   competitionParticipantId: string
   participantName: string
+  scoringType: ScoringType
+  shotsPerSeries: number
   /** Vorhandene Serie — wenn gesetzt, Korrektur-Modus */
   existingSeries?: { rings: number; teiler: number }
 }
@@ -28,6 +32,8 @@ export function EventSeriesDialog({
   competitionId,
   competitionParticipantId,
   participantName,
+  scoringType,
+  shotsPerSeries,
   existingSeries,
 }: Props) {
   const [open, setOpen] = useState(false)
@@ -70,13 +76,12 @@ export function EventSeriesDialog({
         <form id="series-form" action={formAction} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="rings">Gesamtringe</Label>
-            <Input
+            <RingsInput
               id="rings"
               name="rings"
-              type="text"
-              inputMode="decimal"
+              scoringType={scoringType}
+              shotsPerSeries={shotsPerSeries}
               defaultValue={existingSeries?.rings ?? ""}
-              placeholder="z.B. 96"
               disabled={isPending}
               autoFocus
             />
@@ -93,7 +98,7 @@ export function EventSeriesDialog({
               type="text"
               inputMode="decimal"
               defaultValue={existingSeries?.teiler ?? ""}
-              placeholder="z.B. 3.7"
+              placeholder="z.B. 3,7"
               disabled={isPending}
             />
             {fieldErrors?.teiler && (
