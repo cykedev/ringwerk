@@ -4,6 +4,7 @@ import type { EventRankedEntry, EventTeamRankedEntry } from "@/lib/scoring/rankE
 import { styles, PDF_COLORS } from "@/lib/pdf/styles"
 import { SCORING_MODE_LABELS, SCORING_MODE_COLUMN_LABELS } from "@/lib/scoring/labels"
 import type { ScoringMode } from "@/lib/scoring/types"
+import { formatRings, formatDecimal1, getEffectiveScoringType } from "@/lib/series/scoring-format"
 
 // ─── Typen ────────────────────────────────────────────────────────────────────
 
@@ -148,7 +149,7 @@ function RankingTable({
       {entries.map((entry, idx) => {
         const isAlt = idx % 2 === 1
         const nameText = entry.isGuest ? `${entry.participantName} (Gast)` : entry.participantName
-        const teilerValue = isMixed ? entry.correctedTeiler.toFixed(1) : entry.teiler.toFixed(1)
+        const teilerValue = formatDecimal1(isMixed ? entry.correctedTeiler : entry.teiler)
 
         return (
           <View
@@ -173,7 +174,9 @@ function RankingTable({
               </Text>
             )}
 
-            <Text style={[styles.tableCell, { width: W.rings }]}>{entry.rings}</Text>
+            <Text style={[styles.tableCell, { width: W.rings }]}>
+              {formatRings(entry.rings, getEffectiveScoringType(scoringMode, { scoringType: entry.disciplineScoringType }))}
+            </Text>
             <Text style={[styles.tableCell, { width: W.teiler, color: PDF_COLORS.muted }]}>
               {teilerValue}
             </Text>

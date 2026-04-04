@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { SeasonSeriesDialog } from "./SeasonSeriesDialog"
 import { DeleteSeasonSeriesButton } from "./DeleteSeasonSeriesButton"
 import type { ScoringMode, ScoringType } from "@/generated/prisma/client"
+import { formatRings, formatDecimal1, getEffectiveScoringType } from "@/lib/series/scoring-format"
 
 interface Series {
   id: string
@@ -107,7 +108,14 @@ export function SeasonParticipantItem({
                   )}
                 </p>
                 <p className="text-sm tabular-nums">
-                  {s.rings} Ringe · Teiler {s.teiler.toFixed(1)} · RT {s.ringteiler.toFixed(1)}
+                  {formatRings(
+                    s.rings,
+                    getEffectiveScoringType(
+                      scoringMode,
+                      disciplines?.find((d) => d.id === s.disciplineId) ?? null,
+                    ),
+                  )}{" "}
+                  Ringe · Teiler {formatDecimal1(s.teiler)} · RT {formatDecimal1(s.ringteiler)}
                 </p>
               </div>
               <div className="flex items-center gap-1">

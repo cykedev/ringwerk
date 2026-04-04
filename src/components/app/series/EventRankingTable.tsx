@@ -84,13 +84,13 @@ export function EventRankingTable({
 
 function formatScore(score: number, mode: ScoringMode): string {
   if (mode === "TARGET_UNDER" && score >= 1e9) {
-    return `+${(score - 1e9).toFixed(1)}`
+    return `+${(score - 1e9).toFixed(1).replace(".", ",")}`
   }
   if (mode === "TARGET_OVER" && score >= 1e9) {
-    return `-${(score - 1e9).toFixed(1)}`
+    return `-${(score - 1e9).toFixed(1).replace(".", ",")}`
   }
   if (mode === "RINGS" || mode === "DECIMAL_REST") {
     return score.toFixed(0)
   }
-  return score.toFixed(1)
+  return score.toFixed(1).replace(".", ",")
 }

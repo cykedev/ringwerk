@@ -6,7 +6,7 @@ import { getCompetitionById, getSeasonWithSeries } from "@/lib/competitions/quer
 import { getCompetitionParticipants } from "@/lib/competitionParticipants/queries"
 import { getDisciplines } from "@/lib/disciplines/queries"
 import { db } from "@/lib/db"
-import { getEffectiveScoringType } from "@/lib/series/scoring-format"
+import { getEffectiveScoringType, formatRings, formatDecimal1 } from "@/lib/series/scoring-format"
 import { EventSeriesDialog } from "@/components/app/series/EventSeriesDialog"
 import { DeleteEventSeriesButton } from "@/components/app/series/DeleteEventSeriesButton"
 import { SeasonParticipantItem } from "@/components/app/series/SeasonParticipantItem"
@@ -128,7 +128,14 @@ export default async function SeriesPage({ params }: Props) {
                     </div>
                     {series ? (
                       <p className="text-xs text-muted-foreground">
-                        {series.rings} Ringe · Teiler {series.teiler.toFixed(1)}
+                        {formatRings(
+                          series.rings,
+                          getEffectiveScoringType(
+                            competition.scoringMode,
+                            cp.discipline ?? competition.discipline,
+                          ),
+                        )}{" "}
+                        Ringe · Teiler {formatDecimal1(series.teiler)}
                       </p>
                     ) : (
                       <p className="text-xs text-muted-foreground">Noch kein Ergebnis</p>
@@ -145,7 +152,8 @@ export default async function SeriesPage({ params }: Props) {
                       }
                       scoringType={getEffectiveScoringType(
                         competition.scoringMode,
-                        competition.discipline
+                        // For mixed competitions, use the participant's own discipline
+                        cp.discipline ?? competition.discipline,
                       )}
                       shotsPerSeries={competition.shotsPerSeries}
                       existingSeries={series}
