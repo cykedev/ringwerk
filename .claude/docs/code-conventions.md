@@ -536,7 +536,11 @@ export async function createLeague(formData: FormData): Promise<ActionResult>
 
 ## Aus Lernlog übernommen
 
-<!-- Zuletzt konsolidiert: 2026-04-03 -->
+<!-- Zuletzt konsolidiert: 2026-04-04 -->
+
+### Prisma-Queries (ergänzt)
+
+- **Filter by active status in ranking queries**: When querying participants for rankings or series aggregations, always filter by `status: "ACTIVE"` to exclude withdrawn participants. Stale entries corrupt ranking results silently.
 
 ### Migration & Datenbankschema
 
@@ -590,3 +594,10 @@ export async function createLeague(formData: FormData): Promise<ActionResult>
 
 - **Prettier nach neuen Dateien**: Nach jeder neuen Datei lokal `npx prettier --write <datei>` ausführen, bevor CI-Check läuft.
 - **`<fieldset disabled>` für Form-Sektionen**: Deaktiviert alle enthaltenen Inputs, Labels und Buttons gleichzeitig — statt einzelne Inputs manuell zu disablen.
+
+### Formatierung & Lokalisierung
+
+- **Dezimaltrenner in `.toFixed()`-Ausgaben**: Jeder `.toFixed()`-Aufruf der benutzer-sichtbaren Text produziert muss `.replace(".", ",")` nachschalten (de-CH Locale). Gilt auch für abgeleitete Scores, Durchschnitte und PDF-Exporte — nicht nur für Primärwerte wie Ringe und Teiler.
+- **Vollständigkeit beim Einführen von Formatierungshelfer**: Beim Umstellen auf neue Formatierungsfunktionen das gesamte Codebase nach Rohdaten-Anzeige durchsuchen (`.toFixed()`, direkte Zahl-Interpolation). Server-Komponenten, List-Items und PDF-Renderer werden leicht übersehen.
+- **Datenmigration bei Code-Fix**: Wenn ein Persistenz-Bug gefixt wird, immer prüfen ob historische Datensätze im alten (falschen) Format gespeichert wurden. Ein Code-Fix allein reicht nicht — ggf. Backfill-Query oder Migration notwendig.
+- **Rollen-Einführungs-Checkliste**: Beim Hinzufügen oder Ändern einer Nutzerrolle explizit alle Page-Dateien auf hardcodierte Role-Checks durchsuchen (z.B. `grep 'role !== "ADMIN"' src/app/`). Actions und Navigation-Guards reichen nicht — direkter Page-Guard ist eine separate Sicherheitsebene.
