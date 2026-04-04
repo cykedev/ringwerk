@@ -9,6 +9,7 @@ import {
 } from "@/lib/competitions/queries"
 import { getStandingsForCompetition } from "@/lib/standings/queries"
 import { getPlayoffBracket } from "@/lib/playoffs/queries"
+import { getEffectiveScoringType } from "@/lib/series/scoring-format"
 import { rankEventParticipants, rankEventTeams } from "@/lib/scoring/rankEventParticipants"
 import { calculateSeasonStandings } from "@/lib/scoring/calculateSeasonStandings"
 import { StandingsTable } from "@/components/app/standings/StandingsTable"
@@ -110,7 +111,13 @@ export default async function DashboardPage() {
                       <Trophy className="h-4 w-4 text-muted-foreground" />
                       Playoffs
                     </div>
-                    <PlayoffBracket bracket={bracket} canManage={false} compact={true} />
+                    <PlayoffBracket
+                      bracket={bracket}
+                      canManage={false}
+                      compact={true}
+                      scoringType={getEffectiveScoringType(competition.scoringMode, competition.discipline)}
+                      shotsPerSeries={competition.shotsPerSeries}
+                    />
                     <div className="flex justify-end">
                       <Button asChild variant="outline" size="sm">
                         <Link href={`/competitions/${competition.id}/playoffs`}>Details →</Link>

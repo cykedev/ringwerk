@@ -270,8 +270,8 @@ interface Props {
   canManage: boolean
   /** Nur visuelles Bracket, keine Detail-Karten */
   compact?: boolean
-  scoringType?: ScoringType
-  shotsPerSeries?: number
+  scoringType: ScoringType
+  shotsPerSeries: number
   playoffBestOf?: number | null
   finalePrimary?: ScoringMode
   finaleTiebreaker1?: ScoringMode | null
@@ -282,8 +282,8 @@ export function PlayoffBracket({
   bracket,
   canManage,
   compact = false,
-  scoringType = "WHOLE",
-  shotsPerSeries = 10,
+  scoringType,
+  shotsPerSeries,
   playoffBestOf = null,
   finalePrimary = "RINGS",
   finaleTiebreaker1 = null,
