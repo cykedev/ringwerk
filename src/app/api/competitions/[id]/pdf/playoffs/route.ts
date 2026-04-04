@@ -38,6 +38,7 @@ export async function GET(
   const element = createElement(PlayoffsPdf, {
     leagueName: competition.name,
     disciplineName: competition.discipline.name,
+    scoringType: competition.discipline.scoringType,
     bracket,
     generatedAt: new Date(),
   }) as ReactElement<DocumentProps>

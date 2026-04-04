@@ -35,6 +35,7 @@ export async function GET(
   const element = createElement(SchedulePdf, {
     leagueName: competition.name,
     disciplineName: competition.discipline.name,
+    scoringType: competition.discipline.scoringType,
     standings,
     matchups,
     firstLegDeadline: competition.hinrundeDeadline,

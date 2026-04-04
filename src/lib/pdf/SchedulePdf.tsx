@@ -1,7 +1,9 @@
 import { Document, Page, View, Text } from "@react-pdf/renderer"
 import type { ReactElement } from "react"
+import type { ScoringType } from "@/generated/prisma/client"
 import type { MatchupListItem } from "@/lib/matchups/types"
 import type { StandingRow } from "@/lib/standings/calculateStandings"
+import { formatRings, formatDecimal1 } from "@/lib/series/scoring-format"
 import { styles } from "@/lib/pdf/styles"
 
 // ─── Typen ────────────────────────────────────────────────────────────────────
@@ -9,6 +11,7 @@ import { styles } from "@/lib/pdf/styles"
 export interface SchedulePdfProps {
   leagueName: string
   disciplineName: string
+  scoringType: ScoringType
   standings: StandingRow[]
   matchups: MatchupListItem[]
   firstLegDeadline: Date | null
@@ -20,11 +23,6 @@ export interface SchedulePdfProps {
 
 function formatDate(date: Date): string {
   return date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })
-}
-
-function formatRT(value: number | null): string {
-  if (value === null) return "—"
-  return value.toFixed(1)
 }
 
 function rankBadgeColor(rank: number): string {
@@ -113,7 +111,7 @@ function StandingsSection({ rows }: { rows: StandingRow[] }): ReactElement {
               <Text style={[styles.tableCell, { width: W.n }]}>{row.losses}</Text>
               <Text style={[styles.tableCellBold, { width: W.pkt }]}>{row.points}</Text>
               <Text style={[styles.tableCell, { width: W.rt }]}>
-                {formatRT(row.bestRingteiler)}
+                {formatDecimal1(row.bestRingteiler)}
               </Text>
             </View>
           )
@@ -148,11 +146,13 @@ function PlayerCell({
   result,
   isWinner,
   isRowWithdrawn,
+  scoringType,
 }: {
   name: string
   result: { rings: number; teiler: number; ringteiler: number } | null
   isWinner: boolean
   isRowWithdrawn: boolean
+  scoringType: ScoringType
 }): ReactElement {
   if (isRowWithdrawn) {
     return (
@@ -167,8 +167,8 @@ function PlayerCell({
       <Text style={isWinner ? styles.playerNameWinner : styles.playerName}>{name}</Text>
       {result && (
         <Text style={styles.resultSmall}>
-          {`${result.rings.toFixed(0)} R \u00b7 T ${result.teiler.toFixed(1)} \u00b7 RT `}
-          <Text style={isWinner ? styles.resultSmallRT : {}}>{result.ringteiler.toFixed(1)}</Text>
+          {`${formatRings(result.rings, scoringType)} R \u00b7 T ${formatDecimal1(result.teiler)} \u00b7 RT `}
+          <Text style={isWinner ? styles.resultSmallRT : {}}>{formatDecimal1(result.ringteiler)}</Text>
         </Text>
       )}
     </View>
@@ -179,10 +179,12 @@ function MatchupSection({
   title,
   subtitle,
   matchups,
+  scoringType,
 }: {
   title: string
   subtitle: string
   matchups: MatchupListItem[]
+  scoringType: ScoringType
 }): ReactElement {
   const byRound = new Map<number, MatchupListItem[]>()
   for (const m of matchups) {
@@ -244,6 +246,7 @@ function MatchupSection({
                         result={isCompleted && homeRes && !isRowWithdrawn ? homeRes : null}
                         isWinner={!isRowWithdrawn && homeWins}
                         isRowWithdrawn={isRowWithdrawn}
+                        scoringType={scoringType}
                       />
                     </View>
                     <View style={{ width: SW.away }}>
@@ -252,6 +255,7 @@ function MatchupSection({
                         result={isCompleted && awayRes && !isRowWithdrawn ? awayRes : null}
                         isWinner={!isRowWithdrawn && awayWins}
                         isRowWithdrawn={isRowWithdrawn}
+                        scoringType={scoringType}
                       />
                     </View>
                     <Text
@@ -279,6 +283,7 @@ function MatchupSection({
 export function SchedulePdf({
   leagueName,
   disciplineName,
+  scoringType,
   standings,
   matchups,
   firstLegDeadline,
@@ -307,6 +312,7 @@ export function SchedulePdf({
             title="Hinrunde"
             subtitle={firstLegDeadline ? `Abgabe bis ${formatDate(firstLegDeadline)}` : ""}
             matchups={firstLeg}
+            scoringType={scoringType}
           />
         )}
 
@@ -316,6 +322,7 @@ export function SchedulePdf({
             title="Rückrunde"
             subtitle={secondLegDeadline ? `Abgabe bis ${formatDate(secondLegDeadline)}` : ""}
             matchups={secondLeg}
+            scoringType={scoringType}
           />
         )}
 

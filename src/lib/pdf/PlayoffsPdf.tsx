@@ -1,6 +1,8 @@
 import { Document, Page, View, Text, Svg, Line, G } from "@react-pdf/renderer"
 import type { ReactElement } from "react"
+import type { ScoringType } from "@/generated/prisma/client"
 import type { PlayoffBracketData, PlayoffMatchItem, PlayoffDuelItem } from "@/lib/playoffs/types"
+import { formatRings, formatDecimal1 } from "@/lib/series/scoring-format"
 import { styles, PDF_COLORS } from "@/lib/pdf/styles"
 
 // ─── Typen ────────────────────────────────────────────────────────────────────
@@ -8,6 +10,7 @@ import { styles, PDF_COLORS } from "@/lib/pdf/styles"
 export interface PlayoffsPdfProps {
   leagueName: string
   disciplineName: string
+  scoringType: ScoringType
   bracket: PlayoffBracketData
   generatedAt: Date
 }
@@ -405,15 +408,15 @@ function duelWinnerLabel(duel: PlayoffDuelItem, match: PlayoffMatchItem): string
   return `${match.participantB.firstName} ${match.participantB.lastName}`
 }
 
-function duelResultText(duel: PlayoffDuelItem, isFinal: boolean): string {
+function duelResultText(duel: PlayoffDuelItem, isFinal: boolean, scoringType: ScoringType): string {
   if (!duel.isCompleted) return "Ausstehend"
   if (!duel.resultA || !duel.resultB) return "—"
 
   if (isFinal) {
-    return `${duel.resultA.totalRings.toFixed(0)} R  vs  ${duel.resultB.totalRings.toFixed(0)} R`
+    return `${formatRings(duel.resultA.totalRings, scoringType)} R  vs  ${formatRings(duel.resultB.totalRings, scoringType)} R`
   }
-  const rtA = duel.resultA.ringteiler?.toFixed(1) ?? "—"
-  const rtB = duel.resultB.ringteiler?.toFixed(1) ?? "—"
+  const rtA = formatDecimal1(duel.resultA.ringteiler ?? null)
+  const rtB = formatDecimal1(duel.resultB.ringteiler ?? null)
   return `RT ${rtA}  vs  RT ${rtB}`
 }
 
@@ -421,10 +424,12 @@ function MatchDetail({
   match,
   index,
   total,
+  scoringType,
 }: {
   match: PlayoffMatchItem
   index: number
   total: number
+  scoringType: ScoringType
 }): ReactElement {
   const isFinal = match.round === "FINAL"
   const winner = winnerOf(match)
@@ -475,7 +480,7 @@ function MatchDetail({
               {duel.isSuddenDeath ? "Verl." : `Duell ${duel.duelNumber}`}
             </Text>
             <Text style={[styles.tableCell, { width: 160, fontSize: 9 }]}>
-              {duelResultText(duel, isFinal)}
+              {duelResultText(duel, isFinal, scoringType)}
             </Text>
             <Text style={[styles.tableCellLeft, { flex: 1, fontSize: 9 }]}>
               {duel.isCompleted ? duelWinnerLabel(duel, match) : "—"}
@@ -487,7 +492,13 @@ function MatchDetail({
   )
 }
 
-function DetailSection({ bracket }: { bracket: PlayoffBracketData }): ReactElement {
+function DetailSection({
+  bracket,
+  scoringType,
+}: {
+  bracket: PlayoffBracketData
+  scoringType: ScoringType
+}): ReactElement {
   const { eighthFinals: af, quarterFinals: qf, semiFinals: hf, final: fin } = bracket
 
   return (
@@ -505,7 +516,7 @@ function DetailSection({ bracket }: { bracket: PlayoffBracketData }): ReactEleme
             Achtelfinale
           </Text>
           {af.map((m, i) => (
-            <MatchDetail key={m.id} match={m} index={i} total={af.length} />
+            <MatchDetail key={m.id} match={m} index={i} total={af.length} scoringType={scoringType} />
           ))}
         </View>
       )}
@@ -521,7 +532,7 @@ function DetailSection({ bracket }: { bracket: PlayoffBracketData }): ReactEleme
             Viertelfinale
           </Text>
           {qf.map((m, i) => (
-            <MatchDetail key={m.id} match={m} index={i} total={qf.length} />
+            <MatchDetail key={m.id} match={m} index={i} total={qf.length} scoringType={scoringType} />
           ))}
         </View>
       )}
@@ -537,7 +548,7 @@ function DetailSection({ bracket }: { bracket: PlayoffBracketData }): ReactEleme
             Halbfinale
           </Text>
           {hf.map((m, i) => (
-            <MatchDetail key={m.id} match={m} index={i} total={hf.length} />
+            <MatchDetail key={m.id} match={m} index={i} total={hf.length} scoringType={scoringType} />
           ))}
         </View>
       )}
@@ -552,7 +563,7 @@ function DetailSection({ bracket }: { bracket: PlayoffBracketData }): ReactEleme
           >
             Finale
           </Text>
-          <MatchDetail match={fin} index={0} total={1} />
+          <MatchDetail match={fin} index={0} total={1} scoringType={scoringType} />
         </View>
       )}
     </View>
@@ -564,6 +575,7 @@ function DetailSection({ bracket }: { bracket: PlayoffBracketData }): ReactEleme
 export function PlayoffsPdf({
   leagueName,
   disciplineName,
+  scoringType,
   bracket,
   generatedAt,
 }: PlayoffsPdfProps): ReactElement {
@@ -595,7 +607,7 @@ export function PlayoffsPdf({
           disciplineName={disciplineName}
           generatedAt={generatedAt}
         />
-        <DetailSection bracket={bracket} />
+        <DetailSection bracket={bracket} scoringType={scoringType} />
         <View style={styles.footer} fixed>
           <Text style={styles.footerText}>{leagueName} · Playoffs</Text>
           <Text
