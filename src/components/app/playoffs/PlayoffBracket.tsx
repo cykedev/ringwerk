@@ -1,4 +1,4 @@
-import type { ScoringMode } from "@/generated/prisma/client"
+import type { ScoringMode, ScoringType } from "@/generated/prisma/client"
 import type { PlayoffBracketData, PlayoffMatchItem } from "@/lib/playoffs/types"
 import { cn } from "@/lib/utils"
 import { PlayoffMatchCard } from "./PlayoffMatchCard"
@@ -200,6 +200,7 @@ function RoundDetail({
   title,
   matches,
   canManage,
+  scoringType,
   shotsPerSeries,
   playoffBestOf,
   finalePrimary,
@@ -209,6 +210,7 @@ function RoundDetail({
   title: string
   matches: PlayoffMatchItem[]
   canManage: boolean
+  scoringType: ScoringType
   shotsPerSeries: number
   playoffBestOf: number | null
   finalePrimary: ScoringMode
@@ -230,6 +232,7 @@ function RoundDetail({
             key={m.id}
             match={m}
             canManage={canManage}
+            scoringType={scoringType}
             shotsPerSeries={shotsPerSeries}
             playoffBestOf={playoffBestOf}
             finalePrimary={finalePrimary}
@@ -267,6 +270,7 @@ interface Props {
   canManage: boolean
   /** Nur visuelles Bracket, keine Detail-Karten */
   compact?: boolean
+  scoringType?: ScoringType
   shotsPerSeries?: number
   playoffBestOf?: number | null
   finalePrimary?: ScoringMode
@@ -278,6 +282,7 @@ export function PlayoffBracket({
   bracket,
   canManage,
   compact = false,
+  scoringType = "WHOLE",
   shotsPerSeries = 10,
   playoffBestOf = null,
   finalePrimary = "RINGS",
@@ -517,6 +522,7 @@ export function PlayoffBracket({
               title="Achtelfinale"
               matches={af}
               canManage={canManage}
+              scoringType={scoringType}
               shotsPerSeries={shotsPerSeries}
               playoffBestOf={playoffBestOf}
               finalePrimary={finalePrimary}
@@ -529,6 +535,7 @@ export function PlayoffBracket({
               title="Viertelfinale"
               matches={qf}
               canManage={canManage}
+              scoringType={scoringType}
               shotsPerSeries={shotsPerSeries}
               playoffBestOf={playoffBestOf}
               finalePrimary={finalePrimary}
@@ -541,6 +548,7 @@ export function PlayoffBracket({
               title="Halbfinale"
               matches={hf}
               canManage={canManage}
+              scoringType={scoringType}
               shotsPerSeries={shotsPerSeries}
               playoffBestOf={playoffBestOf}
               finalePrimary={finalePrimary}
@@ -553,6 +561,7 @@ export function PlayoffBracket({
               title="Finale"
               matches={[fin]}
               canManage={canManage}
+              scoringType={scoringType}
               shotsPerSeries={shotsPerSeries}
               playoffBestOf={playoffBestOf}
               finalePrimary={finalePrimary}

@@ -13,10 +13,11 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { RingsInput } from "@/components/app/series/RingsInput"
 import { savePlayoffDuelResult } from "@/lib/playoffs/actions"
 import { finaleNeedsTeiler } from "@/lib/playoffs/calculatePlayoffs"
 import type { PlayoffDuelItem, PlayoffParticipant } from "@/lib/playoffs/types"
-import type { ScoringMode } from "@/generated/prisma/client"
+import type { ScoringMode, ScoringType } from "@/generated/prisma/client"
 
 interface Props {
   duel: PlayoffDuelItem
@@ -24,6 +25,7 @@ interface Props {
   participantB: PlayoffParticipant
   isCorrection: boolean
   isFinalMatch: boolean
+  scoringType: ScoringType
   shotsPerSeries: number
   finalePrimary: ScoringMode
   finaleTiebreaker1: ScoringMode | null
@@ -41,6 +43,7 @@ export function PlayoffDuelResultDialog({
   participantB,
   isCorrection,
   isFinalMatch,
+  scoringType,
   shotsPerSeries,
   finalePrimary,
   finaleTiebreaker1,
@@ -169,14 +172,12 @@ export function PlayoffDuelResultDialog({
                 <Label htmlFor="a-rings" className="text-xs text-muted-foreground">
                   Gesamtringe
                 </Label>
-                <Input
+                <RingsInput
                   id="a-rings"
-                  type="number"
-                  step="0.1"
-                  min="0"
+                  scoringType={scoringType}
+                  shotsPerSeries={shotsPerSeries}
                   value={fieldA.totalRings}
                   onChange={(e) => setFieldA((p) => ({ ...p, totalRings: e.target.value }))}
-                  placeholder="z.B. 96"
                   disabled={isPending}
                 />
               </div>
@@ -187,12 +188,11 @@ export function PlayoffDuelResultDialog({
                   </Label>
                   <Input
                     id="a-teiler"
-                    type="number"
-                    step="0.1"
-                    min="0"
+                    type="text"
+                    inputMode="decimal"
                     value={fieldA.teiler}
                     onChange={(e) => setFieldA((p) => ({ ...p, teiler: e.target.value }))}
-                    placeholder="z.B. 3.7"
+                    placeholder="z.B. 3,7"
                     disabled={isPending}
                   />
                 </div>
@@ -216,14 +216,12 @@ export function PlayoffDuelResultDialog({
                 <Label htmlFor="b-rings" className="text-xs text-muted-foreground">
                   Gesamtringe
                 </Label>
-                <Input
+                <RingsInput
                   id="b-rings"
-                  type="number"
-                  step="0.1"
-                  min="0"
+                  scoringType={scoringType}
+                  shotsPerSeries={shotsPerSeries}
                   value={fieldB.totalRings}
                   onChange={(e) => setFieldB((p) => ({ ...p, totalRings: e.target.value }))}
-                  placeholder="z.B. 94"
                   disabled={isPending}
                 />
               </div>
@@ -234,12 +232,11 @@ export function PlayoffDuelResultDialog({
                   </Label>
                   <Input
                     id="b-teiler"
-                    type="number"
-                    step="0.1"
-                    min="0"
+                    type="text"
+                    inputMode="decimal"
                     value={fieldB.teiler}
                     onChange={(e) => setFieldB((p) => ({ ...p, teiler: e.target.value }))}
-                    placeholder="z.B. 5.0"
+                    placeholder="z.B. 3,7"
                     disabled={isPending}
                   />
                 </div>

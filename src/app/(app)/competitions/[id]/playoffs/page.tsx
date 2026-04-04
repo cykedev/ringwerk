@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation"
 import { ArrowLeft, CalendarDays, Trophy, Users } from "lucide-react"
 import { getAuthSession } from "@/lib/auth-helpers"
 import { getCompetitionById } from "@/lib/competitions/queries"
+import { getEffectiveScoringType } from "@/lib/series/scoring-format"
 import { getPlayoffBracket } from "@/lib/playoffs/queries"
 import { getStandingsForCompetition } from "@/lib/standings/queries"
 import { db } from "@/lib/db"
@@ -144,6 +145,7 @@ export default async function CompetitionPlayoffsPage({ params }: Props) {
         <PlayoffBracket
           bracket={bracket}
           canManage={canManage}
+          scoringType={getEffectiveScoringType(competition.scoringMode, competition.discipline)}
           shotsPerSeries={competition.shotsPerSeries}
           playoffBestOf={competition.playoffBestOf}
           finalePrimary={competition.finalePrimary}

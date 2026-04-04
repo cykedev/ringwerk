@@ -19,7 +19,7 @@ import { toast } from "sonner"
 import { addPlayoffDuel, deleteLastPlayoffDuel } from "@/lib/playoffs/actions"
 import { requiredWinsFromBestOf } from "@/lib/playoffs/calculatePlayoffs"
 import type { PlayoffMatchItem } from "@/lib/playoffs/types"
-import type { ScoringMode } from "@/generated/prisma/client"
+import type { ScoringMode, ScoringType } from "@/generated/prisma/client"
 import { PlayoffDuelResultDialog } from "./PlayoffDuelResultDialog"
 import { SCORING_MODE_LABELS } from "@/lib/scoring/labels"
 
@@ -38,6 +38,7 @@ function finaleHintText(
 interface Props {
   match: PlayoffMatchItem
   canManage: boolean
+  scoringType: ScoringType
   shotsPerSeries: number
   playoffBestOf: number | null
   finalePrimary: ScoringMode
@@ -63,6 +64,7 @@ const WINNER_BADGE: Record<string, string> = {
 export function PlayoffMatchCard({
   match,
   canManage,
+  scoringType,
   shotsPerSeries,
   playoffBestOf,
   finalePrimary,
@@ -236,6 +238,7 @@ export function PlayoffMatchCard({
                               participantB={match.participantB}
                               isCorrection={true}
                               isFinalMatch={isFinal}
+                              scoringType={scoringType}
                               shotsPerSeries={shotsPerSeries}
                               finalePrimary={finalePrimary}
                               finaleTiebreaker1={finaleTiebreaker1}
@@ -266,6 +269,7 @@ export function PlayoffMatchCard({
                               participantB={match.participantB}
                               isCorrection={false}
                               isFinalMatch={isFinal}
+                              scoringType={scoringType}
                               shotsPerSeries={shotsPerSeries}
                               finalePrimary={finalePrimary}
                               finaleTiebreaker1={finaleTiebreaker1}
