@@ -4,12 +4,14 @@ const {
   getAuthSessionMock,
   revalidatePathMock,
   matchupFindUniqueMock,
+  competitionParticipantFindFirstMock,
   transactionMock,
   auditLogCreateMock,
 } = vi.hoisted(() => ({
   getAuthSessionMock: vi.fn(),
   revalidatePathMock: vi.fn(),
   matchupFindUniqueMock: vi.fn(),
+  competitionParticipantFindFirstMock: vi.fn(),
   transactionMock: vi.fn(),
   auditLogCreateMock: vi.fn(),
 }))
@@ -22,6 +24,7 @@ vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock }))
 vi.mock("@/lib/db", () => ({
   db: {
     matchup: { findUnique: matchupFindUniqueMock },
+    competitionParticipant: { findFirst: competitionParticipantFindFirstMock },
     auditLog: { create: auditLogCreateMock },
     $transaction: transactionMock,
   },
@@ -129,14 +132,33 @@ describe("saveMatchResult", () => {
     expect(result).toEqual({ error: "Ungültige Paarung: kein Gegner zugeordnet." })
   })
 
-  it("liefert Fehler wenn keine Disziplin konfiguriert", async () => {
+  it("liefert Fehler wenn weder Competition- noch Teilnehmer-Disziplin konfiguriert", async () => {
     getAuthSessionMock.mockResolvedValue(adminSession)
     matchupFindUniqueMock.mockResolvedValue({
       ...matchupBase,
       competition: { shotsPerSeries: 30, discipline: null },
     })
+    competitionParticipantFindFirstMock.mockResolvedValue(null)
     const result = await saveMatchResult("m1", resultInput)
     expect(result).toEqual({ error: "Disziplin nicht konfiguriert." })
+  })
+
+  it("speichert Ergebnis für gemischte Liga (per-Teilnehmer Disziplin)", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    matchupFindUniqueMock.mockResolvedValue({
+      ...matchupBase,
+      competition: { shotsPerSeries: 30, discipline: null },
+      series: [],
+    })
+    const discipline = {
+      id: "d1",
+      scoringType: "WHOLE" as const,
+      teilerFaktor: { toNumber: () => 1.0 },
+    }
+    competitionParticipantFindFirstMock.mockResolvedValue({ discipline })
+    const result = await saveMatchResult("m1", resultInput)
+    expect(result).toEqual({ success: true })
+    expect(transactionMock).toHaveBeenCalled()
   })
 
   it("speichert Ersterfassung und schreibt auditLog RESULT_ENTERED", async () => {

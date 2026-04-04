@@ -1,12 +1,14 @@
-import { MatchStatus, Round } from "@/generated/prisma/client"
+import { MatchStatus, Round, ScoringType } from "@/generated/prisma/client"
 
-export type { MatchStatus, Round }
+export type { MatchStatus, Round, ScoringType }
 
 export interface MatchupParticipant {
   id: string
   firstName: string
   lastName: string
   withdrawn: boolean
+  /** Disziplin-ScoringType des Teilnehmers in diesem Wettbewerb (null = nicht konfiguriert) */
+  scoringType: ScoringType | null
 }
 
 export interface MatchResultSummary {

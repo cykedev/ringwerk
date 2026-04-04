@@ -5,6 +5,7 @@ import { getAuthSession } from "@/lib/auth-helpers"
 import { getCompetitionById } from "@/lib/competitions/queries"
 import { getPlayoffBracket } from "@/lib/playoffs/queries"
 import { PlayoffsPdf } from "@/lib/pdf/PlayoffsPdf"
+import { getEffectiveScoringType } from "@/lib/series/scoring-format"
 
 export async function GET(
   _req: NextRequest,
@@ -31,14 +32,10 @@ export async function GET(
     return new NextResponse("Playoffs noch nicht gestartet", { status: 404 })
   }
 
-  if (!competition.discipline) {
-    return new NextResponse("Disziplin nicht konfiguriert", { status: 400 })
-  }
-
   const element = createElement(PlayoffsPdf, {
     leagueName: competition.name,
-    disciplineName: competition.discipline.name,
-    scoringType: competition.discipline.scoringType,
+    disciplineName: competition.discipline?.name ?? "Gemischt",
+    scoringType: getEffectiveScoringType(competition.scoringMode, competition.discipline),
     bracket,
     generatedAt: new Date(),
   }) as ReactElement<DocumentProps>

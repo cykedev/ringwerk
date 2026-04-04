@@ -126,11 +126,47 @@ export async function savePlayoffDuelResult(
       finaleTiebreaker2
     )
   } else {
-    if (!duel.playoffMatch.competition.discipline) return { error: "Disziplin nicht konfiguriert." }
-    const maxRings = MAX_RINGS[duel.playoffMatch.competition.discipline.scoringType]
-    const faktor = duel.playoffMatch.competition.discipline.teilerFaktor.toNumber()
-    ringteilerA = calculateRingteiler(input.totalRingsA, input.teilerA ?? 0, faktor, maxRings)
-    ringteilerB = calculateRingteiler(input.totalRingsB, input.teilerB ?? 0, faktor, maxRings)
+    // Disziplin per Teilnehmer auflösen (unterstützt gemischte Wettbewerbe)
+    let disciplineA = duel.playoffMatch.competition.discipline
+    let disciplineB = duel.playoffMatch.competition.discipline
+
+    if (!disciplineA) {
+      const [cpA, cpB] = await Promise.all([
+        db.competitionParticipant.findFirst({
+          where: {
+            participantId: match.participantAId,
+            competitionId: match.competitionId,
+          },
+          select: { discipline: { select: { scoringType: true, teilerFaktor: true } } },
+        }),
+        db.competitionParticipant.findFirst({
+          where: {
+            participantId: match.participantBId,
+            competitionId: match.competitionId,
+          },
+          select: { discipline: { select: { scoringType: true, teilerFaktor: true } } },
+        }),
+      ])
+      disciplineA = cpA?.discipline ?? null
+      disciplineB = cpB?.discipline ?? null
+    }
+
+    if (!disciplineA || !disciplineB) return { error: "Disziplin nicht konfiguriert." }
+
+    const maxRingsA = MAX_RINGS[disciplineA.scoringType]
+    const maxRingsB = MAX_RINGS[disciplineB.scoringType]
+    ringteilerA = calculateRingteiler(
+      input.totalRingsA,
+      input.teilerA ?? 0,
+      disciplineA.teilerFaktor.toNumber(),
+      maxRingsA
+    )
+    ringteilerB = calculateRingteiler(
+      input.totalRingsB,
+      input.teilerB ?? 0,
+      disciplineB.teilerFaktor.toNumber(),
+      maxRingsB
+    )
     if (isFinal) {
       outcome = determineFinaleRoundWinner(
         input.totalRingsA,

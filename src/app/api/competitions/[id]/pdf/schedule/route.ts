@@ -6,6 +6,7 @@ import { getCompetitionById } from "@/lib/competitions/queries"
 import { getMatchupsForCompetition } from "@/lib/matchups/queries"
 import { getStandingsForCompetition } from "@/lib/standings/queries"
 import { SchedulePdf } from "@/lib/pdf/SchedulePdf"
+import { getEffectiveScoringType } from "@/lib/series/scoring-format"
 
 export async function GET(
   _req: NextRequest,
@@ -28,14 +29,10 @@ export async function GET(
     return new NextResponse("Wettbewerb nicht gefunden", { status: 404 })
   }
 
-  if (!competition.discipline) {
-    return new NextResponse("Disziplin nicht konfiguriert", { status: 400 })
-  }
-
   const element = createElement(SchedulePdf, {
     leagueName: competition.name,
-    disciplineName: competition.discipline.name,
-    scoringType: competition.discipline.scoringType,
+    disciplineName: competition.discipline?.name ?? "Gemischt",
+    scoringType: getEffectiveScoringType(competition.scoringMode, competition.discipline),
     standings,
     matchups,
     firstLegDeadline: competition.hinrundeDeadline,

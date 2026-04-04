@@ -47,25 +47,48 @@ export async function saveMatchResult(
   if (!matchup) return { error: "Paarung nicht gefunden." }
   if (matchup.status === "BYE") return { error: "Freilos-Paarungen haben keine Ergebnisse." }
   if (!matchup.awayParticipantId) return { error: "Ungültige Paarung: kein Gegner zugeordnet." }
-  if (!matchup.competition.discipline) return { error: "Disziplin nicht konfiguriert." }
 
-  const discipline = matchup.competition.discipline
-  const maxRings = MAX_RINGS[discipline.scoringType]
-  const faktor = discipline.teilerFaktor.toNumber()
+  // Disziplin per Teilnehmer auflösen (unterstützt gemischte Wettbewerbe)
+  let homeDiscipline = matchup.competition.discipline
+  let awayDiscipline = matchup.competition.discipline
+
+  if (!homeDiscipline) {
+    const [homeCp, awayCp] = await Promise.all([
+      db.competitionParticipant.findFirst({
+        where: { participantId: matchup.homeParticipantId, competitionId: matchup.competitionId },
+        select: { discipline: { select: { id: true, scoringType: true, teilerFaktor: true } } },
+      }),
+      db.competitionParticipant.findFirst({
+        where: { participantId: matchup.awayParticipantId!, competitionId: matchup.competitionId },
+        select: { discipline: { select: { id: true, scoringType: true, teilerFaktor: true } } },
+      }),
+    ])
+    homeDiscipline = homeCp?.discipline ?? null
+    awayDiscipline = awayCp?.discipline ?? null
+  }
+
+  if (!homeDiscipline || !awayDiscipline) {
+    return { error: "Disziplin nicht konfiguriert." }
+  }
+
+  const homeMaxRings = MAX_RINGS[homeDiscipline.scoringType]
+  const awayMaxRings = MAX_RINGS[awayDiscipline.scoringType]
+  const homeFaktor = homeDiscipline.teilerFaktor.toNumber()
+  const awayFaktor = awayDiscipline.teilerFaktor.toNumber()
   const sessionDate = matchup.dueDate ?? new Date()
   const shotCount = matchup.competition.shotsPerSeries
 
   const homeRingteiler = calculateRingteiler(
     data.homeResult.rings,
     data.homeResult.teiler,
-    faktor,
-    maxRings
+    homeFaktor,
+    homeMaxRings
   )
   const awayRingteiler = calculateRingteiler(
     data.awayResult.rings,
     data.awayResult.teiler,
-    faktor,
-    maxRings
+    awayFaktor,
+    awayMaxRings
   )
 
   const isCorrection = matchup.series.length > 0
@@ -82,7 +105,7 @@ export async function saveMatchResult(
         create: {
           matchupId,
           participantId: matchup.homeParticipantId,
-          disciplineId: discipline.id,
+          disciplineId: homeDiscipline.id,
           shotCount,
           sessionDate,
           rings: data.homeResult.rings,
@@ -92,7 +115,7 @@ export async function saveMatchResult(
           recordedByUserId: session.user.id,
         },
         update: {
-          disciplineId: discipline.id,
+          disciplineId: homeDiscipline.id,
           shotCount,
           sessionDate,
           rings: data.homeResult.rings,
@@ -112,7 +135,7 @@ export async function saveMatchResult(
         create: {
           matchupId,
           participantId: matchup.awayParticipantId!,
-          disciplineId: discipline.id,
+          disciplineId: awayDiscipline.id,
           shotCount,
           sessionDate,
           rings: data.awayResult.rings,
@@ -122,7 +145,7 @@ export async function saveMatchResult(
           recordedByUserId: session.user.id,
         },
         update: {
-          disciplineId: discipline.id,
+          disciplineId: awayDiscipline.id,
           shotCount,
           sessionDate,
           rings: data.awayResult.rings,

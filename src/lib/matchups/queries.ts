@@ -1,20 +1,22 @@
 import { db } from "@/lib/db"
 import type { MatchupListItem, MatchupParticipant, ScheduleStatus } from "./types"
 
-// Rohtyp aus Prisma-Select (inkl. verschachteltem LP-Status)
+// Rohtyp aus Prisma-Select (inkl. verschachteltem LP-Status und Disziplin)
 type RawParticipant = {
   id: string
   firstName: string
   lastName: string
-  competitions: Array<{ status: string }>
+  competitions: Array<{ status: string; discipline: { scoringType: string } | null }>
 }
 
 function mapParticipant(p: RawParticipant): MatchupParticipant {
+  const cp = p.competitions[0]
   return {
     id: p.id,
     firstName: p.firstName,
     lastName: p.lastName,
-    withdrawn: p.competitions[0]?.status === "WITHDRAWN",
+    withdrawn: cp?.status === "WITHDRAWN",
+    scoringType: (cp?.discipline?.scoringType as MatchupParticipant["scoringType"]) ?? null,
   }
 }
 
@@ -25,7 +27,10 @@ function participantSelect(competitionId: string) {
     lastName: true,
     competitions: {
       where: { competitionId },
-      select: { status: true },
+      select: {
+        status: true,
+        discipline: { select: { scoringType: true } },
+      },
     },
   } as const
 }

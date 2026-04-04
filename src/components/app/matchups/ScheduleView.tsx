@@ -4,6 +4,7 @@ import { determineOutcome } from "@/lib/results/calculateResult"
 import type { ScoringMode, ScoringType } from "@/generated/prisma/client"
 import type { MatchupListItem, MatchupParticipant, MatchResultSummary } from "@/lib/matchups/types"
 import { ResultEntryDialog } from "@/components/app/results/ResultEntryDialog"
+import { formatDecimal1, formatRings, getEffectiveScoringType } from "@/lib/series/scoring-format"
 
 interface Props {
   matchups: MatchupListItem[]
@@ -15,7 +16,8 @@ interface Props {
   /** Keine Erfassung/Korrektur mehr möglich wenn Playoffs laufen */
   playoffsStarted?: boolean
   scoringMode?: ScoringMode
-  scoringType: ScoringType
+  /** @deprecated Per-Teilnehmer-Typen werden aus MatchupParticipant.scoringType berechnet */
+  scoringType?: ScoringType
   shotsPerSeries: number
 }
 
@@ -34,10 +36,12 @@ function participantName(p: MatchupParticipant): string {
 function ParticipantResult({
   participant,
   result,
+  scoringType,
   isVoid = false,
 }: {
   participant: MatchupParticipant
   result: MatchResultSummary | undefined
+  scoringType: ScoringType
   isVoid?: boolean
 }) {
   const name = participantName(participant)
@@ -58,7 +62,8 @@ function ParticipantResult({
     <div className="space-y-0.5">
       <div className="font-medium">{name}</div>
       <div className="text-xs text-muted-foreground">
-        {result.rings} R · {result.teiler.toFixed(1)} T · RT {result.ringteiler.toFixed(1)}
+        {formatRings(result.rings, scoringType)} R · {formatDecimal1(result.teiler)} T · RT{" "}
+        {formatDecimal1(result.ringteiler)}
       </div>
     </div>
   )
@@ -70,7 +75,6 @@ function LegTable({
   deadline,
   canManage,
   scoringMode,
-  scoringType,
   shotsPerSeries,
 }: {
   title: string
@@ -78,7 +82,6 @@ function LegTable({
   deadline: Date | null
   canManage: boolean
   scoringMode: ScoringMode
-  scoringType: ScoringType
   shotsPerSeries: number
 }) {
   const tz = getDisplayTimeZone()
@@ -121,6 +124,21 @@ function LegTable({
               let homeResult: MatchResultSummary | undefined
               let awayResult: MatchResultSummary | undefined
 
+              const homeScoringType = getEffectiveScoringType(
+                scoringMode,
+                m.homeParticipant.scoringType
+                  ? { scoringType: m.homeParticipant.scoringType }
+                  : null
+              )
+              const awayScoringType = m.awayParticipant
+                ? getEffectiveScoringType(
+                    scoringMode,
+                    m.awayParticipant.scoringType
+                      ? { scoringType: m.awayParticipant.scoringType }
+                      : null
+                  )
+                : "WHOLE"
+
               if (isCompleted && m.awayParticipant) {
                 homeResult = m.results.find((r) => r.participantId === m.homeParticipant.id)
                 awayResult = m.results.find((r) => r.participantId === m.awayParticipant!.id)
@@ -151,6 +169,7 @@ function LegTable({
                     <ParticipantResult
                       participant={m.homeParticipant}
                       result={homeResult}
+                      scoringType={homeScoringType}
                       isVoid={isVoid}
                     />
                   </td>
@@ -161,6 +180,7 @@ function LegTable({
                       <ParticipantResult
                         participant={m.awayParticipant}
                         result={awayResult}
+                        scoringType={awayScoringType}
                         isVoid={isVoid}
                       />
                     ) : (
@@ -181,7 +201,8 @@ function LegTable({
                           awayParticipantId={m.awayParticipant.id}
                           existingResults={m.results}
                           isCorrection={isCompleted}
-                          scoringType={scoringType}
+                          homeScoringType={homeScoringType}
+                          awayScoringType={awayScoringType}
                           shotsPerSeries={shotsPerSeries}
                         />
                       )}
@@ -233,7 +254,6 @@ export function ScheduleView({
   canManage,
   playoffsStarted = false,
   scoringMode = "RINGTEILER",
-  scoringType,
   shotsPerSeries,
 }: Props) {
   if (matchups.length === 0) {
@@ -261,7 +281,6 @@ export function ScheduleView({
           deadline={hinrundeDeadline}
           canManage={canManage && !playoffsStarted}
           scoringMode={scoringMode}
-          scoringType={scoringType}
           shotsPerSeries={shotsPerSeries}
         />
       )}
@@ -272,7 +291,6 @@ export function ScheduleView({
           deadline={rueckrundeDeadline}
           canManage={canManage && !playoffsStarted}
           scoringMode={scoringMode}
-          scoringType={scoringType}
           shotsPerSeries={shotsPerSeries}
         />
       )}

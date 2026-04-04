@@ -33,7 +33,9 @@ interface Props {
   /** Existierende Ergebnisse für Vorausfüllung bei Korrektur */
   existingResults: MatchResultSummary[]
   isCorrection: boolean
-  scoringType: ScoringType
+  /** ScoringType je Teilnehmer (kann bei gemischten Wettbewerben unterschiedlich sein) */
+  homeScoringType: ScoringType
+  awayScoringType: ScoringType
   shotsPerSeries: number
 }
 
@@ -52,7 +54,8 @@ export function ResultEntryDialog({
   awayParticipantId,
   existingResults,
   isCorrection,
-  scoringType,
+  homeScoringType,
+  awayScoringType,
   shotsPerSeries,
 }: Props) {
   const [open, setOpen] = useState(false)
@@ -151,7 +154,7 @@ export function ResultEntryDialog({
                 </Label>
                 <RingsInput
                   id="home-rings"
-                  scoringType={scoringType}
+                  scoringType={homeScoringType}
                   shotsPerSeries={shotsPerSeries}
                   value={home.rings}
                   onChange={(e) => setHome((p) => ({ ...p, rings: e.target.value }))}
@@ -190,7 +193,7 @@ export function ResultEntryDialog({
                 </Label>
                 <RingsInput
                   id="away-rings"
-                  scoringType={scoringType}
+                  scoringType={awayScoringType}
                   shotsPerSeries={shotsPerSeries}
                   value={away.rings}
                   onChange={(e) => setAway((p) => ({ ...p, rings: e.target.value }))}
