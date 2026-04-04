@@ -66,7 +66,10 @@ export function EventRankingTable({
                 {entry.disciplineName}
               </td>
               <td className="px-3 py-2 text-right tabular-nums">
-                {formatRings(entry.rings, getEffectiveScoringType(scoringMode, { scoringType: entry.disciplineScoringType }))}
+                {formatRings(
+                  entry.rings,
+                  getEffectiveScoringType(scoringMode, { scoringType: entry.disciplineScoringType })
+                )}
               </td>
               <td className="px-3 py-2 text-right tabular-nums text-muted-foreground hidden sm:table-cell">
                 {formatDecimal1(isMixed ? entry.correctedTeiler : entry.teiler)}

@@ -24,37 +24,38 @@
 
 ## File Map
 
-| Status | Path | Change |
-|--------|------|--------|
-| **Create** | `src/lib/series/scoring-format.ts` | Core utilities: `getEffectiveScoringType`, `getMaxRings`, `formatRings`, `formatDecimal1`, `getRingsInputProps` |
-| **Create** | `src/lib/series/scoring-format.test.ts` | Unit tests for all utilities |
-| **Create** | `src/components/app/series/RingsInput.tsx` | Thin Input wrapper using `getRingsInputProps` |
-| **Modify** | `src/lib/series/types.ts` | Add `scoringType: ScoringType` to `SeasonSeriesItem.discipline` |
-| **Modify** | `src/lib/competitions/queries.ts` | Fetch `scoringType` in season series query; add `scoringMode` to event competition query |
-| **Modify** | `src/lib/scoring/calculateSeasonStandings.ts` | Add `bestRingsScoringType: ScoringType \| null` to `SeasonStandingsEntry` |
-| **Modify** | `src/lib/scoring/calculateSeasonStandings.test.ts` | Update `makeSeries` helper, add tests for new field |
-| **Modify** | `src/lib/scoring/rankEventParticipants.ts` | Add `disciplineScoringType: ScoringType` to `EventRankedEntry`, use `getMaxRings` |
-| **Modify** | `src/lib/scoring/rankEventParticipants.test.ts` | Update tests for new field |
-| **Modify** | `src/lib/series/actions.ts` | Fetch `scoringMode`, add max-rings + integer validation after discipline resolution |
-| **Modify** | `src/lib/series/actions.test.ts` | Add tests for over-max and non-integer rejection |
-| **Modify** | `src/components/app/series/EventSeriesDialog.tsx` | Add `scoringType: ScoringType` + `shotsPerSeries: number` props, use `RingsInput` |
-| **Modify** | `src/components/app/series/SeasonSeriesDialog.tsx` | Extend disciplines with `scoringType`, reactive `RingsInput` |
-| **Modify** | `src/components/app/results/ResultEntryDialog.tsx` | Add `scoringType: ScoringType` prop, use `RingsInput` |
-| **Modify** | `src/components/app/playoffs/PlayoffDuelResultDialog.tsx` | Add `scoringType: ScoringType` prop, use `RingsInput` |
-| **Modify** | Callers of the 4 dialogs above | Pass new props from parent pages |
-| **Modify** | `src/components/app/series/EventRankingTable.tsx` | Use `formatRings` (per-row), `formatDecimal1` |
-| **Modify** | `src/components/app/series/SeasonStandingsTable.tsx` | Use `formatRings` with `bestRingsScoringType`, `formatDecimal1` |
-| **Modify** | `src/components/app/standings/StandingsTable.tsx` | Use `formatDecimal1` for ringteiler |
-| **Modify** | `src/lib/pdf/EventRankingPdf.tsx` | Use `formatRings` (per-row), `formatDecimal1` |
-| **Modify** | `src/lib/pdf/SeasonStandingsPdf.tsx` | Replace local formatters with central utilities |
-| **Modify** | `src/lib/pdf/SchedulePdf.tsx` | Use `formatRings`, `formatDecimal1` |
-| **Modify** | `src/lib/pdf/PlayoffsPdf.tsx` | Use `formatRings`, `formatDecimal1` |
+| Status     | Path                                                      | Change                                                                                                          |
+| ---------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **Create** | `src/lib/series/scoring-format.ts`                        | Core utilities: `getEffectiveScoringType`, `getMaxRings`, `formatRings`, `formatDecimal1`, `getRingsInputProps` |
+| **Create** | `src/lib/series/scoring-format.test.ts`                   | Unit tests for all utilities                                                                                    |
+| **Create** | `src/components/app/series/RingsInput.tsx`                | Thin Input wrapper using `getRingsInputProps`                                                                   |
+| **Modify** | `src/lib/series/types.ts`                                 | Add `scoringType: ScoringType` to `SeasonSeriesItem.discipline`                                                 |
+| **Modify** | `src/lib/competitions/queries.ts`                         | Fetch `scoringType` in season series query; add `scoringMode` to event competition query                        |
+| **Modify** | `src/lib/scoring/calculateSeasonStandings.ts`             | Add `bestRingsScoringType: ScoringType \| null` to `SeasonStandingsEntry`                                       |
+| **Modify** | `src/lib/scoring/calculateSeasonStandings.test.ts`        | Update `makeSeries` helper, add tests for new field                                                             |
+| **Modify** | `src/lib/scoring/rankEventParticipants.ts`                | Add `disciplineScoringType: ScoringType` to `EventRankedEntry`, use `getMaxRings`                               |
+| **Modify** | `src/lib/scoring/rankEventParticipants.test.ts`           | Update tests for new field                                                                                      |
+| **Modify** | `src/lib/series/actions.ts`                               | Fetch `scoringMode`, add max-rings + integer validation after discipline resolution                             |
+| **Modify** | `src/lib/series/actions.test.ts`                          | Add tests for over-max and non-integer rejection                                                                |
+| **Modify** | `src/components/app/series/EventSeriesDialog.tsx`         | Add `scoringType: ScoringType` + `shotsPerSeries: number` props, use `RingsInput`                               |
+| **Modify** | `src/components/app/series/SeasonSeriesDialog.tsx`        | Extend disciplines with `scoringType`, reactive `RingsInput`                                                    |
+| **Modify** | `src/components/app/results/ResultEntryDialog.tsx`        | Add `scoringType: ScoringType` prop, use `RingsInput`                                                           |
+| **Modify** | `src/components/app/playoffs/PlayoffDuelResultDialog.tsx` | Add `scoringType: ScoringType` prop, use `RingsInput`                                                           |
+| **Modify** | Callers of the 4 dialogs above                            | Pass new props from parent pages                                                                                |
+| **Modify** | `src/components/app/series/EventRankingTable.tsx`         | Use `formatRings` (per-row), `formatDecimal1`                                                                   |
+| **Modify** | `src/components/app/series/SeasonStandingsTable.tsx`      | Use `formatRings` with `bestRingsScoringType`, `formatDecimal1`                                                 |
+| **Modify** | `src/components/app/standings/StandingsTable.tsx`         | Use `formatDecimal1` for ringteiler                                                                             |
+| **Modify** | `src/lib/pdf/EventRankingPdf.tsx`                         | Use `formatRings` (per-row), `formatDecimal1`                                                                   |
+| **Modify** | `src/lib/pdf/SeasonStandingsPdf.tsx`                      | Replace local formatters with central utilities                                                                 |
+| **Modify** | `src/lib/pdf/SchedulePdf.tsx`                             | Use `formatRings`, `formatDecimal1`                                                                             |
+| **Modify** | `src/lib/pdf/PlayoffsPdf.tsx`                             | Use `formatRings`, `formatDecimal1`                                                                             |
 
 ---
 
 ## Task 1: Create `src/lib/series/scoring-format.ts`
 
 **Files:**
+
 - Create: `src/lib/series/scoring-format.ts`
 - Create: `src/lib/series/scoring-format.test.ts`
 
@@ -298,6 +299,7 @@ git commit -m "feat: add scoring-format utilities for rings validation and displ
 ## Task 2: Add `scoringType` to `SeasonSeriesItem` and DB query
 
 **Files:**
+
 - Modify: `src/lib/series/types.ts`
 - Modify: `src/lib/competitions/queries.ts:205-218`
 
@@ -397,6 +399,7 @@ git commit -m "feat: add scoringType to SeasonSeriesItem and season series DB qu
 ## Task 3: Add `bestRingsScoringType` to `SeasonStandingsEntry`
 
 **Files:**
+
 - Modify: `src/lib/scoring/calculateSeasonStandings.ts`
 - Modify: `src/lib/scoring/calculateSeasonStandings.test.ts`
 
@@ -473,7 +476,7 @@ export type SeasonStandingsEntry = {
   seriesCount: number
   meetsMinSeries: boolean
   bestRings: number | null
-  bestRingsScoringType: ScoringType | null   // <-- new
+  bestRingsScoringType: ScoringType | null // <-- new
   bestRings_rank: number | null
   bestCorrectedTeiler: number | null
   bestTeiler_rank: number | null
@@ -495,10 +498,7 @@ Replace with:
 
 ```typescript
 // Track the series with highest rings
-const bestRingsSeries = p.series.reduce(
-  (best, s) => (s.rings > best.rings ? s : best),
-  p.series[0]
-)
+const bestRingsSeries = p.series.reduce((best, s) => (s.rings > best.rings ? s : best), p.series[0])
 const bestRings = bestRingsSeries.rings
 const bestRingsScoringType = bestRingsSeries.discipline.scoringType
 ```
@@ -555,6 +555,7 @@ git commit -m "feat: add bestRingsScoringType to SeasonStandingsEntry"
 ## Task 4: Add `disciplineScoringType` to `EventRankedEntry`
 
 **Files:**
+
 - Modify: `src/lib/scoring/rankEventParticipants.ts`
 - Modify: `src/lib/scoring/rankEventParticipants.test.ts`
 
@@ -565,8 +566,18 @@ In `src/lib/scoring/rankEventParticipants.test.ts`, find the RINGTEILER describe
 ```typescript
 it("enthält disciplineScoringType aus der Disziplin der Serie", () => {
   const series = [
-    makeSeries({ participantId: "p1", rings: 96, teiler: 3.7, discipline: { name: "LG", teilerFaktor: 1.0, scoringType: "WHOLE" as const } }),
-    makeSeries({ participantId: "p2", rings: 104.5, teiler: 2.1, discipline: { name: "LGA", teilerFaktor: 1.8, scoringType: "DECIMAL" as const } }),
+    makeSeries({
+      participantId: "p1",
+      rings: 96,
+      teiler: 3.7,
+      discipline: { name: "LG", teilerFaktor: 1.0, scoringType: "WHOLE" as const },
+    }),
+    makeSeries({
+      participantId: "p2",
+      rings: 104.5,
+      teiler: 2.1,
+      discipline: { name: "LGA", teilerFaktor: 1.8, scoringType: "DECIMAL" as const },
+    }),
   ]
   const result = rankEventParticipants(series, BASE_CONFIG)
   const p1 = result.find((e) => e.participantId === "p1")!
@@ -600,7 +611,7 @@ export type EventRankedEntry = {
   participantId: string
   participantName: string
   disciplineName: string
-  disciplineScoringType: ScoringType   // <-- new
+  disciplineScoringType: ScoringType // <-- new
   isGuest: boolean
   teamNumber: number | null
   rings: number
@@ -642,7 +653,7 @@ return {
   participantId: s.participantId,
   participantName: `${s.participant.firstName} ${s.participant.lastName}`,
   disciplineName: s.discipline.name,
-  disciplineScoringType: s.discipline.scoringType,   // <-- new
+  disciplineScoringType: s.discipline.scoringType, // <-- new
   isGuest: s.isGuest,
   teamNumber: s.teamNumber,
   rings: s.rings,
@@ -673,6 +684,7 @@ git commit -m "feat: add disciplineScoringType to EventRankedEntry"
 ## Task 5: Add server-side validation to `actions.ts`
 
 **Files:**
+
 - Modify: `src/lib/series/actions.ts`
 - Modify: `src/lib/series/actions.test.ts`
 
@@ -683,27 +695,46 @@ In `src/lib/series/actions.test.ts`, inside `describe("saveEventSeries", ...)`, 
 ```typescript
 it("liefert Fehler wenn Ringe über Maximum (WHOLE, 10 Schuss → max 100)", async () => {
   getAuthSessionMock.mockResolvedValue(adminSession)
-  competitionFindUniqueMock.mockResolvedValue({ ...eventCompetition, scoringMode: "RINGTEILER", shotsPerSeries: 10 })
+  competitionFindUniqueMock.mockResolvedValue({
+    ...eventCompetition,
+    scoringMode: "RINGTEILER",
+    shotsPerSeries: 10,
+  })
   competitionParticipantFindUniqueMock.mockResolvedValue(cpWithDiscipline) // scoringType: WHOLE
   const fd = makeFormData({ rings: "101", teiler: "3.7" })
   const result = await saveEventSeries("c1", "cp1", null, fd)
-  expect(result).toMatchObject({ error: { rings: expect.arrayContaining([expect.stringContaining("100")]) } })
+  expect(result).toMatchObject({
+    error: { rings: expect.arrayContaining([expect.stringContaining("100")]) },
+  })
 })
 
 it("liefert Fehler wenn Ringe nicht ganzzahlig bei WHOLE-Disziplin", async () => {
   getAuthSessionMock.mockResolvedValue(adminSession)
-  competitionFindUniqueMock.mockResolvedValue({ ...eventCompetition, scoringMode: "RINGTEILER", shotsPerSeries: 10 })
+  competitionFindUniqueMock.mockResolvedValue({
+    ...eventCompetition,
+    scoringMode: "RINGTEILER",
+    shotsPerSeries: 10,
+  })
   competitionParticipantFindUniqueMock.mockResolvedValue(cpWithDiscipline) // scoringType: WHOLE
   const fd = makeFormData({ rings: "95.5", teiler: "3.7" })
   const result = await saveEventSeries("c1", "cp1", null, fd)
-  expect(result).toMatchObject({ error: { rings: expect.arrayContaining([expect.stringContaining("ganze")]) } })
+  expect(result).toMatchObject({
+    error: { rings: expect.arrayContaining([expect.stringContaining("ganze")]) },
+  })
 })
 
 it("akzeptiert Dezimalringe bei DECIMAL-Disziplin", async () => {
   getAuthSessionMock.mockResolvedValue(adminSession)
   const decimalDiscipline = { ...discipline, scoringType: "DECIMAL" as const }
-  competitionFindUniqueMock.mockResolvedValue({ ...eventCompetition, scoringMode: "RINGTEILER", shotsPerSeries: 10 })
-  competitionParticipantFindUniqueMock.mockResolvedValue({ ...cpWithDiscipline, discipline: decimalDiscipline })
+  competitionFindUniqueMock.mockResolvedValue({
+    ...eventCompetition,
+    scoringMode: "RINGTEILER",
+    shotsPerSeries: 10,
+  })
+  competitionParticipantFindUniqueMock.mockResolvedValue({
+    ...cpWithDiscipline,
+    discipline: decimalDiscipline,
+  })
   seriesFindUniqueMock.mockResolvedValue(null)
   const fd = makeFormData({ rings: "104.5", teiler: "2.1" })
   const result = await saveEventSeries("c1", "cp1", null, fd)
@@ -740,7 +771,7 @@ const competition = await db.competition.findUnique({
     id: true,
     type: true,
     status: true,
-    scoringMode: true,   // <-- add this
+    scoringMode: true, // <-- add this
     shotsPerSeries: true,
     disciplineId: true,
   },
@@ -791,6 +822,7 @@ git commit -m "feat: add max-rings and integer validation to series actions"
 ## Task 6: Create `RingsInput` component
 
 **Files:**
+
 - Create: `src/components/app/series/RingsInput.tsx`
 
 - [ ] **Step 1: Create the component**
@@ -848,6 +880,7 @@ git commit -m "feat: add RingsInput component with automatic scoring-type-aware 
 ## Task 7: Update `EventSeriesDialog`
 
 **Files:**
+
 - Modify: `src/components/app/series/EventSeriesDialog.tsx`
 - Modify: callers of `EventSeriesDialog` (find with `grep -r "EventSeriesDialog" src/`)
 
@@ -900,9 +933,7 @@ Replace the rings `<Input>` block with `<RingsInput>`:
     disabled={isPending}
     autoFocus
   />
-  {fieldErrors?.rings && (
-    <p className="text-sm text-destructive">{fieldErrors.rings[0]}</p>
-  )}
+  {fieldErrors?.rings && <p className="text-sm text-destructive">{fieldErrors.rings[0]}</p>}
 </div>
 ```
 
@@ -963,6 +994,7 @@ git commit -m "feat: update EventSeriesDialog with RingsInput and scoring-type-a
 ## Task 8: Update `SeasonSeriesDialog`
 
 **Files:**
+
 - Modify: `src/components/app/series/SeasonSeriesDialog.tsx`
 - Modify: callers of `SeasonSeriesDialog`
 
@@ -990,8 +1022,8 @@ interface Props {
   competitionId: string
   participantId: string
   participantName: string
-  scoringMode: ScoringMode                                          // <-- new
-  disciplines?: { id: string; name: string; scoringType: ScoringType }[]   // <-- scoringType added
+  scoringMode: ScoringMode // <-- new
+  disciplines?: { id: string; name: string; scoringType: ScoringType }[] // <-- scoringType added
   defaultDisciplineId?: string | null
   existingSeries?: ExistingSeries
 }
@@ -1055,9 +1087,7 @@ Replace the rings `<Input>` with `<RingsInput>`:
     defaultValue={existingSeries?.rings ?? ""}
     disabled={isPending}
   />
-  {fieldErrors?.rings && (
-    <p className="text-sm text-destructive">{fieldErrors.rings[0]}</p>
-  )}
+  {fieldErrors?.rings && <p className="text-sm text-destructive">{fieldErrors.rings[0]}</p>}
 </div>
 ```
 
@@ -1066,7 +1096,7 @@ Replace the rings `<Input>` with `<RingsInput>`:
 ```typescript
 interface Props {
   // ...existing props...
-  shotsPerSeries: number   // <-- add
+  shotsPerSeries: number // <-- add
 }
 ```
 
@@ -1099,6 +1129,7 @@ git commit -m "feat: update SeasonSeriesDialog with reactive RingsInput per disc
 ## Task 9: Update `ResultEntryDialog`
 
 **Files:**
+
 - Modify: `src/components/app/results/ResultEntryDialog.tsx`
 - Modify: callers of `ResultEntryDialog`
 
@@ -1122,8 +1153,8 @@ Add to Props interface:
 ```typescript
 interface Props {
   // ...existing props...
-  scoringType: ScoringType    // <-- new
-  shotsPerSeries: number      // <-- new
+  scoringType: ScoringType // <-- new
+  shotsPerSeries: number // <-- new
 }
 ```
 
@@ -1132,6 +1163,7 @@ Destructure in the function signature.
 Replace all four `<Input type="number" step="0.1" ...>` rings inputs with `<RingsInput>`:
 
 **Home rings** (replace lines ~147–155):
+
 ```tsx
 <RingsInput
   id="home-rings"
@@ -1143,6 +1175,7 @@ Replace all four `<Input type="number" step="0.1" ...>` rings inputs with `<Ring
 ```
 
 **Away rings** (replace lines ~188–196):
+
 ```tsx
 <RingsInput
   id="away-rings"
@@ -1189,6 +1222,7 @@ git commit -m "feat: update ResultEntryDialog with RingsInput and corrected Teil
 ## Task 10: Update `PlayoffDuelResultDialog`
 
 **Files:**
+
 - Modify: `src/components/app/playoffs/PlayoffDuelResultDialog.tsx`
 - Modify: callers of `PlayoffDuelResultDialog`
 
@@ -1212,7 +1246,7 @@ Add to Props interface:
 ```typescript
 interface Props {
   // ...existing props...
-  scoringType: ScoringType   // <-- new
+  scoringType: ScoringType // <-- new
 }
 ```
 
@@ -1221,6 +1255,7 @@ Destructure in function signature.
 Replace all four `<Input type="number" step="0.1" ...>` rings inputs (for A and B, inside the dialog) with `<RingsInput>`:
 
 **Participant A rings** (replace lines ~172–181):
+
 ```tsx
 <RingsInput
   id="a-rings"
@@ -1233,6 +1268,7 @@ Replace all four `<Input type="number" step="0.1" ...>` rings inputs (for A and 
 ```
 
 **Participant B rings** (replace lines ~220–229):
+
 ```tsx
 <RingsInput
   id="b-rings"
@@ -1275,6 +1311,7 @@ git commit -m "feat: update PlayoffDuelResultDialog with RingsInput and correcte
 ## Task 11: Update display tables
 
 **Files:**
+
 - Modify: `src/components/app/series/EventRankingTable.tsx`
 - Modify: `src/components/app/series/SeasonStandingsTable.tsx`
 - Modify: `src/components/app/standings/StandingsTable.tsx`
@@ -1304,10 +1341,14 @@ Change the Teiler column (line ~69):
 
 ```tsx
 // Before:
-{isMixed ? entry.correctedTeiler.toFixed(1) : entry.teiler.toFixed(1)}
+{
+  isMixed ? entry.correctedTeiler.toFixed(1) : entry.teiler.toFixed(1)
+}
 
 // After:
-{formatDecimal1(isMixed ? entry.correctedTeiler : entry.teiler)}
+{
+  formatDecimal1(isMixed ? entry.correctedTeiler : entry.teiler)
+}
 ```
 
 - [ ] **Step 2: Update `SeasonStandingsTable`**
@@ -1360,10 +1401,14 @@ Change ringteiler display (line ~109):
 
 ```tsx
 // Before:
-{row.bestRingteiler !== null ? row.bestRingteiler.toFixed(1) : "—"}
+{
+  row.bestRingteiler !== null ? row.bestRingteiler.toFixed(1) : "—"
+}
 
 // After:
-{formatDecimal1(row.bestRingteiler)}
+{
+  formatDecimal1(row.bestRingteiler)
+}
 ```
 
 - [ ] **Step 4: Type-check**
@@ -1386,6 +1431,7 @@ git commit -m "feat: use central formatRings/formatDecimal1 in standings and ran
 ## Task 12: Update `EventRankingPdf`
 
 **Files:**
+
 - Modify: `src/lib/pdf/EventRankingPdf.tsx`
 
 - [ ] **Step 1: Update the PDF**
@@ -1441,6 +1487,7 @@ git commit -m "feat: use central formatRings/formatDecimal1 in EventRankingPdf"
 ## Task 13: Update `SeasonStandingsPdf`
 
 **Files:**
+
 - Modify: `src/lib/pdf/SeasonStandingsPdf.tsx`
 
 - [ ] **Step 1: Update the PDF**
@@ -1452,6 +1499,7 @@ import { formatRings, formatDecimal1 } from "@/lib/series/scoring-format"
 ```
 
 Delete the three local formatter functions (lines ~29–42):
+
 - `function formatRings(value: number | null): string { ... }`
 - `function formatTeiler(value: number | null): string { ... }`
 - `function formatRingteiler(value: number | null): string { ... }`
@@ -1489,6 +1537,7 @@ git commit -m "feat: replace local PDF formatters with central utilities in Seas
 ## Task 14: Update `SchedulePdf` and `PlayoffsPdf`
 
 **Files:**
+
 - Modify: `src/lib/pdf/SchedulePdf.tsx`
 - Modify: `src/lib/pdf/PlayoffsPdf.tsx`
 
@@ -1519,10 +1568,14 @@ Update rings display (line ~170):
 
 ```tsx
 // Before:
-{`${result.rings.toFixed(0)} R \u00b7 T ${result.teiler.toFixed(1)} \u00b7 RT `}
+{
+  ;`${result.rings.toFixed(0)} R \u00b7 T ${result.teiler.toFixed(1)} \u00b7 RT `
+}
 
 // After:
-{`${formatRings(result.rings, scoringType)} R \u00b7 T ${formatDecimal1(result.teiler)} \u00b7 RT `}
+{
+  ;`${formatRings(result.rings, scoringType)} R \u00b7 T ${formatDecimal1(result.teiler)} \u00b7 RT `
+}
 ```
 
 Update ringteiler display (line ~171):

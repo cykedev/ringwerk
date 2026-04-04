@@ -259,7 +259,14 @@ export async function saveSeasonSeries(
 
   const competition = await db.competition.findUnique({
     where: { id: competitionId },
-    select: { id: true, type: true, status: true, shotsPerSeries: true, disciplineId: true, scoringMode: true },
+    select: {
+      id: true,
+      type: true,
+      status: true,
+      shotsPerSeries: true,
+      disciplineId: true,
+      scoringMode: true,
+    },
   })
   if (!competition) return { error: "Wettbewerb nicht gefunden." }
   if (competition.type !== "SEASON") return { error: "Nur für Saison-Wettbewerbe." }
@@ -373,7 +380,14 @@ export async function updateSeasonSeries(
 
   const competition = await db.competition.findUnique({
     where: { id: competitionId },
-    select: { id: true, type: true, status: true, shotsPerSeries: true, disciplineId: true, scoringMode: true },
+    select: {
+      id: true,
+      type: true,
+      status: true,
+      shotsPerSeries: true,
+      disciplineId: true,
+      scoringMode: true,
+    },
   })
   if (!competition) return { error: "Wettbewerb nicht gefunden." }
   if (competition.type !== "SEASON") return { error: "Nur für Saison-Wettbewerbe." }

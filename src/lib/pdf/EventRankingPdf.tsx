@@ -35,17 +35,17 @@ function rankBadgeColor(rank: number): string {
   return "#9ca3af"
 }
 
-function formatScore(score: number, mode: string): string {
+function formatScore(score: number, mode: ScoringMode): string {
   if (mode === "TARGET_UNDER" && score >= 1e9) {
-    return `+${(score - 1e9).toFixed(1)}`
+    return `+${(score - 1e9).toFixed(1).replace(".", ",")}`
   }
   if (mode === "TARGET_OVER" && score >= 1e9) {
-    return `-${(score - 1e9).toFixed(1)}`
+    return `-${(score - 1e9).toFixed(1).replace(".", ",")}`
   }
   if (mode === "RINGS" || mode === "DECIMAL_REST") {
     return score.toFixed(0)
   }
-  return score.toFixed(1)
+  return score.toFixed(1).replace(".", ",")
 }
 
 // ─── Spaltenbreiten (Portrait A4, 515pt nutzbar) ──────────────────────────────
@@ -175,7 +175,10 @@ function RankingTable({
             )}
 
             <Text style={[styles.tableCell, { width: W.rings }]}>
-              {formatRings(entry.rings, getEffectiveScoringType(scoringMode, { scoringType: entry.disciplineScoringType }))}
+              {formatRings(
+                entry.rings,
+                getEffectiveScoringType(scoringMode, { scoringType: entry.disciplineScoringType })
+              )}
             </Text>
             <Text style={[styles.tableCell, { width: W.teiler, color: PDF_COLORS.muted }]}>
               {teilerValue}

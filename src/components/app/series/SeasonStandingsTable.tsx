@@ -149,7 +149,9 @@ export function SeasonStandingsTable({
                   <div className="flex items-center justify-end gap-1.5">
                     {entry.bestRings !== null ? (
                       <>
-                        <span>{formatRings(entry.bestRings, entry.bestRingsScoringType ?? "WHOLE")}</span>
+                        <span>
+                          {formatRings(entry.bestRings, entry.bestRingsScoringType ?? "WHOLE")}
+                        </span>
                         <RankBadge rank={entry.bestRings_rank ?? idx + 1} />
                       </>
                     ) : (

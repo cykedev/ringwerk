@@ -516,7 +516,13 @@ function DetailSection({
             Achtelfinale
           </Text>
           {af.map((m, i) => (
-            <MatchDetail key={m.id} match={m} index={i} total={af.length} scoringType={scoringType} />
+            <MatchDetail
+              key={m.id}
+              match={m}
+              index={i}
+              total={af.length}
+              scoringType={scoringType}
+            />
           ))}
         </View>
       )}
@@ -532,7 +538,13 @@ function DetailSection({
             Viertelfinale
           </Text>
           {qf.map((m, i) => (
-            <MatchDetail key={m.id} match={m} index={i} total={qf.length} scoringType={scoringType} />
+            <MatchDetail
+              key={m.id}
+              match={m}
+              index={i}
+              total={qf.length}
+              scoringType={scoringType}
+            />
           ))}
         </View>
       )}
@@ -548,7 +560,13 @@ function DetailSection({
             Halbfinale
           </Text>
           {hf.map((m, i) => (
-            <MatchDetail key={m.id} match={m} index={i} total={hf.length} scoringType={scoringType} />
+            <MatchDetail
+              key={m.id}
+              match={m}
+              index={i}
+              total={hf.length}
+              scoringType={scoringType}
+            />
           ))}
         </View>
       )}

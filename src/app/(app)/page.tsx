@@ -115,7 +115,10 @@ export default async function DashboardPage() {
                       bracket={bracket}
                       canManage={false}
                       compact={true}
-                      scoringType={getEffectiveScoringType(competition.scoringMode, competition.discipline)}
+                      scoringType={getEffectiveScoringType(
+                        competition.scoringMode,
+                        competition.discipline
+                      )}
                       shotsPerSeries={competition.shotsPerSeries}
                     />
                     <div className="flex justify-end">

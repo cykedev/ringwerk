@@ -112,8 +112,8 @@ export function SeasonParticipantItem({
                     s.rings,
                     getEffectiveScoringType(
                       scoringMode,
-                      disciplines?.find((d) => d.id === s.disciplineId) ?? null,
-                    ),
+                      disciplines?.find((d) => d.id === s.disciplineId) ?? null
+                    )
                   )}{" "}
                   Ringe · Teiler {formatDecimal1(s.teiler)} · RT {formatDecimal1(s.ringteiler)}
                 </p>

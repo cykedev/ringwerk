@@ -132,8 +132,8 @@ export default async function SeriesPage({ params }: Props) {
                           series.rings,
                           getEffectiveScoringType(
                             competition.scoringMode,
-                            cp.discipline ?? competition.discipline,
-                          ),
+                            cp.discipline ?? competition.discipline
+                          )
                         )}{" "}
                         Ringe · Teiler {formatDecimal1(series.teiler)}
                       </p>
@@ -153,7 +153,7 @@ export default async function SeriesPage({ params }: Props) {
                       scoringType={getEffectiveScoringType(
                         competition.scoringMode,
                         // For mixed competitions, use the participant's own discipline
-                        cp.discipline ?? competition.discipline,
+                        cp.discipline ?? competition.discipline
                       )}
                       shotsPerSeries={competition.shotsPerSeries}
                       existingSeries={series}

@@ -210,8 +210,18 @@ describe("rankEventParticipants", () => {
 
   it("enthält disciplineScoringType aus der Disziplin der Serie", () => {
     const series = [
-      makeSeries({ participantId: "p1", rings: 96, teiler: 3.7, discipline: { name: "LG", teilerFaktor: 1.0, scoringType: "WHOLE" as const } }),
-      makeSeries({ participantId: "p2", rings: 104.5, teiler: 2.1, discipline: { name: "LGA", teilerFaktor: 1.8, scoringType: "DECIMAL" as const } }),
+      makeSeries({
+        participantId: "p1",
+        rings: 96,
+        teiler: 3.7,
+        discipline: { name: "LG", teilerFaktor: 1.0, scoringType: "WHOLE" as const },
+      }),
+      makeSeries({
+        participantId: "p2",
+        rings: 104.5,
+        teiler: 2.1,
+        discipline: { name: "LGA", teilerFaktor: 1.8, scoringType: "DECIMAL" as const },
+      }),
     ]
     const result = rankEventParticipants(series, BASE_CONFIG)
     const p1 = result.find((e) => e.participantId === "p1")!

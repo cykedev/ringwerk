@@ -168,7 +168,9 @@ function PlayerCell({
       {result && (
         <Text style={styles.resultSmall}>
           {`${formatRings(result.rings, scoringType)} R \u00b7 T ${formatDecimal1(result.teiler)} \u00b7 RT `}
-          <Text style={isWinner ? styles.resultSmallRT : {}}>{formatDecimal1(result.ringteiler)}</Text>
+          <Text style={isWinner ? styles.resultSmallRT : {}}>
+            {formatDecimal1(result.ringteiler)}
+          </Text>
         </Text>
       )}
     </View>
