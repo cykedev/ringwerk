@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { ChevronUp } from "lucide-react"
 import type { SeasonStandingsEntry } from "@/lib/scoring/calculateSeasonStandings"
+import { formatRings, formatDecimal1 } from "@/lib/series/scoring-format"
 import { RankBadge } from "@/components/ui/rank-badge"
 
 type SortCol = "rings" | "teiler" | "ringteiler"
@@ -148,7 +149,7 @@ export function SeasonStandingsTable({
                   <div className="flex items-center justify-end gap-1.5">
                     {entry.bestRings !== null ? (
                       <>
-                        <span>{entry.bestRings}</span>
+                        <span>{formatRings(entry.bestRings, entry.bestRingsScoringType ?? "WHOLE")}</span>
                         <RankBadge rank={entry.bestRings_rank ?? idx + 1} />
                       </>
                     ) : (
@@ -160,7 +161,7 @@ export function SeasonStandingsTable({
                   <div className="flex items-center justify-end gap-1.5">
                     {entry.bestCorrectedTeiler !== null ? (
                       <>
-                        <span>{entry.bestCorrectedTeiler.toFixed(1)}</span>
+                        <span>{formatDecimal1(entry.bestCorrectedTeiler)}</span>
                         <RankBadge rank={entry.bestTeiler_rank ?? idx + 1} />
                       </>
                     ) : (
@@ -172,7 +173,7 @@ export function SeasonStandingsTable({
                   <div className="flex items-center justify-end gap-1.5">
                     {entry.bestRingteiler !== null ? (
                       <>
-                        <span>{entry.bestRingteiler.toFixed(1)}</span>
+                        <span>{formatDecimal1(entry.bestRingteiler)}</span>
                         <RankBadge rank={entry.bestRingteiler_rank ?? idx + 1} />
                       </>
                     ) : (

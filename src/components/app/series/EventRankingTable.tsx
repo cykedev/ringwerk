@@ -1,11 +1,13 @@
 import type { EventRankedEntry } from "@/lib/scoring/rankEventParticipants"
 import { SCORING_MODE_COLUMN_LABELS } from "@/lib/scoring/labels"
+import { formatRings, formatDecimal1, getEffectiveScoringType } from "@/lib/series/scoring-format"
+import type { ScoringMode } from "@/generated/prisma/client"
 import { Badge } from "@/components/ui/badge"
 import { RankBadge } from "@/components/ui/rank-badge"
 
 interface Props {
   entries: EventRankedEntry[]
-  scoringMode: string
+  scoringMode: ScoringMode
   isMixed?: boolean
   showTeam?: boolean
 }
@@ -20,8 +22,7 @@ export function EventRankingTable({
     return <p className="text-sm text-muted-foreground">Noch keine Ergebnisse erfasst.</p>
   }
 
-  const scoreLabel =
-    SCORING_MODE_COLUMN_LABELS[scoringMode as keyof typeof SCORING_MODE_COLUMN_LABELS] ?? "Score"
+  const scoreLabel = SCORING_MODE_COLUMN_LABELS[scoringMode] ?? "Score"
 
   return (
     <div className="overflow-hidden rounded-lg border bg-card">
@@ -64,9 +65,11 @@ export function EventRankingTable({
               <td className="px-3 py-2 text-muted-foreground hidden sm:table-cell">
                 {entry.disciplineName}
               </td>
-              <td className="px-3 py-2 text-right tabular-nums">{entry.rings}</td>
+              <td className="px-3 py-2 text-right tabular-nums">
+                {formatRings(entry.rings, getEffectiveScoringType(scoringMode, { scoringType: entry.disciplineScoringType }))}
+              </td>
               <td className="px-3 py-2 text-right tabular-nums text-muted-foreground hidden sm:table-cell">
-                {isMixed ? entry.correctedTeiler.toFixed(1) : entry.teiler.toFixed(1)}
+                {formatDecimal1(isMixed ? entry.correctedTeiler : entry.teiler)}
               </td>
               <td className="px-3 py-2 text-right tabular-nums font-medium">
                 {formatScore(entry.score, scoringMode)}
@@ -79,7 +82,7 @@ export function EventRankingTable({
   )
 }
 
-function formatScore(score: number, mode: string): string {
+function formatScore(score: number, mode: ScoringMode): string {
   if (mode === "TARGET_UNDER" && score >= 1e9) {
     return `+${(score - 1e9).toFixed(1)}`
   }

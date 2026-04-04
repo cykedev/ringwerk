@@ -1,4 +1,5 @@
 import type { StandingRow } from "@/lib/standings/queries"
+import { formatDecimal1 } from "@/lib/series/scoring-format"
 import { RankBadge } from "@/components/ui/rank-badge"
 
 interface Props {
@@ -106,7 +107,7 @@ export function StandingsTable({ rows }: Props) {
                   </span>
                 </td>
                 <td className="hidden px-4 py-3 text-right text-muted-foreground sm:table-cell">
-                  {row.bestRingteiler !== null ? row.bestRingteiler.toFixed(1) : "—"}
+                  {formatDecimal1(row.bestRingteiler)}
                 </td>
               </tr>
             )
