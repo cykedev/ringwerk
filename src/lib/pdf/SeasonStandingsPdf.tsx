@@ -4,6 +4,7 @@ import type { SeasonStandingsEntry } from "@/lib/scoring/calculateSeasonStanding
 import { styles, PDF_COLORS } from "@/lib/pdf/styles"
 import { SCORING_MODE_LABELS } from "@/lib/scoring/labels"
 import type { ScoringMode } from "@/lib/scoring/types"
+import { formatRings, formatDecimal1 } from "@/lib/series/scoring-format"
 
 // ─── Typen ────────────────────────────────────────────────────────────────────
 
@@ -24,21 +25,6 @@ export interface SeasonStandingsPdfProps {
 
 function formatDate(date: Date): string {
   return date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })
-}
-
-function formatRings(value: number | null): string {
-  if (value === null) return "–"
-  return value.toFixed(0)
-}
-
-function formatTeiler(value: number | null): string {
-  if (value === null) return "–"
-  return value.toFixed(1)
-}
-
-function formatRingteiler(value: number | null): string {
-  if (value === null) return "–"
-  return value.toFixed(1)
 }
 
 function rankBadgeColor(rank: number): string {
@@ -191,18 +177,18 @@ function StandingsTable({
                 {seriesText}
               </Text>
               <MetricCell
-                value={formatRings(entry.bestRings)}
+                value={formatRings(entry.bestRings, entry.bestRingsScoringType ?? "WHOLE")}
                 rank={entry.bestRings_rank}
                 width={W_WITH_SERIES.rings}
               />
               <MetricCell
-                value={formatTeiler(entry.bestCorrectedTeiler)}
+                value={formatDecimal1(entry.bestCorrectedTeiler)}
                 rank={entry.bestTeiler_rank}
                 width={W_WITH_SERIES.teiler}
                 muted
               />
               <MetricCell
-                value={formatRingteiler(entry.bestRingteiler)}
+                value={formatDecimal1(entry.bestRingteiler)}
                 rank={entry.bestRingteiler_rank}
                 width={W_WITH_SERIES.ringteiler}
               />
@@ -242,18 +228,18 @@ function StandingsTable({
               </Text>
             </View>
             <MetricCell
-              value={formatRings(entry.bestRings)}
+              value={formatRings(entry.bestRings, entry.bestRingsScoringType ?? "WHOLE")}
               rank={entry.bestRings_rank}
               width={W_NO_SERIES.rings}
             />
             <MetricCell
-              value={formatTeiler(entry.bestCorrectedTeiler)}
+              value={formatDecimal1(entry.bestCorrectedTeiler)}
               rank={entry.bestTeiler_rank}
               width={W_NO_SERIES.teiler}
               muted
             />
             <MetricCell
-              value={formatRingteiler(entry.bestRingteiler)}
+              value={formatDecimal1(entry.bestRingteiler)}
               rank={entry.bestRingteiler_rank}
               width={W_NO_SERIES.ringteiler}
             />
