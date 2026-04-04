@@ -14,8 +14,10 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { RingsInput } from "@/components/app/series/RingsInput"
 import { saveMatchResult } from "@/lib/results/actions"
 import type { MatchResultSummary } from "@/lib/matchups/types"
+import type { ScoringType } from "@/generated/prisma/client"
 
 interface ParticipantResult {
   rings: string
@@ -31,6 +33,8 @@ interface Props {
   /** Existierende Ergebnisse für Vorausfüllung bei Korrektur */
   existingResults: MatchResultSummary[]
   isCorrection: boolean
+  scoringType: ScoringType
+  shotsPerSeries: number
 }
 
 function getExisting(
@@ -48,6 +52,8 @@ export function ResultEntryDialog({
   awayParticipantId,
   existingResults,
   isCorrection,
+  scoringType,
+  shotsPerSeries,
 }: Props) {
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -143,14 +149,12 @@ export function ResultEntryDialog({
                 <Label htmlFor="home-rings" className="text-xs text-muted-foreground">
                   Gesamtringe
                 </Label>
-                <Input
+                <RingsInput
                   id="home-rings"
-                  type="number"
-                  step="0.1"
-                  min="0"
+                  scoringType={scoringType}
+                  shotsPerSeries={shotsPerSeries}
                   value={home.rings}
                   onChange={(e) => setHome((p) => ({ ...p, rings: e.target.value }))}
-                  placeholder="z.B. 96"
                 />
               </div>
               <div className="space-y-1">
@@ -159,12 +163,11 @@ export function ResultEntryDialog({
                 </Label>
                 <Input
                   id="home-teiler"
-                  type="number"
-                  step="0.1"
-                  min="0"
+                  type="text"
+                  inputMode="decimal"
                   value={home.teiler}
                   onChange={(e) => setHome((p) => ({ ...p, teiler: e.target.value }))}
-                  placeholder="z.B. 3.7"
+                  placeholder="z.B. 3,7"
                 />
               </div>
             </div>
@@ -185,14 +188,12 @@ export function ResultEntryDialog({
                 <Label htmlFor="away-rings" className="text-xs text-muted-foreground">
                   Gesamtringe
                 </Label>
-                <Input
+                <RingsInput
                   id="away-rings"
-                  type="number"
-                  step="0.1"
-                  min="0"
+                  scoringType={scoringType}
+                  shotsPerSeries={shotsPerSeries}
                   value={away.rings}
                   onChange={(e) => setAway((p) => ({ ...p, rings: e.target.value }))}
-                  placeholder="z.B. 94"
                 />
               </div>
               <div className="space-y-1">
@@ -201,12 +202,11 @@ export function ResultEntryDialog({
                 </Label>
                 <Input
                   id="away-teiler"
-                  type="number"
-                  step="0.1"
-                  min="0"
+                  type="text"
+                  inputMode="decimal"
                   value={away.teiler}
                   onChange={(e) => setAway((p) => ({ ...p, teiler: e.target.value }))}
-                  placeholder="z.B. 5.0"
+                  placeholder="z.B. 5,0"
                 />
               </div>
             </div>

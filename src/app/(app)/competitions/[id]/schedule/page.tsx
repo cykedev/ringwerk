@@ -6,6 +6,7 @@ import { getCompetitionById } from "@/lib/competitions/queries"
 import { getMatchupsForCompetition, getScheduleStatus } from "@/lib/matchups/queries"
 import { hasPlayoffsStarted } from "@/lib/playoffs/queries"
 import { getStandingsForCompetition } from "@/lib/standings/queries"
+import { getEffectiveScoringType } from "@/lib/series/scoring-format"
 import { GenerateScheduleButton } from "@/components/app/matchups/GenerateScheduleButton"
 import { ScheduleView } from "@/components/app/matchups/ScheduleView"
 import { StandingsTable } from "@/components/app/standings/StandingsTable"
@@ -34,6 +35,7 @@ export default async function CompetitionSchedulePage({ params }: Props) {
   if (competition.type !== "LEAGUE") redirect(`/competitions/${id}/ranking`)
 
   const canManage = session.user.role === "ADMIN" || session.user.role === "MANAGER"
+  const scoringType = getEffectiveScoringType(competition.scoringMode, competition.discipline)
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
@@ -92,6 +94,8 @@ export default async function CompetitionSchedulePage({ params }: Props) {
         canManage={canManage}
         playoffsStarted={playoffsStarted}
         scoringMode={competition.scoringMode}
+        scoringType={scoringType}
+        shotsPerSeries={competition.shotsPerSeries}
       />
 
       {/* Tabelle */}

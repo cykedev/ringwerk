@@ -1,7 +1,7 @@
 import { Clock } from "lucide-react"
 import { formatDateOnly, getDisplayTimeZone } from "@/lib/dateTime"
 import { determineOutcome } from "@/lib/results/calculateResult"
-import type { ScoringMode } from "@/generated/prisma/client"
+import type { ScoringMode, ScoringType } from "@/generated/prisma/client"
 import type { MatchupListItem, MatchupParticipant, MatchResultSummary } from "@/lib/matchups/types"
 import { ResultEntryDialog } from "@/components/app/results/ResultEntryDialog"
 
@@ -15,6 +15,8 @@ interface Props {
   /** Keine Erfassung/Korrektur mehr möglich wenn Playoffs laufen */
   playoffsStarted?: boolean
   scoringMode?: ScoringMode
+  scoringType: ScoringType
+  shotsPerSeries: number
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -68,12 +70,16 @@ function LegTable({
   deadline,
   canManage,
   scoringMode,
+  scoringType,
+  shotsPerSeries,
 }: {
   title: string
   matchups: MatchupListItem[]
   deadline: Date | null
   canManage: boolean
   scoringMode: ScoringMode
+  scoringType: ScoringType
+  shotsPerSeries: number
 }) {
   const tz = getDisplayTimeZone()
 
@@ -175,6 +181,8 @@ function LegTable({
                           awayParticipantId={m.awayParticipant.id}
                           existingResults={m.results}
                           isCorrection={isCompleted}
+                          scoringType={scoringType}
+                          shotsPerSeries={shotsPerSeries}
                         />
                       )}
                     </td>
@@ -225,6 +233,8 @@ export function ScheduleView({
   canManage,
   playoffsStarted = false,
   scoringMode = "RINGTEILER",
+  scoringType,
+  shotsPerSeries,
 }: Props) {
   if (matchups.length === 0) {
     return (
@@ -251,6 +261,8 @@ export function ScheduleView({
           deadline={hinrundeDeadline}
           canManage={canManage && !playoffsStarted}
           scoringMode={scoringMode}
+          scoringType={scoringType}
+          shotsPerSeries={shotsPerSeries}
         />
       )}
       {secondLeg.length > 0 && (
@@ -260,6 +272,8 @@ export function ScheduleView({
           deadline={rueckrundeDeadline}
           canManage={canManage && !playoffsStarted}
           scoringMode={scoringMode}
+          scoringType={scoringType}
+          shotsPerSeries={shotsPerSeries}
         />
       )}
     </div>
