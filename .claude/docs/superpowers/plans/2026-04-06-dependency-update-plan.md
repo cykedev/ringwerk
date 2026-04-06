@@ -32,6 +32,7 @@
 ## Task 1: Sichere Updates (npm update)
 
 **Files:**
+
 - Modify: `package-lock.json` (automatisch)
 
 - [ ] **Step 1: npm update ausführen**
@@ -83,6 +84,7 @@ EOF
 ## Task 2: Next.js-Ökosystem (16.1.6 → 16.2.2)
 
 **Files:**
+
 - Modify: `package.json`
 - Modify: `package-lock.json` (automatisch)
 
@@ -125,6 +127,7 @@ git commit -m "chore: upgrade next + eslint-config-next to 16.2.2"
 ## Task 3: Build-Toolchain (TypeScript 6, ESLint 10, @vitejs/plugin-react 6, shadcn 4)
 
 **Files:**
+
 - Modify: `package.json`
 - Modify: `eslint.config.mjs` — falls ESLint 10 Config-Änderungen nötig
 - Modify: `vitest.config.ts` — falls @vitejs/plugin-react 6 Breaking Changes
@@ -153,6 +156,7 @@ npx tsc --noEmit
 ```
 
 TypeScript 6 ist stricter bei:
+
 - Impliziten `any`-Typen in Callbacks
 - Module-Resolution-Änderungen
 - Template-Literal-Typen
@@ -166,6 +170,7 @@ npm run lint
 ```
 
 ESLint 10 Breaking Changes:
+
 - Veraltete Core-Rules wurden entfernt — falls verwendet, ersetzen oder Rule entfernen
 - `eslint.config.mjs` bleibt im Flat Config Format (unverändert)
 
@@ -208,6 +213,7 @@ EOF
 ## Task 4: lucide-react 1.x
 
 **Files:**
+
 - Modify: `package.json`
 - Modify: `package-lock.json` (automatisch)
 - Modify: `src/**/*.tsx` — Icon-Import-Fixes falls nötig (46 Dateien nutzen lucide-react)
@@ -231,11 +237,13 @@ npx tsc --noEmit
 ```
 
 Bekannte Breaking Changes in lucide-react 1.x:
+
 - `LucideIcon` ist weiterhin als Typ exportiert — Import-Pfad bleibt gleich
 - Einzelne Icon-Namen wurden in der 0.x-Serie deprecated und in 1.x entfernt
 - Jeden TypeScript-Fehler nachschlagen: welches Icon fehlt, Ersatz suchen unter https://lucide.dev/icons
 
 Für jeden `Module '"lucide-react"' has no exported member 'XyzIcon'`-Fehler:
+
 1. Neuen Icon-Namen auf lucide.dev suchen
 2. Import in der betroffenen Datei ersetzen
 
@@ -259,6 +267,7 @@ git commit -m "chore: upgrade lucide-react to 1.x"
 ## Task 5: recharts 3.x
 
 **Files:**
+
 - Modify: `package.json`
 - Modify: `package-lock.json` (automatisch)
 - Modify: `src/components/ui/chart.tsx` — falls recharts 3 API-Änderungen
@@ -282,12 +291,14 @@ npx tsc --noEmit
 ```
 
 `chart.tsx` importiert recharts als `import * as RechartsPrimitive from "recharts"` und nutzt:
+
 - `RechartsPrimitive.ResponsiveContainer`
 - `RechartsPrimitive.Tooltip`
 - `RechartsPrimitive.Legend`
 - `RechartsPrimitive.LegendProps`
 
 Bekannte Breaking Changes in recharts 3.x:
+
 - `ResponsiveContainer` wurde überarbeitet — Prop-Typen können sich geändert haben
 - Einige deprecated Props wurden entfernt
 - Jeden TypeScript-Fehler in `chart.tsx` anhand des recharts 3 Changelogs fixen
