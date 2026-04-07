@@ -18,12 +18,11 @@
 | ----------------- | ------------------------ | ------------ |
 | Framework         | Next.js App Router       | 16.x         |
 | Runtime           | React                    | 19.x         |
-| Sprache           | TypeScript (strict)      | 5.x          |
+| Sprache           | TypeScript (strict)      | 6.x          |
 | Datenbank         | PostgreSQL               | 15.x         |
 | ORM               | Prisma                   | 7.x          |
 | Authentifizierung | NextAuth.js              | 4.x (stabil) |
 | UI-Komponenten    | shadcn/ui + Tailwind CSS | Tailwind 4.x |
-| Charts            | Recharts                 | 2.x          |
 | Tests             | Vitest                   | aktuell      |
 | Package Manager   | npm                      | –            |
 | Container         | Docker + Docker Compose  | –            |
