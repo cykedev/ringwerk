@@ -536,7 +536,7 @@ export async function createLeague(formData: FormData): Promise<ActionResult>
 
 ## Aus Lernlog übernommen
 
-<!-- Zuletzt konsolidiert: 2026-04-04 -->
+<!-- Zuletzt konsolidiert: 2026-04-06 -->
 
 ### Prisma-Queries (ergänzt)
 
@@ -551,6 +551,12 @@ export async function createLeague(formData: FormData): Promise<ActionResult>
 - **Migrationen NIE nachträglich editieren**: Bereits angewendete Migration → Drift-Error bei erneutem `migrate dev`. Stattdessen neue Migration anlegen.
 - **`npx prisma generate` nach jeder Migration**: `prisma migrate dev` führt `prisma generate` NICHT automatisch aus. Vor Typecheck oder Build immer manuell aufrufen.
 - **Partielle Unique-Indizes für nullable FK-Felder**: Wenn ein nullable FK die Eindeutigkeitsbedingung kontrolliert, partielle Indizes statt globaler `@@unique`-Constraints verwenden (`WHERE col IS NULL` vs. `WHERE col IS NOT NULL`). Globale Unique-Indexes behandeln NULLs als distinct und erlauben dadurch Duplikate.
+
+### Dependency-Management
+
+- **ESLint + framework config compatibility**: When upgrading ESLint major versions, verify that framework config packages (e.g. `eslint-config-next`) bundle compatible plugin versions. Upgrade both together or not at all.
+- **Audit unused dependencies before upgrades**: Before upgrading dependencies, verify they are actually imported in the codebase. `npm outdated` won't flag unused packages — use grep to confirm usage.
+- **`npm update` only changes the lock file**: `npm update` resolves newer versions within existing semver ranges and writes to `package-lock.json` only. It does not modify `package.json` — this is correct behavior, not a bug.
 
 ### Prisma-Queries
 
