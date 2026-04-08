@@ -244,7 +244,7 @@ Alle Teilnehmer schiessen, eine Rangliste wird erstellt.
 | disciplineId    | null = gemischt (Faktor aktiv), oder fixe Disziplin       |
 | eventDate       | Veranstaltungsdatum                                       |
 | allowGuests     | Gastteilnehmer zugelassen                                 |
-| teamSize        | null = Einzel; 2+ = Teamgröße (noch nicht implementiert)  |
+| teamSize        | null = Einzel; 2+ = Teamgröße                             |
 | targetValue     | Zielwert für TARGET-Modi (z.B. 512 oder 76.0)             |
 | targetValueType | TEILER, RINGS oder RINGS_DECIMAL                          |
 
@@ -287,13 +287,14 @@ Nur bei Events. Drei Varianten:
 
 Bei Teiler-basiertem Zielwert: Faktor-Korrektur wird auf den gemessenen Teiler angewendet. Der Zielwert ist im korrigierten Raum definiert.
 
-### Team-Erweiterung (spätere Phase)
+### Team-Events ✓
 
 - teamSize auf Competition setzen (z.B. 2 für Zweierteams)
 - Admin teilt Teams ein
 - Jedes Teammitglied schießt eine Serie
-- Team-Ergebnis = Summe der Einzelergebnisse
-- Ranking nach Team-Ergebnis
+- Team-Ergebnis = Summe der Einzelergebnisse (teamScoring: "SUM")
+- Ranking nach Team-Ergebnis (`rankEventTeams`, `EventTeamRankingTable`)
+- PDF-Export und Dashboard-Integration vorhanden
 
 ---
 
