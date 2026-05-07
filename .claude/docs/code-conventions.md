@@ -536,7 +536,7 @@ export async function createLeague(formData: FormData): Promise<ActionResult>
 
 ## Aus Lernlog übernommen
 
-<!-- Zuletzt konsolidiert: 2026-04-06 -->
+<!-- Zuletzt konsolidiert: 2026-05-07 -->
 
 ### Prisma-Queries (ergänzt)
 
@@ -570,6 +570,7 @@ export async function createLeague(formData: FormData): Promise<ActionResult>
 - **Neue Relationsfelder vor Core-Logic definieren**: Schema-Felder anlegen und migrieren, bevor Queries + Actions implementiert werden. Umgekehrte Reihenfolge zwingt zu manuellen Migrations-Workarounds.
 - **`db push` nur für schnelle Exploration**: Nie für Dev-Persistenz. Wenn Drift auftritt: `prisma migrate reset --force`, dann `migrate dev` neu aufsetzen.
 - **`$transaction` nur bei mehreren atomaren Operationen**: Einfache Einzellöschungen/-updates nie in `$transaction` wrappen — erhöht Komplexität ohne Nutzen.
+- **FK-Feldnamen vor Bottom-up-Lösch-Transaktionen aus schema.prisma verifizieren**: Nie raten — die exakten FK-Feldnamen im Schema ablesen. Z.B. `Matchup.homeParticipantId`/`awayParticipantId` (nicht `homeId`/`awayId`), `PlayoffMatch.participantAId`/`participantBId`.
 
 ### Typen & Props
 

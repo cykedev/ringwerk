@@ -375,6 +375,18 @@ Ringteiler muss aus **derselben Serie** stammen (Ringe und Teiler gehören zusam
 - **Auto-Cleanup**: Wenn Gast abgemeldet wird, werden stiller Datensatz und Serien automatisch gelöscht
 - Kein Login erforderlich — Ergebnisse werden vom Admin erfasst
 
+### Löschen inaktiver Teilnehmer ✓ IMPLEMENTIERT
+
+- Nur **inaktive** Teilnehmer (isActive = false) dürfen gelöscht werden
+- **Normales Löschen** (keine Wettbewerbshistorie): ADMIN + MANAGER
+- **Force-Delete** (Teilnehmer mit Wettbewerbsdaten): nur ADMIN
+- Adaptiver Dialog (drei Varianten basierend auf Rolle und Datenlage):
+  1. Keine Historie → einfache Bestätigung
+  2. Historie vorhanden + kein Admin → Info "Löschen nicht möglich"
+  3. Historie vorhanden + Admin → Namenseingabe zur Bestätigung
+- Force-Delete löscht kaskadierend: PlayoffMatches, PlayoffDuels, Matchups inkl. Serien des Gegners, verbleibende Serien, CompetitionParticipant, Participant
+- Protokollierung: `PARTICIPANT_DELETED` (normales Löschen) / `PARTICIPANT_FORCE_DELETED` (Admin-Force-Delete)
+
 ### Rückzug (nur Liga)
 
 - Jederzeit möglich (auch nach gespielten Runden)
@@ -468,9 +480,11 @@ Die Seite `/competitions` zeigt Wettbewerbe in Karten mit:
 
 | Ereignis              | Auslöser                  |
 | --------------------- | ------------------------- |
-| PLAYOFF_DUEL_DELETED  | Playoff-Duell gelöscht    |
-| EVENT_SERIES_DELETED  | Serie bei Event gelöscht  |
-| SEASON_SERIES_DELETED | Serie bei Saison gelöscht |
+| PLAYOFF_DUEL_DELETED      | Playoff-Duell gelöscht                      |
+| EVENT_SERIES_DELETED      | Serie bei Event gelöscht                    |
+| SEASON_SERIES_DELETED     | Serie bei Saison gelöscht                   |
+| PARTICIPANT_DELETED       | Inaktiver Teilnehmer ohne Historien gelöscht |
+| PARTICIPANT_FORCE_DELETED | Admin-Force-Delete inkl. aller historischen Daten |
 
 ### Kategorie: Admin (admin)
 

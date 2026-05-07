@@ -234,7 +234,7 @@ Page-Header-Pattern:
 
 ## Aus Lernlog übernommen
 
-<!-- Zuletzt konsolidiert: 2026-03-26 -->
+<!-- Zuletzt konsolidiert: 2026-05-07 -->
 
 ### Layout & Grid
 
@@ -248,6 +248,7 @@ Page-Header-Pattern:
 - **Kein `prompt()`/`confirm()`/`alert()` in async-Callbacks**: Wird auf iOS Safari geblockt. Immer shadcn `Dialog` (Formulare) oder `AlertDialog` (Bestätigung) verwenden.
 - **SVG-Icon als einziger Zelleninhalt**: In `<span className="inline-flex items-center justify-center">` wrappen für zuverlässige Zentrierung in `<td>`.
 - **Spacing-Verhältnis für gestapelte Karten**: `cardHeight × 0.5 = gap` als Faustregel. Bei 80px Kartenhöhe mindestens 40–48px Gap für optisches Gleichgewicht.
+- **Adaptive AlertDialogs mit mehreren Varianten**: Mehrere `AlertDialogContent`-Blöcke in einem `AlertDialog` funktionieren korrekt, wenn ihre Bedingungen sich gegenseitig ausschliessen (z.B. `!hasData`, `hasData && !isAdmin`, `hasData && isAdmin`). Kein separater Dialog-State pro Variante nötig — Bedingung direkt auf den Content-Block anwenden.
 
 ### PDF-Rendering (react-pdf)
 
