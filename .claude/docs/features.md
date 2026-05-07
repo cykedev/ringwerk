@@ -363,6 +363,7 @@ Ringteiler muss aus **derselben Serie** stammen (Ringe und Teiler gehören zusam
 - Felder: Name, Vorname, Kontaktmoeglichkeit (E-Mail oder Telefon, optional)
 - Teilnahme in mehreren Wettbewerben gleichzeitig moeglich
 - Startnummer pro Wettbewerb (optional)
+- **PDF-Export:** Aktive Vereinsmitglieder als druckbare Bürodienst-Liste (`GET /api/participants/pdf`): Spalten Name, Disziplin, Einlage (leer, manuell), Teilnahme und Geschossen (Kästchen zum Abhaken), 10 Leerzeilen für Spontanstarter. Nur für ADMIN/MANAGER.
 
 ### Gastschützen
 
