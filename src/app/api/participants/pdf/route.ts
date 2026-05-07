@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { renderToBuffer, type DocumentProps } from "@react-pdf/renderer"
 import { createElement, type ReactElement } from "react"
-import { getAuthSession } from "@/lib/auth-helpers"
+import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import { getParticipants } from "@/lib/participants/queries"
 import { ParticipantListPdf } from "@/lib/pdf/ParticipantListPdf"
 
@@ -9,6 +9,9 @@ export async function GET(_req: NextRequest): Promise<NextResponse> {
   const session = await getAuthSession()
   if (!session) {
     return new NextResponse("Nicht angemeldet", { status: 401 })
+  }
+  if (!canManage(session.user.role)) {
+    return new NextResponse("Keine Berechtigung", { status: 403 })
   }
 
   const participants = await getParticipants()
