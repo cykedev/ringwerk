@@ -59,6 +59,8 @@ export default async function ParticipantsPage() {
                   lastName={p.lastName}
                   contact={p.contact}
                   isActive={p.isActive}
+                  isAdmin={session.user.role === "ADMIN"}
+                  competitionsCount={p._count.competitions}
                 />
               </div>
             ))}
@@ -85,6 +87,8 @@ export default async function ParticipantsPage() {
                     lastName={p.lastName}
                     contact={p.contact}
                     isActive={p.isActive}
+                    isAdmin={session.user.role === "ADMIN"}
+                    competitionsCount={p._count.competitions}
                   />
                 </div>
               ))}
