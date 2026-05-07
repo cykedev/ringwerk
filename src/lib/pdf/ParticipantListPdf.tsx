@@ -1,8 +1,9 @@
 import { Document, Page, View, Text } from "@react-pdf/renderer"
-import type { ReactElement } from "react"
+import type { ReactElement, ReactNode } from "react"
 import { styles } from "@/lib/pdf/styles"
 
 const W = { name: 200, disziplin: 115, einlage: 60, teilnahme: 70, geschossen: 70 }
+const ROW_H = 28
 const EMPTY_ROWS = 10
 
 function formatDate(date: Date): string {
@@ -15,6 +16,37 @@ function formatDate(date: Date): string {
 
 function Checkbox(): ReactElement {
   return <View style={styles.checkbox} />
+}
+
+function Cell({
+  children,
+  width,
+  borderRight = false,
+  paddingLeft = 0,
+  align = "flex-start",
+}: {
+  children: ReactNode
+  width: number
+  borderRight?: boolean
+  paddingLeft?: number
+  align?: "flex-start" | "center"
+}): ReactElement {
+  return (
+    <View
+      style={{
+        width,
+        height: ROW_H,
+        paddingLeft,
+        justifyContent: "center",
+        alignItems: align,
+        borderRightWidth: borderRight ? 1 : 0,
+        borderRightColor: "#dddddd",
+        borderRightStyle: "solid",
+      }}
+    >
+      {children}
+    </View>
+  )
 }
 
 function PdfHeader({ generatedAt }: { generatedAt: Date }): ReactElement {
@@ -47,10 +79,12 @@ export function ParticipantListPdf({
           {/* Kopfzeile */}
           <View style={styles.tableHeaderRow}>
             <Text style={[styles.tableHeaderCellLeft, { width: W.name }]}>Name</Text>
-            <Text style={[styles.tableHeaderCellLeft, { width: W.disziplin }]}>Disziplin</Text>
+            <Text style={[styles.tableHeaderCellLeft, { width: W.disziplin, paddingLeft: 5 }]}>
+              Disziplin
+            </Text>
             <Text style={[styles.tableHeaderCell, { width: W.einlage }]}>Einlage</Text>
             <Text style={[styles.tableHeaderCell, { width: W.teilnahme }]}>Teilnahme</Text>
-            <Text style={[styles.tableHeaderCell, { width: W.geschossen }]}>Hat geschossen</Text>
+            <Text style={[styles.tableHeaderCell, { width: W.geschossen }]}>Geschossen</Text>
           </View>
 
           {/* Teilnehmer-Zeilen */}
@@ -58,19 +92,28 @@ export function ParticipantListPdf({
             <View
               key={`${p.lastName}-${p.firstName}-${idx}`}
               wrap={false}
-              style={[styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}]}
+              style={[
+                { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: "#eeeeee", borderBottomStyle: "solid" },
+                idx % 2 === 1 ? styles.tableRowAlt : {},
+              ]}
             >
-              <Text style={[styles.tableCellLeft, { width: W.name }]}>
-                {p.lastName}, {p.firstName}
-              </Text>
-              <Text style={[styles.tableCellLeft, { width: W.disziplin }]}> </Text>
-              <Text style={[styles.tableCell, { width: W.einlage }]}> </Text>
-              <View style={{ width: W.teilnahme, alignItems: "center" }}>
+              <Cell width={W.name} borderRight paddingLeft={8}>
+                <Text style={styles.tableCellLeft}>
+                  {p.lastName}, {p.firstName}
+                </Text>
+              </Cell>
+              <Cell width={W.disziplin} borderRight paddingLeft={5}>
+                <Text style={styles.tableCellLeft}> </Text>
+              </Cell>
+              <Cell width={W.einlage} borderRight align="center">
+                <Text style={styles.tableCell}> </Text>
+              </Cell>
+              <Cell width={W.teilnahme} align="center">
                 <Checkbox />
-              </View>
-              <View style={{ width: W.geschossen, alignItems: "center" }}>
+              </Cell>
+              <Cell width={W.geschossen} align="center">
                 <Checkbox />
-              </View>
+              </Cell>
             </View>
           ))}
 
@@ -79,17 +122,29 @@ export function ParticipantListPdf({
             <View
               key={`empty-${i}`}
               wrap={false}
-              style={[styles.tableRow, { backgroundColor: "#fafafa" }]}
+              style={{
+                flexDirection: "row",
+                borderBottomWidth: 1,
+                borderBottomColor: "#eeeeee",
+                borderBottomStyle: "solid",
+                backgroundColor: "#fafafa",
+              }}
             >
-              <Text style={[styles.tableCellLeft, { width: W.name }]}> </Text>
-              <Text style={[styles.tableCellLeft, { width: W.disziplin }]}> </Text>
-              <Text style={[styles.tableCell, { width: W.einlage }]}> </Text>
-              <View style={{ width: W.teilnahme, alignItems: "center" }}>
+              <Cell width={W.name} borderRight paddingLeft={8}>
+                <Text style={styles.tableCellLeft}> </Text>
+              </Cell>
+              <Cell width={W.disziplin} borderRight paddingLeft={5}>
+                <Text style={styles.tableCellLeft}> </Text>
+              </Cell>
+              <Cell width={W.einlage} borderRight align="center">
+                <Text style={styles.tableCell}> </Text>
+              </Cell>
+              <Cell width={W.teilnahme} align="center">
                 <Checkbox />
-              </View>
-              <View style={{ width: W.geschossen, alignItems: "center" }}>
+              </Cell>
+              <Cell width={W.geschossen} align="center">
                 <Checkbox />
-              </View>
+              </Cell>
             </View>
           ))}
         </View>
