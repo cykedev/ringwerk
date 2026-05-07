@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useActionState } from "react"
+import { useState, useActionState, useEffect } from "react"
 import { Pencil, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -50,10 +50,11 @@ export function EventSeriesDialog({
   const generalError =
     state && "error" in state && typeof state.error === "string" ? state.error : null
 
-  // Dialog nach Erfolg schließen
-  if (state && "success" in state && state.success && open) {
-    setOpen(false)
-  }
+  useEffect(() => {
+    if (state && "success" in state && state.success) {
+      setOpen(false)
+    }
+  }, [state])
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
