@@ -6,6 +6,7 @@ import { getParticipantsForManagement } from "@/lib/participants/queries"
 import { ParticipantRowActions } from "@/components/app/participants/ParticipantRowActions"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { PdfDownloadButton } from "@/components/app/shared/PdfDownloadButton"
 
 export default async function ParticipantsPage() {
   const session = await getAuthSession()
@@ -22,12 +23,15 @@ export default async function ParticipantsPage() {
           <h1 className="text-2xl font-semibold">Teilnehmer</h1>
           <p className="text-sm text-muted-foreground mt-1">Alle Schützen des Vereins</p>
         </div>
-        <Button asChild size="sm">
-          <Link href="/participants/new">
-            <Plus className="mr-1 h-4 w-4" />
-            Neuer Teilnehmer
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <PdfDownloadButton href="/api/participants/pdf" label="Teilnehmerliste drucken" />
+          <Button asChild size="sm">
+            <Link href="/participants/new">
+              <Plus className="mr-1 h-4 w-4" />
+              Neuer Teilnehmer
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-lg border bg-card">
