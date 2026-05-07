@@ -21,6 +21,8 @@ export type AuditEventType =
   | "PARTICIPANT_UPDATED"
   | "PARTICIPANT_DEACTIVATED"
   | "PARTICIPANT_REACTIVATED"
+  | "PARTICIPANT_DELETED"
+  | "PARTICIPANT_FORCE_DELETED"
   | "DISCIPLINE_CREATED"
   | "DISCIPLINE_UPDATED"
   | "DISCIPLINE_ARCHIVED"
@@ -52,6 +54,8 @@ export const AUDIT_EVENT_LABELS: Record<string, string> = {
   PARTICIPANT_UPDATED: "Teilnehmer bearbeitet",
   PARTICIPANT_DEACTIVATED: "Teilnehmer deaktiviert",
   PARTICIPANT_REACTIVATED: "Teilnehmer reaktiviert",
+  PARTICIPANT_DELETED: "Teilnehmer gelöscht",
+  PARTICIPANT_FORCE_DELETED: "Teilnehmer endgültig gelöscht",
   DISCIPLINE_CREATED: "Disziplin angelegt",
   DISCIPLINE_UPDATED: "Disziplin bearbeitet",
   DISCIPLINE_ARCHIVED: "Disziplin archiviert",
@@ -86,6 +90,8 @@ export const AUDIT_EVENT_CATEGORY: Record<string, AuditEventCategory> = {
   PARTICIPANT_UPDATED: "admin",
   PARTICIPANT_DEACTIVATED: "admin",
   PARTICIPANT_REACTIVATED: "admin",
+  PARTICIPANT_DELETED: "destructive",
+  PARTICIPANT_FORCE_DELETED: "destructive",
   DISCIPLINE_CREATED: "admin",
   DISCIPLINE_UPDATED: "admin",
   DISCIPLINE_ARCHIVED: "admin",
@@ -215,6 +221,17 @@ export function formatAuditDetails(eventType: string, details: unknown): DetailR
       rows.push({ label: "Nachname", value: str(d.lastName) })
       break
 
+    case "PARTICIPANT_DELETED":
+      rows.push({ label: "Vorname", value: str(d.firstName) })
+      rows.push({ label: "Nachname", value: str(d.lastName) })
+      break
+
+    case "PARTICIPANT_FORCE_DELETED":
+      rows.push({ label: "Vorname", value: str(d.firstName) })
+      rows.push({ label: "Nachname", value: str(d.lastName) })
+      rows.push({ label: "Wettbewerbe", value: str(d.competitions) })
+      break
+
     case "DISCIPLINE_CREATED":
     case "DISCIPLINE_UPDATED":
       rows.push({ label: "Name", value: str(d.name) })
@@ -292,6 +309,8 @@ export function getAuditDescription(eventType: string, details: unknown): string
     case "PARTICIPANT_UPDATED":
     case "PARTICIPANT_DEACTIVATED":
     case "PARTICIPANT_REACTIVATED":
+    case "PARTICIPANT_DELETED":
+    case "PARTICIPANT_FORCE_DELETED":
       return d.firstName && d.lastName ? `${s(d.firstName)} ${s(d.lastName)}` : null
 
     case "DISCIPLINE_CREATED":
