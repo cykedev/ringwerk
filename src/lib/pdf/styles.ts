@@ -315,4 +315,14 @@ export const styles = StyleSheet.create({
     fontFamily: "Helvetica-Bold",
     color: "#ffffff",
   },
+
+  // ── Kästchen ───────────────────────────────────────────────────────────────
+  checkbox: {
+    width: 14,
+    height: 14,
+    borderWidth: 1,
+    borderColor: "#aaaaaa",
+    borderStyle: "solid",
+    borderRadius: 2,
+  },
 })

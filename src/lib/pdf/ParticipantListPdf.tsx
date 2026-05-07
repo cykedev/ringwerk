@@ -14,18 +14,7 @@ function formatDate(date: Date): string {
 }
 
 function Checkbox(): ReactElement {
-  return (
-    <View
-      style={{
-        width: 14,
-        height: 14,
-        borderWidth: 1,
-        borderColor: "#aaaaaa",
-        borderStyle: "solid",
-        borderRadius: 2,
-      }}
-    />
-  )
+  return <View style={styles.checkbox} />
 }
 
 function PdfHeader({ generatedAt }: { generatedAt: Date }): ReactElement {
