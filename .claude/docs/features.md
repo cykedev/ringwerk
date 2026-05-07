@@ -478,12 +478,12 @@ Die Seite `/competitions` zeigt Wettbewerbe in Karten mit:
 
 ### Kategorie: Destruktiv (destructive)
 
-| Ereignis              | Auslöser                  |
-| --------------------- | ------------------------- |
-| PLAYOFF_DUEL_DELETED      | Playoff-Duell gelöscht                      |
-| EVENT_SERIES_DELETED      | Serie bei Event gelöscht                    |
-| SEASON_SERIES_DELETED     | Serie bei Saison gelöscht                   |
-| PARTICIPANT_DELETED       | Inaktiver Teilnehmer ohne Historien gelöscht |
+| Ereignis                  | Auslöser                                          |
+| ------------------------- | ------------------------------------------------- |
+| PLAYOFF_DUEL_DELETED      | Playoff-Duell gelöscht                            |
+| EVENT_SERIES_DELETED      | Serie bei Event gelöscht                          |
+| SEASON_SERIES_DELETED     | Serie bei Saison gelöscht                         |
+| PARTICIPANT_DELETED       | Inaktiver Teilnehmer ohne Historien gelöscht      |
 | PARTICIPANT_FORCE_DELETED | Admin-Force-Delete inkl. aller historischen Daten |
 
 ### Kategorie: Admin (admin)

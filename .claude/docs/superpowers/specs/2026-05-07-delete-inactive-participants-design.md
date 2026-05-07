@@ -13,11 +13,11 @@ Admins und Manager sollen inaktive Teilnehmer löschen können. Teilnehmer mit h
 
 ## Berechtigungen & Scope
 
-| Aktion | Berechtigung |
-|---|---|
-| Normales Löschen (keine Wettbewerbsdaten) | ADMIN + MANAGER |
-| Force-Delete (mit historischen Daten) | Nur ADMIN |
-| Aktive Teilnehmer löschen | Nicht erlaubt — erst deaktivieren |
+| Aktion                                    | Berechtigung                      |
+| ----------------------------------------- | --------------------------------- |
+| Normales Löschen (keine Wettbewerbsdaten) | ADMIN + MANAGER                   |
+| Force-Delete (mit historischen Daten)     | Nur ADMIN                         |
+| Aktive Teilnehmer löschen                 | Nicht erlaubt — erst deaktivieren |
 
 **Indikator für "historische Daten":** `_count.competitions > 0` (CompetitionParticipant-Einträge). Der Wert ist bereits in `getParticipantsForManagement` enthalten — kein zusätzlicher DB-Roundtrip.
 
@@ -30,11 +30,13 @@ Admins und Manager sollen inaktive Teilnehmer löschen können. Teilnehmer mit h
 Datei: `src/lib/participants/actions.ts`
 
 **Guards:**
+
 1. Auth-Check: `canManage` für alle; `isAdmin` zusätzlich wenn `force=true`
 2. Teilnehmer muss existieren
 3. Teilnehmer muss `isActive === false` sein (Löschen aktiver Teilnehmer verboten)
 
 **`force=false` (normales Löschen):**
+
 - Prüft `db.competitionParticipant.count({ where: { participantId: id } })`
 - `> 0` → Fehler: "Dieser Teilnehmer hat historische Daten. Force-Delete ist nur für Admins möglich."
 - `=== 0` → `db.participant.delete({ where: { id } })`
@@ -60,6 +62,7 @@ Reihenfolge Bottom-up (analog `forceDeleteCompetition`):
 `revalidateParticipantPaths()` nach der Transaktion.
 
 Audit-Log **vor** der Transaktion schreiben (Teilnehmer existiert danach nicht mehr):
+
 - Event: `PARTICIPANT_FORCE_DELETED`
 - Details: `{ firstName, lastName, competitions: N, series: M }`
 
@@ -67,10 +70,10 @@ Audit-Log **vor** der Transaktion schreiben (Teilnehmer existiert danach nicht m
 
 Ergänzung in `src/lib/auditLog/types.ts` und `features.md`:
 
-| Event | Auslöser | competitionId |
-|---|---|---|
-| `PARTICIPANT_DELETED` | Löschen ohne historische Daten | null |
-| `PARTICIPANT_FORCE_DELETED` | Admin-Force-Delete mit historischen Daten | null |
+| Event                       | Auslöser                                  | competitionId |
+| --------------------------- | ----------------------------------------- | ------------- |
+| `PARTICIPANT_DELETED`       | Löschen ohne historische Daten            | null          |
+| `PARTICIPANT_FORCE_DELETED` | Admin-Force-Delete mit historischen Daten | null          |
 
 ---
 
@@ -79,8 +82,8 @@ Ergänzung in `src/lib/auditLog/types.ts` und `features.md`:
 ### `ParticipantRowActions` — neue Props
 
 ```ts
-competitionsCount: number   // aus _count.competitions
-isAdmin: boolean            // session.user.role === 'ADMIN'
+competitionsCount: number // aus _count.competitions
+isAdmin: boolean // session.user.role === 'ADMIN'
 ```
 
 ### Trash-Button
@@ -95,6 +98,7 @@ isAdmin: boolean            // session.user.role === 'ADMIN'
 **Variante 1 — Kein Wettbewerbshistorie** (`competitionsCount === 0`):
 
 AlertDialog mit einfacher Bestätigung:
+
 - Titel: „Teilnehmer löschen?"
 - Beschreibung: „{Nachname}, {Vorname} wird endgültig gelöscht. Diese Aktion kann nicht rückgängig gemacht werden."
 - Buttons: Abbrechen | Löschen (destructive)
@@ -102,6 +106,7 @@ AlertDialog mit einfacher Bestätigung:
 **Variante 2 — Historische Daten, kein Admin** (`competitionsCount > 0 && !isAdmin`):
 
 AlertDialog mit Info-Meldung:
+
 - Titel: „Löschen nicht möglich"
 - Beschreibung: „Dieser Teilnehmer hat {N} Wettbewerbe und kann daher nicht gelöscht werden. Force-Delete ist nur für Admins möglich."
 - Buttons: Schließen (nur Cancel)
@@ -109,6 +114,7 @@ AlertDialog mit Info-Meldung:
 **Variante 3 — Historische Daten, Admin** (`competitionsCount > 0 && isAdmin`):
 
 AlertDialog mit Namens-Bestätigung (analog `ForceDeleteCompetitionSection`):
+
 - Titel: „Teilnehmer endgültig löschen?"
 - Beschreibung: Warnung über Datenverlust, inkl. Hinweis dass Liga-Paarungen des Teilnehmers und die zugehörigen Serien des Gegners ebenfalls gelöscht werden.
 - Input: „Zur Bestätigung Nachnamen eingeben: **{Nachname}**"
@@ -118,6 +124,7 @@ AlertDialog mit Namens-Bestätigung (analog `ForceDeleteCompetitionSection`):
 ### Page (`/participants/page.tsx`)
 
 Übergibt an `ParticipantRowActions` in der inaktiven Sektion:
+
 - `isAdmin={session.user.role === "ADMIN"}`
 - `competitionsCount={p._count.competitions}`
 

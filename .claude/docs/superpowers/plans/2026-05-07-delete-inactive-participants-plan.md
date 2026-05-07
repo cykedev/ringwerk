@@ -21,19 +21,20 @@
 
 ## File Map
 
-| File | Action | Responsibility |
-|---|---|---|
-| `src/lib/auditLog/types.ts` | Modify | Add two new event types, labels, categories, format/description cases |
-| `src/lib/participants/actions.ts` | Modify | Add `deleteParticipant(id, force)` action |
-| `src/lib/participants/actions.test.ts` | Create | Tests for `deleteParticipant` |
-| `src/components/app/participants/ParticipantRowActions.tsx` | Modify | Add Trash2 button + three dialog variants |
-| `src/app/(app)/participants/page.tsx` | Modify | Pass `isAdmin` + `competitionsCount` props |
+| File                                                        | Action | Responsibility                                                        |
+| ----------------------------------------------------------- | ------ | --------------------------------------------------------------------- |
+| `src/lib/auditLog/types.ts`                                 | Modify | Add two new event types, labels, categories, format/description cases |
+| `src/lib/participants/actions.ts`                           | Modify | Add `deleteParticipant(id, force)` action                             |
+| `src/lib/participants/actions.test.ts`                      | Create | Tests for `deleteParticipant`                                         |
+| `src/components/app/participants/ParticipantRowActions.tsx` | Modify | Add Trash2 button + three dialog variants                             |
+| `src/app/(app)/participants/page.tsx`                       | Modify | Pass `isAdmin` + `competitionsCount` props                            |
 
 ---
 
 ## Task 1: Extend audit event types
 
 **Files:**
+
 - Modify: `src/lib/auditLog/types.ts`
 
 - [ ] **Step 1: Add event types to the union**
@@ -102,10 +103,12 @@ git commit -m "feat: add PARTICIPANT_DELETED and PARTICIPANT_FORCE_DELETED audit
 ## Task 2: Implement deleteParticipant action (TDD)
 
 **Files:**
+
 - Create: `src/lib/participants/actions.test.ts`
 - Modify: `src/lib/participants/actions.ts`
 
 ### Key schema facts (checked against prisma/schema.prisma):
+
 - `Matchup` FK fields: `homeParticipantId`, `awayParticipantId`
 - `PlayoffMatch` FK fields: `participantAId`, `participantBId`
 - `Series` FK fields: `participantId` (direct), `matchupId` (nullable)
@@ -213,8 +216,7 @@ describe("deleteParticipant (force=false)", () => {
     competitionParticipantCountMock.mockResolvedValue(3)
     const result = await deleteParticipant("p1", false)
     expect(result).toEqual({
-      error:
-        "Dieser Teilnehmer hat historische Daten. Force-Delete ist nur für Admins möglich.",
+      error: "Dieser Teilnehmer hat historische Daten. Force-Delete ist nur für Admins möglich.",
     })
     expect(participantDeleteMock).not.toHaveBeenCalled()
   })
@@ -479,6 +481,7 @@ git commit -m "feat: add deleteParticipant server action with force-delete suppo
 ## Task 3: Update ParticipantRowActions component
 
 **Files:**
+
 - Modify: `src/components/app/participants/ParticipantRowActions.tsx`
 
 No unit tests for client components — behavior verified visually via dev server.
@@ -736,6 +739,7 @@ git commit -m "feat: add delete button with adaptive dialog to ParticipantRowAct
 ## Task 4: Wire props in the participants page
 
 **Files:**
+
 - Modify: `src/app/(app)/participants/page.tsx`
 
 - [ ] **Step 1: Add isAdmin + competitionsCount props to both ParticipantRowActions usages**

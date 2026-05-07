@@ -1,11 +1,11 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { renderToBuffer, type DocumentProps } from "@react-pdf/renderer"
 import { createElement, type ReactElement } from "react"
 import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import { getParticipants } from "@/lib/participants/queries"
 import { ParticipantListPdf } from "@/lib/pdf/ParticipantListPdf"
 
-export async function GET(_req: NextRequest): Promise<NextResponse> {
+export async function GET(): Promise<NextResponse> {
   const session = await getAuthSession()
   if (!session) {
     return new NextResponse("Nicht angemeldet", { status: 401 })

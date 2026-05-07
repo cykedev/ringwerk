@@ -21,28 +21,29 @@
 
 ## Dateiübersicht
 
-| Datei | Aktion | Verantwortung |
-|---|---|---|
-| `src/lib/pdf/ParticipantListPdf.tsx` | Neu erstellen | react-pdf Dokument: Header, Tabelle, Leerzeilen, Footer |
+| Datei                                   | Aktion        | Verantwortung                                             |
+| --------------------------------------- | ------------- | --------------------------------------------------------- |
+| `src/lib/pdf/ParticipantListPdf.tsx`    | Neu erstellen | react-pdf Dokument: Header, Tabelle, Leerzeilen, Footer   |
 | `src/app/api/participants/pdf/route.ts` | Neu erstellen | API-Route: Auth-Check, Daten holen, PDF rendern, Response |
-| `src/app/(app)/participants/page.tsx` | Ändern | `PdfDownloadButton` in den Header einbauen |
+| `src/app/(app)/participants/page.tsx`   | Ändern        | `PdfDownloadButton` in den Header einbauen                |
 
 ---
 
 ## Task 1: ParticipantListPdf-Komponente erstellen
 
 **Files:**
+
 - Create: `src/lib/pdf/ParticipantListPdf.tsx`
 
 Spaltenbreiten (Summe = 515pt = A4 Portrait mit 40pt Rändern):
 
-| Spalte | Breite |
-|---|---|
-| Name | 200pt |
-| Disziplin | 115pt |
-| Einlage | 60pt |
-| Teilnahme | 70pt |
-| Hat geschossen | 70pt |
+| Spalte         | Breite |
+| -------------- | ------ |
+| Name           | 200pt  |
+| Disziplin      | 115pt  |
+| Einlage        | 60pt   |
+| Teilnahme      | 70pt   |
+| Hat geschossen | 70pt   |
 
 - [ ] **Datei erstellen**
 
@@ -181,6 +182,7 @@ feat: add ParticipantListPdf component
 ## Task 2: API-Route erstellen
 
 **Files:**
+
 - Create: `src/app/api/participants/pdf/route.ts`
 
 Referenz-Implementierung für das Muster: `src/app/api/competitions/[id]/pdf/schedule/route.ts`
@@ -231,6 +233,7 @@ feat: add GET /api/participants/pdf route
 ## Task 3: Download-Button auf Teilnehmerseite
 
 **Files:**
+
 - Modify: `src/app/(app)/participants/page.tsx`
 
 Referenz für das Button-Pattern: `src/app/(app)/competitions/[id]/schedule/page.tsx` (dort ist `PdfDownloadButton` bereits verwendet).
@@ -244,6 +247,7 @@ import { PdfDownloadButton } from "@/components/app/shared/PdfDownloadButton"
 - [ ] **Header-Bereich anpassen**
 
 Bestehender Code (Zeile ~24–30):
+
 ```tsx
 <Button asChild size="sm">
   <Link href="/participants/new">
@@ -254,6 +258,7 @@ Bestehender Code (Zeile ~24–30):
 ```
 
 Ersetzen durch:
+
 ```tsx
 <div className="flex items-center gap-2">
   <PdfDownloadButton href="/api/participants/pdf" label="Teilnehmerliste drucken" />

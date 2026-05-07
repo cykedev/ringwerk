@@ -95,8 +95,7 @@ describe("deleteParticipant (force=false)", () => {
     competitionParticipantCountMock.mockResolvedValue(3)
     const result = await deleteParticipant("p1", false)
     expect(result).toEqual({
-      error:
-        "Dieser Teilnehmer hat historische Daten. Force-Delete ist nur für Admins möglich.",
+      error: "Dieser Teilnehmer hat historische Daten. Force-Delete ist nur für Admins möglich.",
     })
     expect(participantDeleteMock).not.toHaveBeenCalled()
   })
