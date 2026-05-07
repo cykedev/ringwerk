@@ -93,7 +93,12 @@ export function ParticipantListPdf({
               key={`${p.lastName}-${p.firstName}-${idx}`}
               wrap={false}
               style={[
-                { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: "#eeeeee", borderBottomStyle: "solid" },
+                {
+                  flexDirection: "row",
+                  borderBottomWidth: 1,
+                  borderBottomColor: "#eeeeee",
+                  borderBottomStyle: "solid",
+                },
                 idx % 2 === 1 ? styles.tableRowAlt : {},
               ]}
             >
