@@ -153,7 +153,7 @@ export async function setParticipantActive(id: string, isActive: boolean): Promi
 
   if (!isActive) {
     const activeEnrollments = await db.competitionParticipant.count({
-      where: { participantId: id, status: "ACTIVE" },
+      where: { participantId: id, status: "ACTIVE", competition: { status: "ACTIVE" } },
     })
     if (activeEnrollments > 0) {
       return {
