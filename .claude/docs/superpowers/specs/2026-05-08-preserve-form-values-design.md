@@ -16,16 +16,16 @@ Forms mit bereits controlled Inputs (`value`/`onChange` + lokalem State) sind ni
 
 ## Betroffene Forms
 
-| Form | Pfad | Use-Case |
-|------|------|----------|
-| `EventSeriesDialog` | `src/components/app/series/EventSeriesDialog.tsx` | Kranzl-Serie eintragen/korrigieren |
-| `SeasonSeriesDialog` | `src/components/app/series/SeasonSeriesDialog.tsx` | Saison-Serie eintragen/korrigieren |
-| `ParticipantForm` | `src/components/app/participants/ParticipantForm.tsx` | Teilnehmer anlegen/bearbeiten |
-| `DisciplineForm` | `src/components/app/disciplines/DisciplineForm.tsx` | Disziplin anlegen/bearbeiten |
-| `CompetitionForm` | `src/components/app/competitions/CompetitionForm.tsx` | Wettbewerb anlegen/bearbeiten |
-| `UserCreateForm` | `src/components/app/users/UserCreateForm.tsx` | Nutzer anlegen |
-| `UserEditForm` | `src/components/app/users/UserEditForm.tsx` | Nutzer bearbeiten |
-| `AccountPasswordForm` | `src/components/app/account/AccountPasswordForm.tsx` | Eigenes Passwort ändern |
+| Form                  | Pfad                                                  | Use-Case                           |
+| --------------------- | ----------------------------------------------------- | ---------------------------------- |
+| `EventSeriesDialog`   | `src/components/app/series/EventSeriesDialog.tsx`     | Kranzl-Serie eintragen/korrigieren |
+| `SeasonSeriesDialog`  | `src/components/app/series/SeasonSeriesDialog.tsx`    | Saison-Serie eintragen/korrigieren |
+| `ParticipantForm`     | `src/components/app/participants/ParticipantForm.tsx` | Teilnehmer anlegen/bearbeiten      |
+| `DisciplineForm`      | `src/components/app/disciplines/DisciplineForm.tsx`   | Disziplin anlegen/bearbeiten       |
+| `CompetitionForm`     | `src/components/app/competitions/CompetitionForm.tsx` | Wettbewerb anlegen/bearbeiten      |
+| `UserCreateForm`      | `src/components/app/users/UserCreateForm.tsx`         | Nutzer anlegen                     |
+| `UserEditForm`        | `src/components/app/users/UserEditForm.tsx`           | Nutzer bearbeiten                  |
+| `AccountPasswordForm` | `src/components/app/account/AccountPasswordForm.tsx`  | Eigenes Passwort ändern            |
 
 `ResultEntryDialog` (Liga-Ergebnis) ist **nicht** betroffen — der ist bereits controlled.
 

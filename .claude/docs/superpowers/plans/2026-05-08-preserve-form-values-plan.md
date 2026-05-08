@@ -13,6 +13,7 @@
 ## Required Docs
 
 Subagents müssen vor jedem Task lesen:
+
 - `.claude/docs/code-conventions.md`
 - `.claude/docs/ui-patterns.md`
 - `.claude/docs/reference-files.md`
@@ -36,6 +37,7 @@ const [home, setHome] = useState<ParticipantResult>({
 ```
 
 **Wichtig:**
+
 - `value` muss **immer ein String** sein — nie `number | undefined`. Bei numerischen Feldern: `String(initialValue)` oder `""`.
 - `defaultValue` für `Select` (shadcn) bleibt: das ist nicht das HTML-`defaultValue`, sondern ein Prop des Radix-Wrappers. Bei `Select` ist das Pattern bereits richtig (entweder `value` + `onValueChange` controlled, oder `defaultValue` — letzteres wird beim React-19-Reset NICHT auf den Initialwert zurückgesetzt, weil Radix das selbst managed). Selects, die schon `value` + `onValueChange` haben (z.B. in `CompetitionForm`), bleiben unverändert.
 - `Checkbox`/Hidden-Inputs die bereits controlled sind (siehe `CompetitionForm`: `allowGuests`), bleiben unverändert.
@@ -52,6 +54,7 @@ Reihenfolge der Aufzählung folgt User-Priorität (Kranzl-Eingabe zuerst):
 ### Task 1: EventSeriesDialog — controlled Inputs
 
 **Files:**
+
 - Modify: `src/components/app/series/EventSeriesDialog.tsx`
 
 - [ ] **Step 1: Lokalen State für `rings` + `teiler` einführen**
@@ -61,12 +64,8 @@ In `EventSeriesDialog`:
 ```tsx
 import { useEffect, useState, useActionState } from "react"
 // …
-const [rings, setRings] = useState<string>(
-  existingSeries ? String(existingSeries.rings) : ""
-)
-const [teiler, setTeiler] = useState<string>(
-  existingSeries ? String(existingSeries.teiler) : ""
-)
+const [rings, setRings] = useState<string>(existingSeries ? String(existingSeries.rings) : "")
+const [teiler, setTeiler] = useState<string>(existingSeries ? String(existingSeries.teiler) : "")
 ```
 
 - [ ] **Step 2: Inputs controlled machen**
@@ -129,6 +128,7 @@ git commit -m "fix: preserve EventSeriesDialog values on validation error"
 ### Task 2: SeasonSeriesDialog — controlled Inputs
 
 **Files:**
+
 - Modify: `src/components/app/series/SeasonSeriesDialog.tsx`
 
 - [ ] **Step 1: Lokalen State für `sessionDate`, `rings`, `teiler` einführen**
@@ -137,12 +137,8 @@ git commit -m "fix: preserve EventSeriesDialog values on validation error"
 const [sessionDate, setSessionDate] = useState<string>(
   existingSeries?.sessionDate ?? new Date().toISOString().slice(0, 10)
 )
-const [rings, setRings] = useState<string>(
-  existingSeries ? String(existingSeries.rings) : ""
-)
-const [teiler, setTeiler] = useState<string>(
-  existingSeries ? String(existingSeries.teiler) : ""
-)
+const [rings, setRings] = useState<string>(existingSeries ? String(existingSeries.rings) : "")
+const [teiler, setTeiler] = useState<string>(existingSeries ? String(existingSeries.teiler) : "")
 ```
 
 `selectedDisciplineId` ist bereits controlled — bleibt.
@@ -215,6 +211,7 @@ git commit -m "fix: preserve SeasonSeriesDialog values on validation error"
 ### Task 3: ParticipantForm — controlled Inputs
 
 **Files:**
+
 - Modify: `src/components/app/participants/ParticipantForm.tsx`
 
 - [ ] **Step 1: Lokalen State**
@@ -253,6 +250,7 @@ git commit -m "fix: preserve ParticipantForm values on validation error"
 ### Task 4: DisciplineForm — controlled Inputs
 
 **Files:**
+
 - Modify: `src/components/app/disciplines/DisciplineForm.tsx`
 
 - [ ] **Step 1: Lokalen State**
@@ -316,6 +314,7 @@ git commit -m "fix: preserve DisciplineForm values on validation error"
 ### Task 5: UserCreateForm — controlled Inputs
 
 **Files:**
+
 - Modify: `src/components/app/users/UserCreateForm.tsx`
 
 - [ ] **Step 1: Lokalen State**
@@ -383,6 +382,7 @@ git commit -m "fix: preserve UserCreateForm values on validation error"
 ### Task 6: UserEditForm — controlled Inputs
 
 **Files:**
+
 - Modify: `src/components/app/users/UserEditForm.tsx`
 
 - [ ] **Step 1: Lokalen State**
@@ -459,6 +459,7 @@ git commit -m "fix: preserve UserEditForm values on validation error"
 ### Task 7: AccountPasswordForm — controlled Inputs
 
 **Files:**
+
 - Modify: `src/components/app/account/AccountPasswordForm.tsx`
 
 - [ ] **Step 1: Lokalen State**
@@ -499,6 +500,7 @@ git commit -m "fix: preserve AccountPasswordForm values on validation error"
 ### Task 8: CompetitionForm — controlled Inputs
 
 **Files:**
+
 - Modify: `src/components/app/competitions/CompetitionForm.tsx`
 
 Bereits controlled (bleiben unverändert): `type`, `scoringMode`, `allowGuests`, `teamSize`, `finalePrimary`, `finaleTiebreaker1`, `finaleTiebreaker2`, `finaleHasSuddenDeath`.
@@ -524,9 +526,7 @@ const [hinrundeDeadline, setHinrundeDeadline] = useState<string>(
 const [rueckrundeDeadline, setRueckrundeDeadline] = useState<string>(
   toDateInputValue(competition?.rueckrundeDeadline)
 )
-const [playoffBestOf, setPlayoffBestOf] = useState<string>(
-  String(competition?.playoffBestOf ?? 5)
-)
+const [playoffBestOf, setPlayoffBestOf] = useState<string>(String(competition?.playoffBestOf ?? 5))
 const [playoffHasViertelfinale, setPlayoffHasViertelfinale] = useState<boolean>(
   competition?.playoffHasViertelfinale ?? true
 )
@@ -685,6 +685,7 @@ git commit -m "fix: preserve CompetitionForm values on validation error"
 ### Task 9: Final-Verification & Lessons
 
 **Files:**
+
 - Modify: `.claude/tasks/lessons.md`
 
 - [ ] **Step 1: Final `/check`**
