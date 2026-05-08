@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState, useEffect } from "react"
+import { useActionState, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,6 +17,9 @@ interface Props {
 export function ParticipantForm({ participant, action, onSuccess }: Props) {
   const router = useRouter()
   const [state, formAction, isPending] = useActionState(action, null)
+  const [firstName, setFirstName] = useState<string>(participant?.firstName ?? "")
+  const [lastName, setLastName] = useState<string>(participant?.lastName ?? "")
+  const [contact, setContact] = useState<string>(participant?.contact ?? "")
 
   useEffect(() => {
     if (state && "success" in state && state.success) {
@@ -37,7 +40,8 @@ export function ParticipantForm({ participant, action, onSuccess }: Props) {
         <Input
           id="firstName"
           name="firstName"
-          defaultValue={participant?.firstName ?? ""}
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
           placeholder="z.B. Max"
           disabled={isPending}
         />
@@ -51,7 +55,8 @@ export function ParticipantForm({ participant, action, onSuccess }: Props) {
         <Input
           id="lastName"
           name="lastName"
-          defaultValue={participant?.lastName ?? ""}
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
           placeholder="z.B. Muster"
           disabled={isPending}
         />
@@ -68,7 +73,8 @@ export function ParticipantForm({ participant, action, onSuccess }: Props) {
           id="contact"
           name="contact"
           type="text"
-          defaultValue={participant?.contact ?? ""}
+          value={contact}
+          onChange={(e) => setContact(e.target.value)}
           placeholder="z.B. max@example.com oder +49 151 12345678"
           disabled={isPending}
         />
