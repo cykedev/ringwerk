@@ -113,6 +113,7 @@ export default async function EventRankingPage({ params }: Props) {
       <EventRankingTable
         entries={ranked}
         scoringMode={competition.scoringMode}
+        targetValueType={competition.targetValueType}
         isMixed={!competition.disciplineId}
         showTeam={isTeamEvent}
       />

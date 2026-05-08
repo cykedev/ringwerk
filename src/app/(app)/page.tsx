@@ -168,6 +168,7 @@ export default async function DashboardPage() {
                     <EventRankingTable
                       entries={ranked}
                       scoringMode={c.scoringMode}
+                      targetValueType={c.targetValueType}
                       isMixed={!c.discipline}
                     />
                   )}

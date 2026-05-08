@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useActionState, useEffect } from "react"
+import { useState, useActionState } from "react"
 import { Pencil, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -41,7 +41,13 @@ export function EventSeriesDialog({
 
   const boundAction = saveEventSeries.bind(null, competitionId, competitionParticipantId)
   const [state, formAction, isPending] = useActionState(
-    (prev: ActionResult | null, formData: FormData) => boundAction(prev, formData),
+    async (prev: ActionResult | null, formData: FormData) => {
+      const result = await boundAction(prev, formData)
+      if (result && "success" in result && result.success) {
+        setOpen(false)
+      }
+      return result
+    },
     null
   )
 
@@ -49,12 +55,6 @@ export function EventSeriesDialog({
     state && "error" in state && typeof state.error === "object" ? state.error : null
   const generalError =
     state && "error" in state && typeof state.error === "string" ? state.error : null
-
-  useEffect(() => {
-    if (state && "success" in state && state.success) {
-      setOpen(false)
-    }
-  }, [state])
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

@@ -27,6 +27,7 @@ export type CompetitionListItem = {
   allowGuests: boolean | null
   teamSize: number | null
   teamScoring: TeamScoring | null
+  targetValueType: TargetValueType | null
   // Saison
   seasonStart: Date | null
   seasonEnd: Date | null

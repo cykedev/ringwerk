@@ -1,4 +1,4 @@
-import type { ScoringMode, ScoringType } from "@/generated/prisma/client"
+import type { ScoringMode, ScoringType, TargetValueType } from "@/generated/prisma/client"
 
 /**
  * Bestimmt den effektiven ScoringType für die Eingabe/Anzeige von Ringen.
@@ -6,14 +6,28 @@ import type { ScoringMode, ScoringType } from "@/generated/prisma/client"
  * RINGS          → immer WHOLE (explizit ganzzahlig)
  * RINGS_DECIMAL  → immer DECIMAL
  * DECIMAL_REST   → immer DECIMAL (Nachkommastellen werden summiert)
- * RINGTEILER, TEILER, TARGET_* → folgt der Disziplin; WHOLE als Fallback bei gemischten Wettbewerben
+ * TARGET_*       → richtet sich nach targetValueType:
+ *                    RINGS         → WHOLE
+ *                    RINGS_DECIMAL → DECIMAL
+ *                    TEILER / null → folgt der Disziplin
+ * RINGTEILER, TEILER → folgt der Disziplin; WHOLE als Fallback bei gemischten Wettbewerben
  */
 export function getEffectiveScoringType(
   scoringMode: ScoringMode,
-  discipline: { scoringType: ScoringType } | null
+  discipline: { scoringType: ScoringType } | null,
+  targetValueType?: TargetValueType | null
 ): ScoringType {
   if (scoringMode === "RINGS") return "WHOLE"
   if (scoringMode === "RINGS_DECIMAL" || scoringMode === "DECIMAL_REST") return "DECIMAL"
+  if (
+    scoringMode === "TARGET_ABSOLUTE" ||
+    scoringMode === "TARGET_UNDER" ||
+    scoringMode === "TARGET_OVER"
+  ) {
+    if (targetValueType === "RINGS_DECIMAL") return "DECIMAL"
+    if (targetValueType === "RINGS") return "WHOLE"
+    // TEILER oder null → fall through zur Disziplin
+  }
   return discipline?.scoringType ?? "WHOLE"
 }
 

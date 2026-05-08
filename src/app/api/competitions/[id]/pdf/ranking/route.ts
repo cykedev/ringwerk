@@ -40,6 +40,7 @@ export async function GET(
     disciplineName: competition.discipline?.name ?? null,
     eventDate: competition.eventDate,
     scoringMode: competition.scoringMode,
+    targetValueType: competition.targetValueType,
     shotsPerSeries: competition.shotsPerSeries,
     targetValue: competition.targetValue,
     isMixed: !competition.disciplineId,

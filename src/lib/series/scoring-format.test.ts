@@ -32,16 +32,56 @@ describe("getEffectiveScoringType", () => {
     expect(getEffectiveScoringType("TEILER", { scoringType: "DECIMAL" })).toBe("DECIMAL")
   })
 
-  it("TARGET_ABSOLUTE → folgt der Disziplin", () => {
+  it("TARGET_ABSOLUTE ohne targetValueType → folgt der Disziplin", () => {
     expect(getEffectiveScoringType("TARGET_ABSOLUTE", { scoringType: "WHOLE" })).toBe("WHOLE")
   })
 
-  it("TARGET_UNDER → folgt der Disziplin", () => {
+  it("TARGET_UNDER ohne targetValueType → folgt der Disziplin", () => {
     expect(getEffectiveScoringType("TARGET_UNDER", { scoringType: "DECIMAL" })).toBe("DECIMAL")
   })
 
-  it("TARGET_OVER → folgt der Disziplin", () => {
+  it("TARGET_OVER ohne targetValueType → folgt der Disziplin", () => {
     expect(getEffectiveScoringType("TARGET_OVER", { scoringType: "WHOLE" })).toBe("WHOLE")
+  })
+
+  it("TARGET_* mit targetValueType=RINGS_DECIMAL → DECIMAL (auch bei WHOLE-Disziplin)", () => {
+    expect(
+      getEffectiveScoringType("TARGET_ABSOLUTE", { scoringType: "WHOLE" }, "RINGS_DECIMAL")
+    ).toBe("DECIMAL")
+    expect(getEffectiveScoringType("TARGET_UNDER", { scoringType: "WHOLE" }, "RINGS_DECIMAL")).toBe(
+      "DECIMAL"
+    )
+    expect(getEffectiveScoringType("TARGET_OVER", { scoringType: "WHOLE" }, "RINGS_DECIMAL")).toBe(
+      "DECIMAL"
+    )
+    expect(getEffectiveScoringType("TARGET_UNDER", null, "RINGS_DECIMAL")).toBe("DECIMAL")
+  })
+
+  it("TARGET_* mit targetValueType=RINGS → WHOLE (auch bei DECIMAL-Disziplin)", () => {
+    expect(getEffectiveScoringType("TARGET_ABSOLUTE", { scoringType: "DECIMAL" }, "RINGS")).toBe(
+      "WHOLE"
+    )
+    expect(getEffectiveScoringType("TARGET_UNDER", { scoringType: "DECIMAL" }, "RINGS")).toBe(
+      "WHOLE"
+    )
+  })
+
+  it("TARGET_* mit targetValueType=TEILER → folgt der Disziplin", () => {
+    expect(getEffectiveScoringType("TARGET_UNDER", { scoringType: "WHOLE" }, "TEILER")).toBe(
+      "WHOLE"
+    )
+    expect(getEffectiveScoringType("TARGET_UNDER", { scoringType: "DECIMAL" }, "TEILER")).toBe(
+      "DECIMAL"
+    )
+  })
+
+  it("targetValueType wird bei nicht-TARGET-Modi ignoriert", () => {
+    expect(getEffectiveScoringType("RINGS", { scoringType: "DECIMAL" }, "RINGS_DECIMAL")).toBe(
+      "WHOLE"
+    )
+    expect(getEffectiveScoringType("RINGTEILER", { scoringType: "WHOLE" }, "RINGS_DECIMAL")).toBe(
+      "WHOLE"
+    )
   })
 
   it("RINGTEILER ohne Disziplin (gemischt) → WHOLE als Fallback", () => {

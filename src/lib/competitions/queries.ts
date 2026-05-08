@@ -23,6 +23,7 @@ const listSelect = {
   allowGuests: true,
   teamSize: true,
   teamScoring: true,
+  targetValueType: true,
   seasonStart: true,
   seasonEnd: true,
   createdAt: true,

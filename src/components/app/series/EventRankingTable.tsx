@@ -1,13 +1,14 @@
 import type { EventRankedEntry } from "@/lib/scoring/rankEventParticipants"
 import { SCORING_MODE_COLUMN_LABELS } from "@/lib/scoring/labels"
 import { formatRings, formatDecimal1, getEffectiveScoringType } from "@/lib/series/scoring-format"
-import type { ScoringMode } from "@/generated/prisma/client"
+import type { ScoringMode, TargetValueType } from "@/generated/prisma/client"
 import { Badge } from "@/components/ui/badge"
 import { RankBadge } from "@/components/ui/rank-badge"
 
 interface Props {
   entries: EventRankedEntry[]
   scoringMode: ScoringMode
+  targetValueType?: TargetValueType | null
   isMixed?: boolean
   showTeam?: boolean
 }
@@ -15,6 +16,7 @@ interface Props {
 export function EventRankingTable({
   entries,
   scoringMode,
+  targetValueType,
   isMixed = false,
   showTeam = false,
 }: Props) {
@@ -68,7 +70,11 @@ export function EventRankingTable({
               <td className="px-3 py-2 text-right tabular-nums">
                 {formatRings(
                   entry.rings,
-                  getEffectiveScoringType(scoringMode, { scoringType: entry.disciplineScoringType })
+                  getEffectiveScoringType(
+                    scoringMode,
+                    { scoringType: entry.disciplineScoringType },
+                    targetValueType
+                  )
                 )}
               </td>
               <td className="px-3 py-2 text-right tabular-nums text-muted-foreground hidden sm:table-cell">

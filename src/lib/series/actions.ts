@@ -58,6 +58,7 @@ export async function saveEventSeries(
       shotsPerSeries: true,
       disciplineId: true,
       scoringMode: true,
+      targetValueType: true,
     },
   })
   if (!competition) return { error: "Wettbewerb nicht gefunden." }
@@ -101,7 +102,11 @@ export async function saveEventSeries(
   const { rings, teiler } = parsed.data
 
   // Effektiver Scoring-Typ bestimmt Ringformat und Maximum
-  const effectiveScoringType = getEffectiveScoringType(competition.scoringMode, discipline)
+  const effectiveScoringType = getEffectiveScoringType(
+    competition.scoringMode,
+    discipline,
+    competition.targetValueType
+  )
   const maxRings = getMaxRings(effectiveScoringType, competition.shotsPerSeries)
   if (rings > maxRings) {
     return {
@@ -266,6 +271,7 @@ export async function saveSeasonSeries(
       shotsPerSeries: true,
       disciplineId: true,
       scoringMode: true,
+      targetValueType: true,
     },
   })
   if (!competition) return { error: "Wettbewerb nicht gefunden." }
@@ -311,7 +317,11 @@ export async function saveSeasonSeries(
   const { rings, teiler, sessionDate } = parsed.data
 
   // Effektiver Scoring-Typ bestimmt Ringformat und Maximum
-  const effectiveScoringType = getEffectiveScoringType(competition.scoringMode, discipline)
+  const effectiveScoringType = getEffectiveScoringType(
+    competition.scoringMode,
+    discipline,
+    competition.targetValueType
+  )
   const maxRings = getMaxRings(effectiveScoringType, competition.shotsPerSeries)
   if (rings > maxRings) {
     return {
@@ -387,6 +397,7 @@ export async function updateSeasonSeries(
       shotsPerSeries: true,
       disciplineId: true,
       scoringMode: true,
+      targetValueType: true,
     },
   })
   if (!competition) return { error: "Wettbewerb nicht gefunden." }
@@ -444,7 +455,11 @@ export async function updateSeasonSeries(
   const { rings, teiler, sessionDate } = parsed.data
 
   // Effektiver Scoring-Typ bestimmt Ringformat und Maximum
-  const effectiveScoringType = getEffectiveScoringType(competition.scoringMode, discipline)
+  const effectiveScoringType = getEffectiveScoringType(
+    competition.scoringMode,
+    discipline,
+    competition.targetValueType
+  )
   const maxRings = getMaxRings(effectiveScoringType, competition.shotsPerSeries)
   if (rings > maxRings) {
     return {

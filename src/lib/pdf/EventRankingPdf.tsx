@@ -4,6 +4,7 @@ import type { EventRankedEntry, EventTeamRankedEntry } from "@/lib/scoring/rankE
 import { styles, PDF_COLORS } from "@/lib/pdf/styles"
 import { SCORING_MODE_LABELS, SCORING_MODE_COLUMN_LABELS } from "@/lib/scoring/labels"
 import type { ScoringMode } from "@/lib/scoring/types"
+import type { TargetValueType } from "@/generated/prisma/client"
 import { formatRings, formatDecimal1, getEffectiveScoringType } from "@/lib/series/scoring-format"
 
 // ─── Typen ────────────────────────────────────────────────────────────────────
@@ -13,6 +14,7 @@ export interface EventRankingPdfProps {
   disciplineName: string | null
   eventDate: Date | null
   scoringMode: ScoringMode
+  targetValueType: TargetValueType | null
   shotsPerSeries: number
   targetValue: number | null
   isMixed: boolean
@@ -121,10 +123,12 @@ function TeamRankingTable({
 function RankingTable({
   entries,
   scoringMode,
+  targetValueType,
   isMixed,
 }: {
   entries: EventRankedEntry[]
   scoringMode: ScoringMode
+  targetValueType: TargetValueType | null
   isMixed: boolean
 }): ReactElement {
   const scoreLabel = SCORING_MODE_COLUMN_LABELS[scoringMode] ?? "Score"
@@ -177,7 +181,11 @@ function RankingTable({
             <Text style={[styles.tableCell, { width: W.rings }]}>
               {formatRings(
                 entry.rings,
-                getEffectiveScoringType(scoringMode, { scoringType: entry.disciplineScoringType })
+                getEffectiveScoringType(
+                  scoringMode,
+                  { scoringType: entry.disciplineScoringType },
+                  targetValueType
+                )
               )}
             </Text>
             <Text style={[styles.tableCell, { width: W.teiler, color: PDF_COLORS.muted }]}>
@@ -200,6 +208,7 @@ export function EventRankingPdf({
   disciplineName,
   eventDate,
   scoringMode,
+  targetValueType,
   shotsPerSeries,
   targetValue,
   isMixed,
@@ -259,7 +268,12 @@ export function EventRankingPdf({
             Noch keine Ergebnisse erfasst.
           </Text>
         ) : (
-          <RankingTable entries={entries} scoringMode={scoringMode} isMixed={isMixed} />
+          <RankingTable
+            entries={entries}
+            scoringMode={scoringMode}
+            targetValueType={targetValueType}
+            isMixed={isMixed}
+          />
         )}
 
         {/* Fußzeile */}
