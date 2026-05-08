@@ -39,6 +39,9 @@ export function EventSeriesDialog({
   const [open, setOpen] = useState(false)
   const isCorrection = !!existingSeries
 
+  const [rings, setRings] = useState<string>(existingSeries ? String(existingSeries.rings) : "")
+  const [teiler, setTeiler] = useState<string>(existingSeries ? String(existingSeries.teiler) : "")
+
   const boundAction = saveEventSeries.bind(null, competitionId, competitionParticipantId)
   const [state, formAction, isPending] = useActionState(
     async (prev: ActionResult | null, formData: FormData) => {
@@ -56,8 +59,16 @@ export function EventSeriesDialog({
   const generalError =
     state && "error" in state && typeof state.error === "string" ? state.error : null
 
+  function handleOpenChange(isOpen: boolean) {
+    if (!isOpen) {
+      setRings(existingSeries ? String(existingSeries.rings) : "")
+      setTeiler(existingSeries ? String(existingSeries.teiler) : "")
+    }
+    setOpen(isOpen)
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button
           variant="ghost"
@@ -82,7 +93,8 @@ export function EventSeriesDialog({
               name="rings"
               scoringType={scoringType}
               shotsPerSeries={shotsPerSeries}
-              defaultValue={existingSeries?.rings ?? ""}
+              value={rings}
+              onChange={(e) => setRings(e.target.value)}
               disabled={isPending}
               autoFocus
             />
@@ -98,7 +110,8 @@ export function EventSeriesDialog({
               name="teiler"
               type="text"
               inputMode="decimal"
-              defaultValue={existingSeries?.teiler ?? ""}
+              value={teiler}
+              onChange={(e) => setTeiler(e.target.value)}
               placeholder="z.B. 3,7"
               disabled={isPending}
             />
