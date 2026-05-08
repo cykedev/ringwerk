@@ -124,7 +124,12 @@ export function EventSeriesDialog({
         </form>
 
         <DialogFooter>
-          <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isPending}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => handleOpenChange(false)}
+            disabled={isPending}
+          >
             Abbrechen
           </Button>
           <Button type="submit" form="series-form" disabled={isPending}>
