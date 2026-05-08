@@ -68,6 +68,12 @@ export function SeasonSeriesDialog({
     initialDisciplineId
   )
 
+  const [sessionDate, setSessionDate] = useState<string>(
+    existingSeries?.sessionDate ?? new Date().toISOString().slice(0, 10)
+  )
+  const [rings, setRings] = useState<string>(existingSeries ? String(existingSeries.rings) : "")
+  const [teiler, setTeiler] = useState<string>(existingSeries ? String(existingSeries.teiler) : "")
+
   // Compute effective scoring type based on currently selected discipline
   const selectedDiscipline = disciplines?.find((d) => d.id === selectedDisciplineId) ?? null
   const effectiveScoringType = getEffectiveScoringType(scoringMode, selectedDiscipline)
@@ -93,8 +99,18 @@ export function SeasonSeriesDialog({
     }
   }, [state])
 
+  function handleOpenChange(isOpen: boolean) {
+    if (!isOpen) {
+      setSessionDate(existingSeries?.sessionDate ?? new Date().toISOString().slice(0, 10))
+      setRings(existingSeries ? String(existingSeries.rings) : "")
+      setTeiler(existingSeries ? String(existingSeries.teiler) : "")
+      setSelectedDisciplineId(initialDisciplineId)
+    }
+    setOpen(isOpen)
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {isCorrection ? (
           <Button variant="ghost" size="icon" className="h-10 w-10" title="Serie bearbeiten">
@@ -119,7 +135,8 @@ export function SeasonSeriesDialog({
               id="sessionDate"
               name="sessionDate"
               type="date"
-              defaultValue={existingSeries?.sessionDate ?? new Date().toISOString().slice(0, 10)}
+              value={sessionDate}
+              onChange={(e) => setSessionDate(e.target.value)}
               disabled={isPending}
               autoFocus
             />
@@ -158,7 +175,8 @@ export function SeasonSeriesDialog({
               name="rings"
               scoringType={effectiveScoringType}
               shotsPerSeries={shotsPerSeries}
-              defaultValue={existingSeries?.rings ?? ""}
+              value={rings}
+              onChange={(e) => setRings(e.target.value)}
               disabled={isPending}
             />
             {fieldErrors?.rings && (
@@ -174,7 +192,8 @@ export function SeasonSeriesDialog({
               type="text"
               inputMode="decimal"
               placeholder="z.B. 3,7"
-              defaultValue={existingSeries?.teiler ?? ""}
+              value={teiler}
+              onChange={(e) => setTeiler(e.target.value)}
               disabled={isPending}
             />
             {fieldErrors?.teiler && (
