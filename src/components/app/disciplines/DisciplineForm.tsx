@@ -1,8 +1,7 @@
 "use client"
 
-import { useActionState } from "react"
+import { useActionState, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -24,6 +23,11 @@ interface Props {
 export function DisciplineForm({ discipline, action }: Props) {
   const router = useRouter()
   const [state, formAction, isPending] = useActionState(action, null)
+  const [name, setName] = useState<string>(discipline?.name ?? "")
+  const [scoringType, setScoringType] = useState<string>(discipline?.scoringType ?? "WHOLE")
+  const [teilerFaktor, setTeilerFaktor] = useState<string>(
+    discipline?.teilerFaktor?.toString() ?? "1.0"
+  )
 
   useEffect(() => {
     if (state && "success" in state && state.success) {
@@ -43,7 +47,8 @@ export function DisciplineForm({ discipline, action }: Props) {
         <Input
           id="name"
           name="name"
-          defaultValue={discipline?.name ?? ""}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           placeholder="z.B. Luftpistole"
           disabled={isPending}
         />
@@ -54,7 +59,8 @@ export function DisciplineForm({ discipline, action }: Props) {
         <Label htmlFor="scoringType">Wertungsart</Label>
         <Select
           name="scoringType"
-          defaultValue={discipline?.scoringType ?? "WHOLE"}
+          value={scoringType}
+          onValueChange={setScoringType}
           disabled={isPending}
         >
           <SelectTrigger id="scoringType">
@@ -79,7 +85,8 @@ export function DisciplineForm({ discipline, action }: Props) {
           step="0.001"
           min="0.001"
           max="9.999"
-          defaultValue={discipline?.teilerFaktor?.toString() ?? "1.0"}
+          value={teilerFaktor}
+          onChange={(e) => setTeilerFaktor(e.target.value)}
           placeholder="z.B. 0.333"
           disabled={isPending}
         />
