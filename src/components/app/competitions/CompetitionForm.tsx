@@ -70,6 +70,40 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
     competition?.finaleHasSuddenDeath ?? true
   )
 
+  const [name, setName] = useState<string>(competition?.name ?? "")
+  const [shotsPerSeries, setShotsPerSeries] = useState<string>(
+    String(competition?.shotsPerSeries ?? 10)
+  )
+  const [disciplineId, setDisciplineId] = useState<string>(competition?.disciplineId ?? "mixed")
+  const [minSeries, setMinSeries] = useState<string>(
+    competition?.minSeries != null ? String(competition.minSeries) : ""
+  )
+  const [seasonStart, setSeasonStart] = useState<string>(toDateInputValue(competition?.seasonStart))
+  const [seasonEnd, setSeasonEnd] = useState<string>(toDateInputValue(competition?.seasonEnd))
+  const [hinrundeDeadline, setHinrundeDeadline] = useState<string>(
+    toDateInputValue(competition?.hinrundeDeadline)
+  )
+  const [rueckrundeDeadline, setRueckrundeDeadline] = useState<string>(
+    toDateInputValue(competition?.rueckrundeDeadline)
+  )
+  const [playoffBestOf, setPlayoffBestOf] = useState<string>(
+    String(competition?.playoffBestOf ?? 5)
+  )
+  const [playoffHasViertelfinale, setPlayoffHasViertelfinale] = useState<boolean>(
+    competition?.playoffHasViertelfinale ?? true
+  )
+  const [playoffHasAchtelfinale, setPlayoffHasAchtelfinale] = useState<boolean>(
+    competition?.playoffHasAchtelfinale ?? false
+  )
+  const [eventDate, setEventDate] = useState<string>(toDateInputValue(competition?.eventDate))
+  const [teamScoring, setTeamScoring] = useState<string>(competition?.teamScoring ?? "SUM")
+  const [targetValue, setTargetValue] = useState<string>(
+    competition?.targetValue != null ? String(competition.targetValue) : ""
+  )
+  const [targetValueType, setTargetValueType] = useState<string>(
+    competition?.targetValueType ?? "RINGS"
+  )
+
   useEffect(() => {
     if (state && "success" in state && state.success) {
       const id = (state.data as { id?: string } | undefined)?.id
@@ -116,7 +150,8 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
         <Input
           id="name"
           name="name"
-          defaultValue={competition?.name ?? ""}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           placeholder={
             type === "EVENT"
               ? "z.B. Kranzlschiessen 2026"
@@ -167,7 +202,8 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
             type="number"
             min={1}
             max={100}
-            defaultValue={competition?.shotsPerSeries ?? 10}
+            value={shotsPerSeries}
+            onChange={(e) => setShotsPerSeries(e.target.value)}
             disabled={isPending}
           />
         </div>
@@ -178,7 +214,8 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
         <Label htmlFor="disciplineId">Disziplin</Label>
         <Select
           name="disciplineId"
-          defaultValue={competition?.disciplineId ?? "mixed"}
+          value={disciplineId}
+          onValueChange={setDisciplineId}
           disabled={isPending || isEdit}
         >
           <SelectTrigger id="disciplineId">
@@ -214,7 +251,8 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
               type="number"
               min={1}
               max={999}
-              defaultValue={competition?.minSeries ?? ""}
+              value={minSeries}
+              onChange={(e) => setMinSeries(e.target.value)}
               placeholder="z.B. 20"
               disabled={isPending}
             />
@@ -228,7 +266,8 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
               id="seasonStart"
               name="seasonStart"
               type="date"
-              defaultValue={toDateInputValue(competition?.seasonStart)}
+              value={seasonStart}
+              onChange={(e) => setSeasonStart(e.target.value)}
               disabled={isPending}
             />
           </div>
@@ -238,7 +277,8 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
               id="seasonEnd"
               name="seasonEnd"
               type="date"
-              defaultValue={toDateInputValue(competition?.seasonEnd)}
+              value={seasonEnd}
+              onChange={(e) => setSeasonEnd(e.target.value)}
               disabled={isPending}
             />
           </div>
@@ -254,7 +294,8 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
               id="hinrundeDeadline"
               name="hinrundeDeadline"
               type="date"
-              defaultValue={toDateInputValue(competition?.hinrundeDeadline)}
+              value={hinrundeDeadline}
+              onChange={(e) => setHinrundeDeadline(e.target.value)}
               disabled={isPending}
             />
           </div>
@@ -264,7 +305,8 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
               id="rueckrundeDeadline"
               name="rueckrundeDeadline"
               type="date"
-              defaultValue={toDateInputValue(competition?.rueckrundeDeadline)}
+              value={rueckrundeDeadline}
+              onChange={(e) => setRueckrundeDeadline(e.target.value)}
               disabled={isPending}
             />
           </div>
@@ -291,7 +333,8 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
                     min={1}
                     max={9}
                     step={2}
-                    defaultValue={competition?.playoffBestOf ?? 5}
+                    value={playoffBestOf}
+                    onChange={(e) => setPlayoffBestOf(e.target.value)}
                     placeholder="5"
                   />
                   <p className="text-xs text-muted-foreground">z.B. 5 = Best-of-5 (3 Siege)</p>
@@ -304,7 +347,8 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
                     type="number"
                     min={1}
                     max={100}
-                    defaultValue={competition?.shotsPerSeries ?? 10}
+                    value={shotsPerSeries}
+                    onChange={(e) => setShotsPerSeries(e.target.value)}
                   />
                 </div>
               </div>
@@ -315,7 +359,8 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
                     name="playoffHasViertelfinale"
                     type="checkbox"
                     value="true"
-                    defaultChecked={competition?.playoffHasViertelfinale ?? true}
+                    checked={playoffHasViertelfinale}
+                    onChange={(e) => setPlayoffHasViertelfinale(e.target.checked)}
                   />
                   <Label htmlFor="playoffHasViertelfinale">Viertelfinale (8 TN)</Label>
                 </div>
@@ -325,7 +370,8 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
                     name="playoffHasAchtelfinale"
                     type="checkbox"
                     value="true"
-                    defaultChecked={competition?.playoffHasAchtelfinale ?? false}
+                    checked={playoffHasAchtelfinale}
+                    onChange={(e) => setPlayoffHasAchtelfinale(e.target.checked)}
                   />
                   <Label htmlFor="playoffHasAchtelfinale">Achtelfinale (16 TN)</Label>
                 </div>
@@ -430,7 +476,8 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
               id="eventDate"
               name="eventDate"
               type="date"
-              defaultValue={toDateInputValue(competition?.eventDate)}
+              value={eventDate}
+              onChange={(e) => setEventDate(e.target.value)}
               disabled={isPending}
             />
           </div>
@@ -476,7 +523,8 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
               <Label htmlFor="teamScoring">Team-Wertung</Label>
               <Select
                 name="teamScoring"
-                defaultValue={competition?.teamScoring ?? "SUM"}
+                value={teamScoring}
+                onValueChange={setTeamScoring}
                 disabled={isPending}
               >
                 <SelectTrigger id="teamScoring">
@@ -500,7 +548,8 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
                   type="number"
                   step="0.1"
                   min={0}
-                  defaultValue={competition?.targetValue ?? ""}
+                  value={targetValue}
+                  onChange={(e) => setTargetValue(e.target.value)}
                   placeholder="z.B. 512"
                   disabled={isPending}
                 />
@@ -509,7 +558,8 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
                 <Label htmlFor="targetValueType">Zielwert-Typ</Label>
                 <Select
                   name="targetValueType"
-                  defaultValue={competition?.targetValueType ?? "RINGS"}
+                  value={targetValueType}
+                  onValueChange={setTargetValueType}
                   disabled={isPending}
                 >
                   <SelectTrigger id="targetValueType">
