@@ -19,6 +19,10 @@ export function UserCreateForm() {
   const router = useRouter()
   const [state, formAction, isPending] = useActionState(createUser, null)
   const [showPassword, setShowPassword] = useState(false)
+  const [name, setName] = useState<string>("")
+  const [email, setEmail] = useState<string>("")
+  const [tempPassword, setTempPassword] = useState<string>("")
+  const [role, setRole] = useState<string>("USER")
 
   useEffect(() => {
     if (state && "success" in state && state.success) {
@@ -35,7 +39,14 @@ export function UserCreateForm() {
     <form action={formAction} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="name">Name (optional)</Label>
-        <Input id="name" name="name" placeholder="Vor- und Nachname" disabled={isPending} />
+        <Input
+          id="name"
+          name="name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Vor- und Nachname"
+          disabled={isPending}
+        />
         {fieldErrors?.name && <p className="text-sm text-destructive">{fieldErrors.name[0]}</p>}
       </div>
 
@@ -45,6 +56,8 @@ export function UserCreateForm() {
           id="email"
           name="email"
           type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           placeholder="nutzer@beispiel.de"
           disabled={isPending}
         />
@@ -58,6 +71,8 @@ export function UserCreateForm() {
             id="tempPassword"
             name="tempPassword"
             type={showPassword ? "text" : "password"}
+            value={tempPassword}
+            onChange={(e) => setTempPassword(e.target.value)}
             placeholder="Mind. 12 Zeichen"
             disabled={isPending}
             className="pr-10"
@@ -78,7 +93,7 @@ export function UserCreateForm() {
 
       <div className="space-y-2">
         <Label htmlFor="role">Rolle</Label>
-        <Select name="role" defaultValue="USER" disabled={isPending}>
+        <Select name="role" value={role} onValueChange={setRole} disabled={isPending}>
           <SelectTrigger id="role">
             <SelectValue />
           </SelectTrigger>
