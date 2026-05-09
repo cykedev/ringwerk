@@ -13,6 +13,9 @@ export function AccountPasswordForm() {
   const [showCurrent, setShowCurrent] = useState(false)
   const [showNew, setShowNew] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState<string>("")
+  const [newPassword, setNewPassword] = useState<string>("")
+  const [confirmPassword, setConfirmPassword] = useState<string>("")
 
   useEffect(() => {
     if (state && "success" in state && state.success) {
@@ -37,6 +40,8 @@ export function AccountPasswordForm() {
             id="currentPassword"
             name="currentPassword"
             type={showCurrent ? "text" : "password"}
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
             disabled={isPending}
             className="pr-10"
           />
@@ -58,6 +63,8 @@ export function AccountPasswordForm() {
             id="newPassword"
             name="newPassword"
             type={showNew ? "text" : "password"}
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
             placeholder="Mind. 12 Zeichen"
             disabled={isPending}
             className="pr-10"
@@ -80,6 +87,8 @@ export function AccountPasswordForm() {
             id="confirmPassword"
             name="confirmPassword"
             type={showConfirm ? "text" : "password"}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
             disabled={isPending}
             className="pr-10"
           />
