@@ -25,6 +25,11 @@ export function UserEditForm({ user, action }: Props) {
   const router = useRouter()
   const [state, formAction, isPending] = useActionState(action, null)
   const [showPassword, setShowPassword] = useState(false)
+  const [name, setName] = useState<string>(user.name ?? "")
+  const [email, setEmail] = useState<string>(user.email)
+  const [role, setRole] = useState<string>(user.role)
+  const [isActive, setIsActive] = useState<string>(user.isActive ? "true" : "false")
+  const [tempPassword, setTempPassword] = useState<string>("")
 
   useEffect(() => {
     if (state && "success" in state && state.success) {
@@ -44,7 +49,8 @@ export function UserEditForm({ user, action }: Props) {
         <Input
           id="name"
           name="name"
-          defaultValue={user.name ?? ""}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           placeholder="Vor- und Nachname"
           disabled={isPending}
         />
@@ -57,7 +63,8 @@ export function UserEditForm({ user, action }: Props) {
           id="email"
           name="email"
           type="email"
-          defaultValue={user.email}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           disabled={isPending}
         />
         {fieldErrors?.email && <p className="text-sm text-destructive">{fieldErrors.email[0]}</p>}
@@ -65,7 +72,7 @@ export function UserEditForm({ user, action }: Props) {
 
       <div className="space-y-2">
         <Label htmlFor="role">Rolle</Label>
-        <Select name="role" defaultValue={user.role} disabled={isPending}>
+        <Select name="role" value={role} onValueChange={setRole} disabled={isPending}>
           <SelectTrigger id="role">
             <SelectValue />
           </SelectTrigger>
@@ -80,11 +87,7 @@ export function UserEditForm({ user, action }: Props) {
 
       <div className="space-y-2">
         <Label htmlFor="isActive">Status</Label>
-        <Select
-          name="isActive"
-          defaultValue={user.isActive ? "true" : "false"}
-          disabled={isPending}
-        >
+        <Select name="isActive" value={isActive} onValueChange={setIsActive} disabled={isPending}>
           <SelectTrigger id="isActive">
             <SelectValue />
           </SelectTrigger>
@@ -102,6 +105,8 @@ export function UserEditForm({ user, action }: Props) {
             id="tempPassword"
             name="tempPassword"
             type={showPassword ? "text" : "password"}
+            value={tempPassword}
+            onChange={(e) => setTempPassword(e.target.value)}
             placeholder="Leer lassen = kein Wechsel"
             disabled={isPending}
             className="pr-10"
