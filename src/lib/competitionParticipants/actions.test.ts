@@ -15,6 +15,7 @@ const {
   seriesDeleteManyMock,
   transactionMock,
   auditLogCreateMock,
+  disciplineFindUniqueMock,
 } = vi.hoisted(() => ({
   getAuthSessionMock: vi.fn(),
   revalidatePathMock: vi.fn(),
@@ -30,6 +31,7 @@ const {
   seriesDeleteManyMock: vi.fn(),
   transactionMock: vi.fn(),
   auditLogCreateMock: vi.fn(),
+  disciplineFindUniqueMock: vi.fn(),
 }))
 
 vi.mock("@/lib/auth-helpers", () => ({
@@ -55,6 +57,7 @@ vi.mock("@/lib/db", () => ({
     },
     series: { deleteMany: seriesDeleteManyMock },
     auditLog: { create: auditLogCreateMock },
+    discipline: { findUnique: disciplineFindUniqueMock },
     $transaction: transactionMock,
   },
 }))
@@ -65,6 +68,7 @@ import {
   withdrawParticipant,
   revokeWithdrawal,
   updateStartNumber,
+  updateParticipantDiscipline,
 } from "@/lib/competitionParticipants/actions"
 
 const adminSession = { user: { id: "u1", role: "ADMIN" } }
@@ -467,5 +471,99 @@ describe("updateStartNumber", () => {
     expect(competitionParticipantUpdateMock).toHaveBeenCalledWith(
       expect.objectContaining({ data: { startNumber: 7 } })
     )
+  })
+})
+
+// ─── updateParticipantDiscipline ─────────────────────────────────────────────
+
+describe("updateParticipantDiscipline", () => {
+  const activeCp = {
+    id: "cp1",
+    competitionId: "c1",
+    status: "ACTIVE",
+    _count: { series: 0 },
+  }
+  const activeDiscipline = { id: "d2", isArchived: false }
+
+  beforeEach(() => {
+    vi.resetAllMocks()
+    competitionParticipantFindUniqueMock.mockResolvedValue(activeCp)
+    disciplineFindUniqueMock.mockResolvedValue(activeDiscipline)
+    competitionParticipantUpdateMock.mockResolvedValue({})
+  })
+
+  it("liefert Fehler ohne Session", async () => {
+    getAuthSessionMock.mockResolvedValue(null)
+    const result = await updateParticipantDiscipline("cp1", "d2")
+    expect(result).toEqual({ error: "Nicht angemeldet" })
+  })
+
+  it("liefert Fehler wenn kein Admin/Manager", async () => {
+    getAuthSessionMock.mockResolvedValue(userSession)
+    const result = await updateParticipantDiscipline("cp1", "d2")
+    expect(result).toEqual({ error: "Keine Berechtigung" })
+  })
+
+  it("liefert Fehler wenn CP nicht gefunden", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    competitionParticipantFindUniqueMock.mockResolvedValue(null)
+    const result = await updateParticipantDiscipline("cp1", "d2")
+    expect(result).toEqual({ error: "Einschreibung nicht gefunden." })
+  })
+
+  it("liefert Fehler wenn Status WITHDRAWN", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    competitionParticipantFindUniqueMock.mockResolvedValue({
+      ...activeCp,
+      status: "WITHDRAWN",
+    })
+    const result = await updateParticipantDiscipline("cp1", "d2")
+    expect(result).toEqual({
+      error: "Disziplin kann nur bei aktiven Teilnehmern geändert werden.",
+    })
+  })
+
+  it("liefert Fehler wenn Serien vorhanden", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    competitionParticipantFindUniqueMock.mockResolvedValue({
+      ...activeCp,
+      _count: { series: 1 },
+    })
+    const result = await updateParticipantDiscipline("cp1", "d2")
+    expect(result).toEqual({
+      error: "Disziplin kann nicht mehr geändert werden — es gibt bereits erfasste Serien.",
+    })
+  })
+
+  it("liefert Fehler wenn Disziplin nicht gefunden", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    disciplineFindUniqueMock.mockResolvedValue(null)
+    const result = await updateParticipantDiscipline("cp1", "d2")
+    expect(result).toEqual({ error: "Disziplin nicht gefunden oder nicht verfügbar." })
+  })
+
+  it("liefert Fehler wenn Disziplin archiviert", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    disciplineFindUniqueMock.mockResolvedValue({ id: "d2", isArchived: true })
+    const result = await updateParticipantDiscipline("cp1", "d2")
+    expect(result).toEqual({ error: "Disziplin nicht gefunden oder nicht verfügbar." })
+  })
+
+  it("aktualisiert Disziplin erfolgreich", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    const result = await updateParticipantDiscipline("cp1", "d2")
+    expect(result).toEqual({ success: true })
+    expect(competitionParticipantUpdateMock).toHaveBeenCalledWith({
+      where: { id: "cp1" },
+      data: { disciplineId: "d2" },
+    })
+    expect(revalidatePathMock).toHaveBeenCalledWith("/competitions/c1/participants")
+    expect(revalidatePathMock).toHaveBeenCalledWith("/competitions")
+  })
+
+  it("erlaubt MANAGER die Änderung", async () => {
+    getAuthSessionMock.mockResolvedValue(managerSession)
+    const result = await updateParticipantDiscipline("cp1", "d2")
+    expect(result).toEqual({ success: true })
   })
 })
