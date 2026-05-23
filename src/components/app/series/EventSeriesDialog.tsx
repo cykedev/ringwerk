@@ -24,6 +24,8 @@ interface Props {
   participantName: string
   scoringType: ScoringType
   shotsPerSeries: number
+  /** Teiler-Korrekturfaktor der Disziplin — für Live-Anzeige des korrigierten Teilers */
+  teilerFaktor?: number
   /** Vorhandene Serie — wenn gesetzt, Korrektur-Modus */
   existingSeries?: { rings: number; teiler: number }
 }
@@ -34,6 +36,7 @@ export function EventSeriesDialog({
   participantName,
   scoringType,
   shotsPerSeries,
+  teilerFaktor = 1,
   existingSeries,
 }: Props) {
   const [open, setOpen] = useState(false)
@@ -66,6 +69,9 @@ export function EventSeriesDialog({
     }
     setOpen(isOpen)
   }
+
+  const teilerNum = parseFloat(teiler.replace(",", "."))
+  const correctedTeiler = isNaN(teilerNum) || teilerFaktor === 1 ? null : teilerNum * teilerFaktor
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -117,6 +123,11 @@ export function EventSeriesDialog({
             />
             {fieldErrors?.teiler && (
               <p className="text-sm text-destructive">{fieldErrors.teiler[0]}</p>
+            )}
+            {correctedTeiler !== null && (
+              <p className="text-xs text-muted-foreground">
+                Korr. Teiler: {correctedTeiler.toFixed(2)}
+              </p>
             )}
           </div>
 

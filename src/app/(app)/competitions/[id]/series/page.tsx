@@ -158,6 +158,7 @@ export default async function SeriesPage({ params }: Props) {
                         competition.targetValueType
                       )}
                       shotsPerSeries={competition.shotsPerSeries}
+                      teilerFaktor={(cp.discipline ?? competition.discipline)?.teilerFaktor ?? 1}
                       existingSeries={series}
                     />
                     {series && <DeleteEventSeriesButton seriesId={series.id} competitionId={id} />}
@@ -253,7 +254,16 @@ async function SeasonSeriesPageContent({ id }: { id: string }) {
                 isMixed={isMixed}
                 scoringMode={competition.scoringMode}
                 shotsPerSeries={competition.shotsPerSeries}
-                disciplines={isMixed ? allDisciplines : undefined}
+                disciplines={
+                  isMixed
+                    ? allDisciplines.map((d) => ({
+                        id: d.id,
+                        name: d.name,
+                        scoringType: d.scoringType,
+                        teilerFaktor: d.teilerFaktor,
+                      }))
+                    : undefined
+                }
                 defaultDisciplineId={cp.discipline?.id ?? competition.disciplineId}
               />
             ))}

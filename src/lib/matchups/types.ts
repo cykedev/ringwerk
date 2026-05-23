@@ -9,6 +9,8 @@ export interface MatchupParticipant {
   withdrawn: boolean
   /** Disziplin-ScoringType des Teilnehmers in diesem Wettbewerb (null = nicht konfiguriert) */
   scoringType: ScoringType | null
+  /** Teiler-Korrekturfaktor der Teilnehmer-Disziplin (null = keine per-CP-Disziplin) */
+  teilerFaktor: number | null
 }
 
 export interface MatchResultSummary {
