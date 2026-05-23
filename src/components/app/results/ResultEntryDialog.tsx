@@ -37,6 +37,8 @@ interface Props {
   homeScoringType: ScoringType
   awayScoringType: ScoringType
   shotsPerSeries: number
+  homeTeilerFaktor: number
+  awayTeilerFaktor: number
 }
 
 function getExisting(
@@ -57,6 +59,8 @@ export function ResultEntryDialog({
   homeScoringType,
   awayScoringType,
   shotsPerSeries,
+  homeTeilerFaktor,
+  awayTeilerFaktor,
 }: Props) {
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -124,6 +128,14 @@ export function ResultEntryDialog({
     })
   }
 
+  const homeTeilerNum = parseFloat(home.teiler.replace(",", "."))
+  const homeCorrectedTeiler =
+    isNaN(homeTeilerNum) || homeTeilerFaktor === 1 ? null : homeTeilerNum * homeTeilerFaktor
+
+  const awayTeilerNum = parseFloat(away.teiler.replace(",", "."))
+  const awayCorrectedTeiler =
+    isNaN(awayTeilerNum) || awayTeilerFaktor === 1 ? null : awayTeilerNum * awayTeilerFaktor
+
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
       <DialogTrigger asChild>
@@ -172,6 +184,11 @@ export function ResultEntryDialog({
                   onChange={(e) => setHome((p) => ({ ...p, teiler: e.target.value }))}
                   placeholder="z.B. 3,7"
                 />
+                {homeCorrectedTeiler !== null && (
+                  <p className="text-xs text-muted-foreground">
+                    Korr. Teiler: {homeCorrectedTeiler.toFixed(2)}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -211,6 +228,11 @@ export function ResultEntryDialog({
                   onChange={(e) => setAway((p) => ({ ...p, teiler: e.target.value }))}
                   placeholder="z.B. 5,0"
                 />
+                {awayCorrectedTeiler !== null && (
+                  <p className="text-xs text-muted-foreground">
+                    Korr. Teiler: {awayCorrectedTeiler.toFixed(2)}
+                  </p>
+                )}
               </div>
             </div>
           </div>

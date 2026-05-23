@@ -19,6 +19,7 @@ interface Props {
   /** @deprecated Per-Teilnehmer-Typen werden aus MatchupParticipant.scoringType berechnet */
   scoringType?: ScoringType
   shotsPerSeries: number
+  competitionTeilerFaktor?: number
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -76,6 +77,7 @@ function LegTable({
   canManage,
   scoringMode,
   shotsPerSeries,
+  competitionTeilerFaktor = 1,
 }: {
   title: string
   matchups: MatchupListItem[]
@@ -83,6 +85,7 @@ function LegTable({
   canManage: boolean
   scoringMode: ScoringMode
   shotsPerSeries: number
+  competitionTeilerFaktor?: number
 }) {
   const tz = getDisplayTimeZone()
 
@@ -138,6 +141,9 @@ function LegTable({
                       : null
                   )
                 : "WHOLE"
+
+              const homeTeilerFaktor = m.homeParticipant.teilerFaktor ?? competitionTeilerFaktor
+              const awayTeilerFaktor = m.awayParticipant?.teilerFaktor ?? competitionTeilerFaktor
 
               if (isCompleted && m.awayParticipant) {
                 homeResult = m.results.find((r) => r.participantId === m.homeParticipant.id)
@@ -204,6 +210,8 @@ function LegTable({
                           homeScoringType={homeScoringType}
                           awayScoringType={awayScoringType}
                           shotsPerSeries={shotsPerSeries}
+                          homeTeilerFaktor={homeTeilerFaktor}
+                          awayTeilerFaktor={awayTeilerFaktor}
                         />
                       )}
                     </td>
@@ -255,6 +263,7 @@ export function ScheduleView({
   playoffsStarted = false,
   scoringMode = "RINGTEILER",
   shotsPerSeries,
+  competitionTeilerFaktor = 1,
 }: Props) {
   if (matchups.length === 0) {
     return (
@@ -282,6 +291,7 @@ export function ScheduleView({
           canManage={canManage && !playoffsStarted}
           scoringMode={scoringMode}
           shotsPerSeries={shotsPerSeries}
+          competitionTeilerFaktor={competitionTeilerFaktor}
         />
       )}
       {secondLeg.length > 0 && (
@@ -292,6 +302,7 @@ export function ScheduleView({
           canManage={canManage && !playoffsStarted}
           scoringMode={scoringMode}
           shotsPerSeries={shotsPerSeries}
+          competitionTeilerFaktor={competitionTeilerFaktor}
         />
       )}
     </div>

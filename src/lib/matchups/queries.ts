@@ -6,7 +6,13 @@ type RawParticipant = {
   id: string
   firstName: string
   lastName: string
-  competitions: Array<{ status: string; discipline: { scoringType: string } | null }>
+  competitions: Array<{
+    status: string
+    discipline: {
+      scoringType: string
+      teilerFaktor: { toNumber: () => number }
+    } | null
+  }>
 }
 
 function mapParticipant(p: RawParticipant): MatchupParticipant {
@@ -17,6 +23,7 @@ function mapParticipant(p: RawParticipant): MatchupParticipant {
     lastName: p.lastName,
     withdrawn: cp?.status === "WITHDRAWN",
     scoringType: (cp?.discipline?.scoringType as MatchupParticipant["scoringType"]) ?? null,
+    teilerFaktor: cp?.discipline?.teilerFaktor?.toNumber() ?? null,
   }
 }
 
@@ -29,7 +36,7 @@ function participantSelect(competitionId: string) {
       where: { competitionId },
       select: {
         status: true,
-        discipline: { select: { scoringType: true } },
+        discipline: { select: { scoringType: true, teilerFaktor: true } },
       },
     },
   } as const
