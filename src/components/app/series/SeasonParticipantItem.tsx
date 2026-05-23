@@ -30,7 +30,7 @@ interface Props {
   isMixed: boolean
   scoringMode: ScoringMode
   shotsPerSeries: number
-  disciplines?: { id: string; name: string; scoringType: ScoringType }[]
+  disciplines?: { id: string; name: string; scoringType: ScoringType; teilerFaktor: number }[]
   defaultDisciplineId?: string | null
 }
 

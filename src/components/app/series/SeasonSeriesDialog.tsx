@@ -42,7 +42,7 @@ interface Props {
   scoringMode: ScoringMode
   shotsPerSeries: number
   /** Disziplinen für gemischte Saisons */
-  disciplines?: { id: string; name: string; scoringType: ScoringType }[]
+  disciplines?: { id: string; name: string; scoringType: ScoringType; teilerFaktor: number }[]
   defaultDisciplineId?: string | null
   /** Wenn gesetzt: Edit-Modus für diese bestehende Serie */
   existingSeries?: ExistingSeries
@@ -77,6 +77,11 @@ export function SeasonSeriesDialog({
   // Compute effective scoring type based on currently selected discipline
   const selectedDiscipline = disciplines?.find((d) => d.id === selectedDisciplineId) ?? null
   const effectiveScoringType = getEffectiveScoringType(scoringMode, selectedDiscipline)
+
+  // teilerFaktor aus der gewählten Disziplin (für Live-Anzeige des korrigierten Teilers)
+  const teilerFaktor = selectedDiscipline?.teilerFaktor ?? 1
+  const teilerNum = parseFloat(teiler.replace(",", "."))
+  const correctedTeiler = isNaN(teilerNum) || teilerFaktor === 1 ? null : teilerNum * teilerFaktor
 
   const boundAction = isCorrection
     ? updateSeasonSeries.bind(null, competitionId, existingSeries.id)
@@ -198,6 +203,11 @@ export function SeasonSeriesDialog({
             />
             {fieldErrors?.teiler && (
               <p className="text-sm text-destructive">{fieldErrors.teiler[0]}</p>
+            )}
+            {correctedTeiler !== null && (
+              <p className="text-xs text-muted-foreground">
+                Korr. Teiler: {correctedTeiler.toFixed(2)}
+              </p>
             )}
           </div>
 
