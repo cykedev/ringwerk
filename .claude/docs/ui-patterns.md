@@ -234,7 +234,7 @@ Page-Header-Pattern:
 
 ## Aus Lernlog übernommen
 
-<!-- Zuletzt konsolidiert: 2026-05-07 -->
+<!-- Zuletzt konsolidiert: 2026-05-23 -->
 
 ### Layout & Grid
 
@@ -256,3 +256,7 @@ Page-Header-Pattern:
 - **PDF: eigene Spacing-Konstanten**: A4-Querformat (769pt × 546pt) hat deutlich tightere Constraints als Bildschirm. PDF-Module mit separaten kompakten Konstanten versehen — nie Web-Konstanten teilen.
 - **react-pdf Union-Types: kein Narrowing per `"in"`-Guard**: react-pdf `<Text>` benötigt konkrete Typ-Constraints zur Compile-Zeit. Statt `if ("disc" in W)` direkt auf die spezifische Konstante zugreifen (`W_MIXED.disc` statt `W.disc`).
 - **react-pdf: keine durchgehenden Spaltenlinien via Flex-Stretch**: `borderRightWidth` auf `<Text>` oder Stretch-Separator-Views liefern in react-pdf keine durchgehenden vertikalen Linien. Stattdessen explizite `height` auf den `<View>`-Zellen setzen, die den Border tragen.
+
+### Forms & State
+
+- **React 19 Forms: Inputs immer controlled mit `useActionState`**: `<form action={fn}>` setzt uncontrolled Inputs (`defaultValue`) nach jedem Submit zurück — auch bei Validation Errors verlieren User ihre Eingaben. Bei Forms mit `useActionState` Inputs IMMER controlled führen (`value` + `onChange` + lokaler State via `useState`), nie `defaultValue`. Initialwerte beim Mount aus Props in den State kopieren.

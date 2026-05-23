@@ -536,7 +536,7 @@ export async function createLeague(formData: FormData): Promise<ActionResult>
 
 ## Aus Lernlog übernommen
 
-<!-- Zuletzt konsolidiert: 2026-05-07 -->
+<!-- Zuletzt konsolidiert: 2026-05-23 -->
 
 ### Prisma-Queries (ergänzt)
 
@@ -609,3 +609,5 @@ export async function createLeague(formData: FormData): Promise<ActionResult>
 - **Datenmigration bei Code-Fix**: Wenn ein Persistenz-Bug gefixt wird, immer prüfen ob historische Datensätze im alten (falschen) Format gespeichert wurden. Ein Code-Fix allein reicht nicht — ggf. Backfill-Query oder Migration notwendig.
 - **Rollen-Einführungs-Checkliste**: Beim Hinzufügen oder Ändern einer Nutzerrolle explizit alle Page-Dateien auf hardcodierte Role-Checks durchsuchen (z.B. `grep 'role !== "ADMIN"' src/app/`). Actions und Navigation-Guards reichen nicht — direkter Page-Guard ist eine separate Sicherheitsebene.
 - **PDF-Routes mit demselben Role-Check absichern wie die zugehörige Page**: Neue PDF-/Export-Routes für sensitive Daten dürfen sich nicht auf einen reinen Session-Check verlassen. Immer denselben Authorization-Helper (z.B. `canManage()`) wie die UI-Page anwenden, sonst entsteht PII-Exposure über die Export-URL.
+- **Prisma Decimal: `.toNumber()` auch für Client-Props**: `Decimal`-Felder sind nicht JSON-serialisierbar. Beim Übergeben von Prisma-Resultaten an Client Components (oder als Props durch die Server/Client-Boundary) immer `.toNumber()` in der Query-Mapping-Funktion aufrufen — nie roh weitergeben. Sonst gibt es einen Serialisierungsfehler zur Laufzeit.
+- **Prettier auch für `.claude/` Markdown**: Plan-, Spec- und Lessons-Files unter `.claude/` werden von Prettier mitformatiert. Nach dem Erstellen oder Bearbeiten solcher Files immer `npx prettier --write <pfad>` laufen lassen, bevor committed wird — sonst schlägt `npm run format:check` im `/check`-Gate fehl.

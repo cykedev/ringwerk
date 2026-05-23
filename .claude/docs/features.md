@@ -141,6 +141,7 @@ Regelset ist **nach Spielplan-Generierung gesperrt** — Änderungen nur vor dem
 - **Optional:** Einzelschusswerte (Schuss 1–N) für Statistiken
 - Automatische Berechnung des Ringteilers
 - Nachträgliche Korrektur: nur durch Admin oder Schiedsrichter (AuditLog)
+- **Live-Anzeige korrigierter Teiler:** Wird der Teiler-Wert eingegeben und ist `teilerFaktor ≠ 1.0`, erscheint direkt unter dem Eingabefeld ein Hint mit dem korrigierten Teiler (`Teiler × Faktor`). Gilt unabhängig für Heim und Gast.
 
 ### Validierungsregeln
 
@@ -253,11 +254,13 @@ Alle Teilnehmer schiessen, eine Rangliste wird erstellt.
 - Vereinsmitglieder werden aus dem Teilnehmerpool eingeschrieben
 - Gäste: werden als Participant angelegt mit `isGuest: true` auf CompetitionParticipant
 - Bei gemischten Disziplinen: jeder Teilnehmer wählt seine Disziplin bei der Anmeldung
+- **Disziplin ändern (gemischte Wettbewerbe):** Solange noch keine Serie erfasst wurde, kann die Disziplin eines aktiven (ACTIVE) Nicht-Gast-Teilnehmers nachträglich geändert werden. Button erscheint in der Teilnehmerliste. Nicht verfügbar für zurückgezogene Teilnehmer, Gastschützen oder wenn bereits Serien vorhanden sind.
 
 ### Serien-Erfassung ✓
 
 - Jeder Teilnehmer schießt **eine Serie** pro Event
 - Admin erfasst: Gesamtringe + Teiler (+ optional Einzelschüsse)
+- **Live-Anzeige korrigierter Teiler:** Wird der Teiler eingegeben und ist `teilerFaktor ≠ 1.0`, erscheint direkt unter dem Eingabefeld ein Hint mit dem korrigierten Teiler (`Teiler × Faktor`).
 - Bei DECIMAL_REST-Modus: Einzelschüsse sind **Pflicht** (Nachkommastellen benötigt); **nur in LEAGUE** (EVENT/SEASON können DECIMAL_REST nicht verwenden)
 
 ### Rangliste ✓
@@ -328,6 +331,7 @@ Serien werden "gekauft" — jede geschossene Serie zählt als gekauft.
   - **Disziplin-Vorauswahl** (defaultDisciplineId prop) wird unterstützt
   - Dialog kann jederzeit neu geöffnet werden (fix Reopening-Bug via useEffect Pattern)
 - **Edit-Modus:** Bearbeiten (Bearbeiten) bestehender Serien — Pencil-Icon pro Serienzeile öffnet Dialog im Edit-Modus, nutzt `updateSeasonSeries` Action, recalculates Ringteiler, logs `SEASON_SERIES_CORRECTED` audit event
+- **Live-Anzeige korrigierter Teiler:** Wird der Teiler eingegeben und ist der `teilerFaktor` der gewählten Disziplin `≠ 1.0`, erscheint direkt unter dem Eingabefeld ein Hint mit dem korrigierten Teiler. Reagiert dynamisch auf Disziplin-Wechsel.
 
 ### Mehrfach-Wertung ✓
 
