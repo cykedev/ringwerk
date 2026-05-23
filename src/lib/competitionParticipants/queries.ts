@@ -22,6 +22,7 @@ export async function getCompetitionParticipants(
         select: { id: true, firstName: true, lastName: true, contact: true },
       },
       eventTeam: { select: { teamNumber: true } },
+      _count: { select: { series: true } },
     },
     orderBy: [
       { status: "asc" },
@@ -35,5 +36,6 @@ export async function getCompetitionParticipants(
       ? { ...r.discipline, teilerFaktor: r.discipline.teilerFaktor.toNumber() }
       : null,
     teamNumber: r.eventTeam?.teamNumber ?? null,
+    seriesCount: r._count.series,
   })) as unknown as CompetitionParticipantListItem[]
 }
