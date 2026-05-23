@@ -174,7 +174,11 @@ export default async function CompetitionParticipantsPage({ params }: Props) {
                       <p className="text-xs text-muted-foreground">{cp.participant.contact}</p>
                     )}
                   </div>
-                  <CompetitionParticipantActions entry={cp} playoffsStarted={playoffsStarted} />
+                  <CompetitionParticipantActions
+                    entry={cp}
+                    playoffsStarted={playoffsStarted}
+                    disciplines={enrollDisciplines}
+                  />
                 </div>
               ))}
             </div>
@@ -208,7 +212,11 @@ export default async function CompetitionParticipantsPage({ params }: Props) {
                       <p className="text-xs text-muted-foreground">{cp.participant.contact}</p>
                     )}
                   </div>
-                  <CompetitionParticipantActions entry={cp} playoffsStarted={playoffsStarted} />
+                  <CompetitionParticipantActions
+                    entry={cp}
+                    playoffsStarted={playoffsStarted}
+                    disciplines={enrollDisciplines}
+                  />
                 </div>
               ))}
             </div>

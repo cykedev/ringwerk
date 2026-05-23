@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { UserMinus, UserCheck, Trash2 } from "lucide-react"
+import { UserMinus, UserCheck, Trash2, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   AlertDialog,
@@ -21,6 +21,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
@@ -28,22 +35,36 @@ import {
   withdrawParticipant,
   revokeWithdrawal,
   unenrollParticipant,
+  updateParticipantDiscipline,
 } from "@/lib/competitionParticipants/actions"
 import type { CompetitionParticipantListItem } from "@/lib/competitionParticipants/types"
+import type { SerializableDiscipline } from "@/lib/disciplines/types"
 
 interface Props {
   entry: CompetitionParticipantListItem
   playoffsStarted: boolean
+  /** Übergeben bei gemischten Wettbewerben — ermöglicht Disziplin-Edit */
+  disciplines?: SerializableDiscipline[]
 }
 
-export function CompetitionParticipantActions({ entry, playoffsStarted }: Props) {
+export function CompetitionParticipantActions({ entry, playoffsStarted, disciplines }: Props) {
   const [isPending, startTransition] = useTransition()
   const [withdrawOpen, setWithdrawOpen] = useState(false)
   const [reason, setReason] = useState("")
+  const [disciplineOpen, setDisciplineOpen] = useState(false)
+  const [selectedDisciplineId, setSelectedDisciplineId] = useState<string>(entry.disciplineId ?? "")
 
   const fullName = entry.isGuest
     ? entry.participant.firstName
     : `${entry.participant.lastName}, ${entry.participant.firstName}`
+
+  // Disziplin-Edit möglich wenn: gemischter WB, aktiv, keine Serien, kein Gast
+  const canEditDiscipline =
+    disciplines &&
+    disciplines.length > 0 &&
+    !entry.isGuest &&
+    entry.status === "ACTIVE" &&
+    entry.seriesCount === 0
 
   if (playoffsStarted) return null
 
@@ -81,8 +102,83 @@ export function CompetitionParticipantActions({ entry, playoffsStarted }: Props)
     })
   }
 
+  function handleDisciplineSave() {
+    if (!selectedDisciplineId) return
+    startTransition(async () => {
+      const result = await updateParticipantDiscipline(entry.id, selectedDisciplineId)
+      if ("error" in result) {
+        toast.error(
+          typeof result.error === "string" ? result.error : "Fehler beim Ändern der Disziplin."
+        )
+      } else {
+        setDisciplineOpen(false)
+      }
+    })
+  }
+
   return (
     <div className="flex items-center gap-1">
+      {/* Disziplin ändern */}
+      {canEditDiscipline && (
+        <>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10"
+            title="Disziplin ändern"
+            onClick={() => {
+              setSelectedDisciplineId(entry.disciplineId ?? "")
+              setDisciplineOpen(true)
+            }}
+            disabled={isPending}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Dialog open={disciplineOpen} onOpenChange={setDisciplineOpen}>
+            <DialogContent className="sm:max-w-sm">
+              <DialogHeader>
+                <DialogTitle>Disziplin ändern</DialogTitle>
+              </DialogHeader>
+              <p className="text-sm text-muted-foreground">{fullName}</p>
+              <div className="space-y-1.5">
+                <Label htmlFor="discipline-select">Disziplin</Label>
+                <Select
+                  value={selectedDisciplineId}
+                  onValueChange={setSelectedDisciplineId}
+                  disabled={isPending}
+                >
+                  <SelectTrigger id="discipline-select">
+                    <SelectValue placeholder="Disziplin wählen…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {disciplines!.map((d) => (
+                      <SelectItem key={d.id} value={d.id}>
+                        {d.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setDisciplineOpen(false)}
+                  disabled={isPending}
+                >
+                  Abbrechen
+                </Button>
+                <Button
+                  onClick={handleDisciplineSave}
+                  disabled={isPending || !selectedDisciplineId}
+                >
+                  {isPending ? "Speichern…" : "Speichern"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </>
+      )}
+
       {/* Zurückziehen */}
       {entry.status === "ACTIVE" && (
         <>
