@@ -18,29 +18,43 @@ describe("EventStarterListPdf", () => {
     const pdf = await renderToString(
       createElement(EventStarterListPdf, baseProps) as any
     )
-    // Document was created and contains PDF header
+    // Verify valid PDF document structure
     expect(pdf).toContain("%PDF")
-    // Title metadata is present
-    expect(pdf).toContain("Starterliste")
-    // Document structure is intact with expected resources
-    expect(pdf).toMatch(/\/Type \/Font/)
+    expect(pdf).toMatch(/\/Type \/Catalog/)
+    expect(pdf).toMatch(/\/Type \/Pages/)
     expect(pdf).toMatch(/\/Type \/Page/)
+    // Verify document metadata (readable title and author)
+    expect(pdf).toContain("Starterliste")
+    expect(pdf).toContain("Ringwerk")
+    // Verify fonts are embedded (ensures text rendering)
+    expect(pdf).toMatch(/\/Type \/Font/)
+    expect(pdf).toMatch(/\/BaseFont \/Helvetica/)
+    // Verify substantial content is present (participants rendered in compressed stream)
+    expect(pdf.length).toBeGreaterThan(4000)
   })
 
   it("renders without participants (blank list)", async () => {
     const pdf = await renderToString(
       createElement(EventStarterListPdf, { ...baseProps, participants: [] }) as any
     )
+    // Verify valid PDF with correct structure
     expect(pdf).toContain("%PDF")
     expect(pdf).toContain("Starterliste")
+    expect(pdf).toMatch(/\/Type \/Font/)
+    // Verify content is present (empty rows are still rendered)
+    expect(pdf.length).toBeGreaterThan(2500)
   })
 
   it("omits date segment from subtitle when eventDate is null", async () => {
     const pdf = await renderToString(
       createElement(EventStarterListPdf, { ...baseProps, eventDate: null }) as any
     )
-    // Document renders without error
+    // Verify PDF structure is intact
     expect(pdf).toContain("%PDF")
     expect(pdf).toContain("Starterliste")
+    expect(pdf).toMatch(/\/Type \/Font/)
+    expect(pdf).toMatch(/\/Type \/Page/)
+    // Verify content is generated
+    expect(pdf.length).toBeGreaterThan(2500)
   })
 })
