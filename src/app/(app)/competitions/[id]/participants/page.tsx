@@ -16,6 +16,7 @@ import { EnrollParticipantForm } from "@/components/app/competitionParticipants/
 import { CompetitionParticipantActions } from "@/components/app/competitionParticipants/CompetitionParticipantActions"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { PdfDownloadButton } from "@/components/app/shared/PdfDownloadButton"
 import type { ActionResult } from "@/lib/types"
 
 interface Props {
@@ -80,6 +81,10 @@ export default async function CompetitionParticipantsPage({ params }: Props) {
           <div className="flex shrink-0 items-center gap-2">
             {isEvent ? (
               <>
+                <PdfDownloadButton
+                  href={`/api/competitions/${id}/starter-list/pdf`}
+                  label="Starterliste drucken"
+                />
                 <Button asChild variant="outline" size="icon" className="h-9 w-9">
                   <Link href={`/competitions/${id}/series`} title="Serien erfassen">
                     <ListOrdered className="h-4 w-4" />
