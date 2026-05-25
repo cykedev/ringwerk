@@ -18,8 +18,11 @@ interface BuildArgs {
 }
 
 /**
- * Filters ACTIVE participants, resolves discipline (per-row → competition fallback),
- * and assigns a Fisher–Yates–shuffled start number 1..n.
+ * Filters ACTIVE participants, sorts by lastName/firstName, then assigns
+ * a Fisher–Yates–shuffled start number 1..n to each sorted row.
+ *
+ * The list is alphabetically ordered but the Nr. column is randomised,
+ * so the starting order is not predictable from the name order.
  *
  * `random` injection makes the shuffle deterministic in tests.
  */
@@ -28,14 +31,24 @@ export function buildStarterListRows({
   competitionDisciplineName,
   random,
 }: BuildArgs): StarterListRow[] {
-  const active = participants.filter((p) => p.status === "ACTIVE")
-  const shuffled = [...active]
-  for (let i = shuffled.length - 1; i > 0; i--) {
+  const active = participants
+    .filter((p) => p.status === "ACTIVE")
+    .sort((a, b) => {
+      const last = a.participant.lastName.localeCompare(b.participant.lastName, "de")
+      if (last !== 0) return last
+      return a.participant.firstName.localeCompare(b.participant.firstName, "de")
+    })
+
+  // Build a shuffled pool of numbers 1..n
+  const n = active.length
+  const numbers = Array.from({ length: n }, (_, i) => i + 1)
+  for (let i = n - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1))
-    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    ;[numbers[i], numbers[j]] = [numbers[j], numbers[i]]
   }
-  return shuffled.map((cp, idx) => ({
-    nr: idx + 1,
+
+  return active.map((cp, idx) => ({
+    nr: numbers[idx],
     firstName: cp.participant.firstName,
     lastName: cp.participant.lastName,
     disciplineName: cp.discipline?.name ?? competitionDisciplineName ?? null,
