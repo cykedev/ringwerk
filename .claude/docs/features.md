@@ -255,6 +255,7 @@ Alle Teilnehmer schiessen, eine Rangliste wird erstellt.
 - Gäste: werden als Participant angelegt mit `isGuest: true` auf CompetitionParticipant
 - Bei gemischten Disziplinen: jeder Teilnehmer wählt seine Disziplin bei der Anmeldung
 - **Disziplin ändern (gemischte Wettbewerbe):** Solange noch keine Serie erfasst wurde, kann die Disziplin eines aktiven (ACTIVE) Nicht-Gast-Teilnehmers nachträglich geändert werden. Button erscheint in der Teilnehmerliste. Nicht verfügbar für zurückgezogene Teilnehmer, Gastschützen oder wenn bereits Serien vorhanden sind.
+- **PDF-Export Starterliste:** Druckbare Starterliste pro Event (`GET /api/competitions/[id]/starter-list/pdf`). Spalten: Nr. (zufällig gemischte Startreihenfolge 1..n, Fisher–Yates), Name, Disziplin (pro Zeile befüllt — bei gemischtem Event individuelle Disziplin, bei festem Event Wettbewerbs-Disziplin), Einlage (leer), Teilnahme, Geschossen. Nur ACTIVE-Teilnehmer + 10 Leerzeilen für Spontanstarter. Button auf `/competitions/[id]/participants` für EVENT-Wettbewerbe. Nur ADMIN/MANAGER. Jeder Klick erzeugt eine neue Zufallsreihenfolge.
 
 ### Serien-Erfassung ✓
 
