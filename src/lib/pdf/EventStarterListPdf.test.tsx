@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest"
 import { inflateSync } from "node:zlib"
-import { renderToBuffer } from "@react-pdf/renderer"
-import { createElement } from "react"
-import { EventStarterListPdf } from "@/lib/pdf/EventStarterListPdf"
+import { renderToBuffer, type DocumentProps } from "@react-pdf/renderer"
+import { createElement, type ReactElement } from "react"
+import { EventStarterListPdf, type EventStarterListPdfProps } from "@/lib/pdf/EventStarterListPdf"
 
 /**
  * Extract readable text from a PDF buffer.
@@ -59,8 +59,14 @@ describe("EventStarterListPdf", () => {
     generatedAt: new Date("2026-05-24T10:00:00.000Z"),
   }
 
+  function render(props: EventStarterListPdfProps) {
+    return renderToBuffer(
+      createElement(EventStarterListPdf, props) as ReactElement<DocumentProps>
+    )
+  }
+
   it("renders with participants", async () => {
-    const buffer = await renderToBuffer(createElement(EventStarterListPdf, baseProps))
+    const buffer = await render(baseProps)
     const text = extractPdfText(buffer)
     expect(text).toContain("Starterliste")
     expect(text).toContain("Kranzlschiessen 2026")
@@ -73,21 +79,15 @@ describe("EventStarterListPdf", () => {
   })
 
   it("renders without participants (blank list)", async () => {
-    const buffer = await renderToBuffer(
-      createElement(EventStarterListPdf, { ...baseProps, participants: [] })
-    )
+    const buffer = await render({ ...baseProps, participants: [] })
     const text = extractPdfText(buffer)
     expect(text).toContain("Starterliste")
     expect(text).toContain("Kranzlschiessen 2026")
   })
 
   it("omits date segment from subtitle when eventDate is null", async () => {
-    const withDate = await renderToBuffer(createElement(EventStarterListPdf, baseProps))
-    const withoutDate = await renderToBuffer(
-      createElement(EventStarterListPdf, { ...baseProps, eventDate: null })
-    )
-    const textWithDate = extractPdfText(withDate)
-    const textWithoutDate = extractPdfText(withoutDate)
+    const textWithDate = extractPdfText(await render(baseProps))
+    const textWithoutDate = extractPdfText(await render({ ...baseProps, eventDate: null }))
 
     // Both contain competition name
     expect(textWithoutDate).toContain("Kranzlschiessen 2026")
