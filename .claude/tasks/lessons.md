@@ -5,7 +5,7 @@ Format: Datum | Fehler | Regel die ihn verhindert
 
 ---
 
-<!-- Zuletzt konsolidiert: 2026-05-23 -->
+<!-- Zuletzt konsolidiert: 2026-05-25 -->
 
 | 2026-05-08 | `getEffectiveScoringType` ignorierte `targetValueType` — TARGET\*-Kranzl mit Zielwert-Typ "Ringe (Zehntel)" zwang Ganzzahl-Eingabe | Bei `scoringMode = TARGET*` muss `targetValueType` Vorrang vor der Disziplin haben; alle Effective-Scoring-Aufrufe brauchen scoringMode + discipline + targetValueType |
 | 2026-04-04 | `competition.discipline`-Check brach gemischte Wettbewerbe ab — Fix: per-CP-Lookup als Fallback | Bei gemischten Wettbewerben nie `competition.discipline` als einzige Quelle — immer `competitionParticipant.discipline` als Fallback |
