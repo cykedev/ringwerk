@@ -23,23 +23,20 @@ function extractPdfText(buffer: Buffer): string {
 
       // Process TJ arrays: extract and decode only hex strings, skip kerning numbers
       // TJ array format: [ <hex1> num <hex2> num ... ] TJ
-      const decoded = decompressed.replace(
-        /\[([^\]]*)\] TJ/g,
-        (_m, content: string) => {
-          // Extract only hex substrings (<...>) from TJ arrays
-          const texts: string[] = []
-          const hexRegex = /<([0-9a-fA-F]+)>/g
-          let hexMatch: RegExpExecArray | null
-          while ((hexMatch = hexRegex.exec(content)) !== null) {
-            try {
-              texts.push(Buffer.from(hexMatch[1], "hex").toString("latin1"))
-            } catch {
-              // skip
-            }
+      const decoded = decompressed.replace(/\[([^\]]*)\] TJ/g, (_m, content: string) => {
+        // Extract only hex substrings (<...>) from TJ arrays
+        const texts: string[] = []
+        const hexRegex = /<([0-9a-fA-F]+)>/g
+        let hexMatch: RegExpExecArray | null
+        while ((hexMatch = hexRegex.exec(content)) !== null) {
+          try {
+            texts.push(Buffer.from(hexMatch[1], "hex").toString("latin1"))
+          } catch {
+            // skip
           }
-          return texts.join("") + " "
         }
-      )
+        return texts.join("") + " "
+      })
       parts.push(decoded)
     } catch {
       // not a compressed stream — skip
@@ -60,9 +57,7 @@ describe("EventStarterListPdf", () => {
   }
 
   function render(props: EventStarterListPdfProps) {
-    return renderToBuffer(
-      createElement(EventStarterListPdf, props) as ReactElement<DocumentProps>
-    )
+    return renderToBuffer(createElement(EventStarterListPdf, props) as ReactElement<DocumentProps>)
   }
 
   it("renders with participants", async () => {

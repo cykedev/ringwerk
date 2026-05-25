@@ -21,6 +21,7 @@ Baseline subagent reading per `.claude/CLAUDE.md` (`code-conventions.md`, `refer
 ## File Structure
 
 **Create:**
+
 - `src/lib/pdf/eventStarterList.ts` — pure helper that filters ACTIVE participants, resolves disciplineName, and assigns a shuffled `nr` (uses injectable RNG for testability)
 - `src/lib/pdf/eventStarterList.test.ts` — unit tests for the helper
 - `src/lib/pdf/EventStarterListPdf.tsx` — `@react-pdf/renderer` component
@@ -28,6 +29,7 @@ Baseline subagent reading per `.claude/CLAUDE.md` (`code-conventions.md`, `refer
 - `src/app/api/competitions/[id]/starter-list/pdf/route.ts` — GET handler
 
 **Modify:**
+
 - `src/app/(app)/competitions/[id]/participants/page.tsx` — add `PdfDownloadButton` for EVENT competitions
 - `.claude/docs/features.md` — add bullet under "Event-Modus" describing the new export
 
@@ -36,6 +38,7 @@ Baseline subagent reading per `.claude/CLAUDE.md` (`code-conventions.md`, `refer
 ## Task 1: Pure helper for building starter-list rows
 
 **Files:**
+
 - Create: `src/lib/pdf/eventStarterList.ts`
 - Test: `src/lib/pdf/eventStarterList.test.ts`
 
@@ -135,9 +138,7 @@ describe("buildStarterListRows", () => {
 
   it("returns empty array when there are no ACTIVE participants", () => {
     const rows = buildStarterListRows({
-      participants: [
-        makeCp({ firstName: "W", lastName: "Out", status: "WITHDRAWN" }),
-      ],
+      participants: [makeCp({ firstName: "W", lastName: "Out", status: "WITHDRAWN" })],
       competitionDisciplineName: "Luftpistole",
       random: () => 0,
     })
@@ -218,6 +219,7 @@ git commit -m "feat(pdf): add helper to build event starter-list rows"
 ## Task 2: PDF component `EventStarterListPdf`
 
 **Files:**
+
 - Create: `src/lib/pdf/EventStarterListPdf.tsx`
 - Test: `src/lib/pdf/EventStarterListPdf.test.tsx`
 
@@ -339,9 +341,7 @@ interface PdfHeaderProps {
 }
 
 function PdfHeader({ competitionName, eventDate, generatedAt }: PdfHeaderProps): ReactElement {
-  const subtitle = eventDate
-    ? `${competitionName} · ${formatDateDe(eventDate)}`
-    : competitionName
+  const subtitle = eventDate ? `${competitionName} · ${formatDateDe(eventDate)}` : competitionName
   return (
     <View style={styles.headerBlock}>
       <View style={styles.headerLeft}>
@@ -499,6 +499,7 @@ git commit -m "feat(pdf): add EventStarterListPdf component with Nr. column"
 ## Task 3: API route `/api/competitions/[id]/starter-list/pdf`
 
 **Files:**
+
 - Create: `src/app/api/competitions/[id]/starter-list/pdf/route.ts`
 
 This route is pragmatically smoke-tested — the unit-testable pieces live in Task 1's helper. The route is thin glue: auth, type guard, helper invocation, PDF buffer generation. We verify it by manual run + the helper tests already in place.
@@ -519,13 +520,14 @@ import { buildStarterListRows } from "@/lib/pdf/eventStarterList"
 import { EventStarterListPdf } from "@/lib/pdf/EventStarterListPdf"
 
 function slugify(value: string): string {
-  return value
-    .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    || "event"
+  return (
+    value
+      .normalize("NFKD")
+      .replace(/[̀-ͯ]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "event"
+  )
 }
 
 export async function GET(
@@ -606,6 +608,7 @@ git commit -m "feat(api): add starter-list PDF route for events"
 ## Task 4: UI integration — add `PdfDownloadButton` to event participants page
 
 **Files:**
+
 - Modify: `src/app/(app)/competitions/[id]/participants/page.tsx`
 
 - [ ] **Step 1: Read the file to locate the header action area**
@@ -627,12 +630,14 @@ import { PdfDownloadButton } from "@/components/app/shared/PdfDownloadButton"
 Inside the header's right-side action `<div>` (the one with `className="flex shrink-0 items-center gap-2"`), add as the first child:
 
 ```tsx
-{competition.type === "EVENT" && (
-  <PdfDownloadButton
-    href={`/api/competitions/${id}/starter-list/pdf`}
-    label="Starterliste drucken"
-  />
-)}
+{
+  competition.type === "EVENT" && (
+    <PdfDownloadButton
+      href={`/api/competitions/${id}/starter-list/pdf`}
+      label="Starterliste drucken"
+    />
+  )
+}
 ```
 
 - [ ] **Step 4: Verify type-check and lint pass**
@@ -646,6 +651,7 @@ Expected: no errors.
 - [ ] **Step 5: Manual smoke check (dev server)**
 
 Run: `docker compose -f docker-compose.dev.yml up -d` (if not already up) and open the participants page of any EVENT competition in the browser. Confirm:
+
 - Button visible on EVENT page
 - Click downloads a PDF named `starterliste-<slug>.pdf`
 - PDF shows Starterliste title, the enrolled ACTIVE participants with a random Nr. column, their disciplines, and 10 empty rows
@@ -665,6 +671,7 @@ git commit -m "feat(ui): show 'Starterliste drucken' button on event participant
 ## Task 5: Doc sync — update `features.md`
 
 **Files:**
+
 - Modify: `.claude/docs/features.md`
 
 - [ ] **Step 1: Locate the Event-Modus section**

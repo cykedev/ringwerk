@@ -20,11 +20,11 @@ As an ADMIN or MANAGER preparing a Kranzl/Pokal/Spassschiessen, I want to print 
 
 Layout extends the existing `ParticipantListPdf` with a leading **Nr.** column for the (randomized) start order:
 
-| Nr. | Name              | Disziplin   | Einlage | Teilnahme | Geschossen |
-| --- | ----------------- | ----------- | ------- | --------- | ---------- |
-| 3   | Lastname, First   | Luftpistole |         | ☐         | ☐          |
-| 1   | …                 | …           |         | ☐         | ☐          |
-| _10 empty rows for spontaneous starters — Nr. cell blank_           |
+| Nr.                                                       | Name            | Disziplin   | Einlage | Teilnahme | Geschossen |
+| --------------------------------------------------------- | --------------- | ----------- | ------- | --------- | ---------- |
+| 3                                                         | Lastname, First | Luftpistole |         | ☐         | ☐          |
+| 1                                                         | …               | …           |         | ☐         | ☐          |
+| _10 empty rows for spontaneous starters — Nr. cell blank_ |
 
 **Differences from the club-wide list:**
 
@@ -104,25 +104,27 @@ Participants page (server component)
 
 ## Edge Cases
 
-| Case                                  | Behavior                                                                  |
-| ------------------------------------- | ------------------------------------------------------------------------- |
-| No ACTIVE participants                | PDF generated with 0 data rows + 10 empty rows (usable as blank list)     |
-| WITHDRAWN participants                | Excluded                                                                  |
-| Pre-registered guest (isGuest: true)  | Included if ACTIVE (treated like any other participant on the list)       |
-| LEAGUE / SEASON competition           | API returns 400; button is not rendered on the page                       |
-| Mixed event, participant without disc | Defensive: cell rendered blank (UI prevents this via enrollment validation)|
-| Competition not found                 | API returns 404                                                           |
-| Unauthenticated / not canManage       | API returns 401 / 403                                                     |
+| Case                                  | Behavior                                                                    |
+| ------------------------------------- | --------------------------------------------------------------------------- |
+| No ACTIVE participants                | PDF generated with 0 data rows + 10 empty rows (usable as blank list)       |
+| WITHDRAWN participants                | Excluded                                                                    |
+| Pre-registered guest (isGuest: true)  | Included if ACTIVE (treated like any other participant on the list)         |
+| LEAGUE / SEASON competition           | API returns 400; button is not rendered on the page                         |
+| Mixed event, participant without disc | Defensive: cell rendered blank (UI prevents this via enrollment validation) |
+| Competition not found                 | API returns 404                                                             |
+| Unauthenticated / not canManage       | API returns 401 / 403                                                       |
 
 ## Tests
 
 ### `EventStarterListPdf.test.tsx`
+
 - Renders without crashing for empty participants array
 - Renders 10 empty rows regardless of participant count
 - Renders participant rows with their disciplineName and startNumber
 - Header subtitle includes formatted eventDate when present, omits date segment when null
 
 ### Route test `route.test.ts`
+
 - 401 without session
 - 403 for USER role
 - 404 for unknown competition id
@@ -134,6 +136,7 @@ Participants page (server component)
 - With `crypto.randomInt` mocked to a deterministic value, the resulting order matches the expected Fisher–Yates output (proves the shuffle is wired, not a no-op)
 
 ### UI page test (if existing pattern covers it)
+
 - Button rendered for EVENT competition
 - Button NOT rendered for LEAGUE/SEASON competition
 
