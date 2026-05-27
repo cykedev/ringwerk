@@ -186,6 +186,13 @@ model Competition {
 
   status CompetitionStatus @default(ACTIVE)
 
+  // Veröffentlichung: macht eine PDF-Variante unter /api/public/c/<slug>/pdf erreichbar.
+  // Nur eine ACTIVE-Wettbewerb pro Slug zulässig (partial unique index, siehe Migration).
+  isPublic           Boolean @default(false)
+  publicSlug         String?
+  // bcrypt hash, null = kein Passwortschutz. Plaintext wird nie gespeichert.
+  publicPasswordHash String?
+
   // Audit: wer hat den Wettbewerb angelegt
   createdByUserId String
   createdBy       User       @relation(fields: [createdByUserId], references: [id])
