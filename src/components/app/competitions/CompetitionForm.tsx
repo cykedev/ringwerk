@@ -127,7 +127,7 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
   // (only if the slug input is currently empty). Subsequent edits are left alone.
   useEffect(() => {
     if (isPublic && publicSlug.trim() === "" && name) {
-      setPublicSlug(slugify(name)) // eslint-disable-line react-hooks/set-state-in-effect
+      setPublicSlug(slugify(name))
     }
   }, [isPublic]) // eslint-disable-line react-hooks/exhaustive-deps
 
