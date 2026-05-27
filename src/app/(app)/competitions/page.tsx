@@ -184,6 +184,11 @@ export default async function CompetitionsPage() {
                     <Badge variant="secondary" className="text-xs">
                       {c.discipline ? c.discipline.name : "Gemischt"}
                     </Badge>
+                    {c.isPublic && (
+                      <Badge variant="outline" className="text-xs">
+                        Öffentlich
+                      </Badge>
+                    )}
                   </div>
                   <div className="flex flex-wrap items-center gap-4">
                     <CompetitionCardLinks c={c} canManage={canManage} />
@@ -213,6 +218,11 @@ export default async function CompetitionsPage() {
                     <Badge variant="secondary" className="text-xs">
                       {c.discipline ? c.discipline.name : "Gemischt"}
                     </Badge>
+                    {c.isPublic && (
+                      <Badge variant="outline" className="text-xs">
+                        Öffentlich
+                      </Badge>
+                    )}
                   </div>
                   <div className="flex flex-wrap items-center gap-4">
                     <CompetitionCardLinks c={c} canManage={canManage} />
