@@ -1,11 +1,13 @@
 "use server"
 
+import bcrypt from "bcryptjs"
 import { db } from "@/lib/db"
 import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import type { CompetitionStatus } from "@/generated/prisma/client"
 import type { AuditEventType } from "@/lib/auditLog/types"
-import { parseDate, revalidateCompetitionPaths, BaseSchema } from "./_shared"
+import { parseDate, revalidateCompetitionPaths, BaseSchema, revalidatePublicSlug } from "./_shared"
+import { findActiveSlugConflict } from "../publicSlug"
 
 export async function updateCompetition(
   id: string,
@@ -19,7 +21,15 @@ export async function updateCompetition(
   const [competition, matchupCount] = await Promise.all([
     db.competition.findUnique({
       where: { id },
-      select: { id: true, type: true, scoringMode: true },
+      select: {
+        id: true,
+        type: true,
+        scoringMode: true,
+        status: true,
+        isPublic: true,
+        publicSlug: true,
+        publicPasswordHash: true,
+      },
     }),
     db.matchup.count({ where: { competitionId: id } }),
   ])
@@ -46,6 +56,10 @@ export async function updateCompetition(
     playoffBestOf: formData.get("playoffBestOf"),
     playoffHasViertelfinale: formData.get("playoffHasViertelfinale"),
     playoffHasAchtelfinale: formData.get("playoffHasAchtelfinale"),
+    isPublic: formData.get("isPublic"),
+    publicSlug: formData.get("publicSlug"),
+    publicPassword: formData.get("publicPassword"),
+    removePublicPassword: formData.get("removePublicPassword"),
     finalePrimary: formData.get("finalePrimary"),
     finaleTiebreaker1: formData.get("finaleTiebreaker1"),
     finaleTiebreaker2: formData.get("finaleTiebreaker2"),
@@ -53,12 +67,43 @@ export async function updateCompetition(
   })
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
 
+  const willBePublic = parsed.data.isPublic
+  const willHaveSlug = parsed.data.publicSlug
+  const isActive = competition.status === "ACTIVE"
+
+  // Slug conflict check: only block when the updated competition itself will be ACTIVE+isPublic.
+  // DRAFT/COMPLETED competitions may share a slug with an active one — only one ACTIVE+isPublic is blocked at a time.
+  if (willBePublic && willHaveSlug && isActive) {
+    const conflict = await findActiveSlugConflict(willHaveSlug, id)
+    if (conflict) {
+      return {
+        error: `Slug ist bereits vom aktiven Wettbewerb '${conflict.name}' belegt. Wählen Sie einen anderen Slug oder schließen Sie den anderen Wettbewerb zuerst ab.`,
+      }
+    }
+  }
+
+  // Three-way password hash semantics:
+  // 1. removePublicPassword=true  → clear hash (null)
+  // 2. publicPassword provided    → hash with bcrypt
+  // 3. neither                    → undefined (Prisma: do not touch the column)
+  let publicPasswordHashUpdate: string | null | undefined
+  if (parsed.data.removePublicPassword) {
+    publicPasswordHashUpdate = null
+  } else if (parsed.data.publicPassword != null) {
+    publicPasswordHashUpdate = await bcrypt.hash(parsed.data.publicPassword, 12)
+  } else {
+    publicPasswordHashUpdate = undefined // Prisma: do not touch the column
+  }
+
   const type = competition.type
 
   await db.competition.update({
     where: { id },
     data: {
       name: parsed.data.name,
+      isPublic: parsed.data.isPublic ?? false,
+      publicSlug: parsed.data.publicSlug,
+      publicPasswordHash: publicPasswordHashUpdate,
       scoringMode: rulesetLocked ? undefined : parsed.data.scoringMode,
       shotsPerSeries: rulesetLocked ? undefined : parsed.data.shotsPerSeries,
       hinrundeDeadline: parseDate(parsed.data.hinrundeDeadline),
@@ -102,6 +147,18 @@ export async function updateCompetition(
       },
     },
   })
+
+  // Revalidate old slug if it changed or publishing was turned off — cached PDF pages must reflect the change
+  if (competition.publicSlug && competition.publicSlug !== parsed.data.publicSlug) {
+    revalidatePublicSlug(competition.publicSlug)
+  }
+  if (competition.isPublic && !parsed.data.isPublic && competition.publicSlug) {
+    revalidatePublicSlug(competition.publicSlug)
+  }
+  // Revalidate new slug so the public PDF page reflects the updated data immediately
+  if (parsed.data.isPublic && parsed.data.publicSlug) {
+    revalidatePublicSlug(parsed.data.publicSlug)
+  }
 
   revalidateCompetitionPaths()
   return { success: true }
