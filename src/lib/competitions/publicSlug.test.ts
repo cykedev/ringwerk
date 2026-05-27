@@ -73,6 +73,11 @@ describe("resolveSlug", () => {
     expect(await resolveSlug("test-slug")).toBeNull()
   })
 
+  it("ignores DRAFT+isPublic rows", async () => {
+    await createTestCompetition({ status: "DRAFT", isPublic: true, publicSlug: "test-slug" })
+    expect(await resolveSlug("test-slug")).toBeNull()
+  })
+
   it("falls back to most recent COMPLETED/ARCHIVED when no ACTIVE claim exists", async () => {
     const older = await createTestCompetition({
       status: "ARCHIVED",

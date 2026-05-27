@@ -66,7 +66,7 @@ export async function findActiveSlugConflict(
       publicSlug: slug,
       isPublic: true,
       status: "ACTIVE",
-      ...(excludeId ? { id: { not: excludeId } } : {}),
+      ...(excludeId != null ? { id: { not: excludeId } } : {}),
     },
     select: { id: true, name: true },
   })
