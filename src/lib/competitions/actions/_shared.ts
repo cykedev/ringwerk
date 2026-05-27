@@ -1,6 +1,7 @@
-import { revalidatePath } from "next/cache"
+import { revalidatePath, revalidateTag } from "next/cache"
 import { z } from "zod"
 import { ScoringMode, TeamScoring, TargetValueType } from "@/generated/prisma/client"
+import { SLUG_REGEX } from "../publicSlug"
 
 const PLAYOFF_SCORING_MODES = ["RINGTEILER", "RINGS", "RINGS_DECIMAL", "TEILER"] as const
 
@@ -13,6 +14,16 @@ export function parseDate(value: string | null | undefined): Date | null {
 export function revalidateCompetitionPaths(): void {
   revalidatePath("/competitions")
   revalidatePath("/competitions", "layout")
+}
+
+export function publicPdfCacheTag(slug: string): string {
+  return `public-pdf:${slug}`
+}
+
+export function revalidatePublicSlug(slug: string | null | undefined): void {
+  if (!slug) return
+  // "max" profile: evict all cached entries with this tag immediately
+  revalidateTag(publicPdfCacheTag(slug), "max")
 }
 
 export const BaseSchema = z
@@ -32,6 +43,28 @@ export const BaseSchema = z
       .nullable()
       .optional()
       .transform((v) => (v && v !== "mixed" ? v : null)),
+    isPublic: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => v === "true" || v === "on"),
+    publicSlug: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => (v == null || v.trim() === "" ? null : v.trim())),
+    // Plaintext password — never persisted as-is. Empty string / null = "leave existing hash alone"
+    publicPassword: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => (v == null || v === "" ? null : v)),
+    // "Passwort entfernen" checkbox — if true, clear the hash regardless of publicPassword
+    removePublicPassword: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => v === "true" || v === "on"),
     // Liga
     hinrundeDeadline: z.string().nullable().optional(),
     rueckrundeDeadline: z.string().nullable().optional(),
@@ -110,6 +143,34 @@ export const BaseSchema = z
         code: z.ZodIssueCode.custom,
         message: "Tiebreaker 2 setzt Tiebreaker 1 voraus",
         path: ["finaleTiebreaker2"],
+      })
+    }
+    if (data.isPublic) {
+      if (!data.publicSlug) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Slug ist erforderlich, wenn 'Auf Vereins-Website veröffentlichen' aktiv ist",
+          path: ["publicSlug"],
+        })
+      } else if (!SLUG_REGEX.test(data.publicSlug)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Slug: 3–60 Zeichen, nur a–z, 0–9 und Bindestriche, keine doppelten Bindestriche",
+          path: ["publicSlug"],
+        })
+      }
+    }
+    if (
+      data.publicPassword !== null &&
+      data.publicPassword !== undefined &&
+      data.publicPassword.length < 4
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Passwort muss mindestens 4 Zeichen haben",
+        path: ["publicPassword"],
       })
     }
   })
