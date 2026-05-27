@@ -182,13 +182,23 @@ export async function setCompetitionStatus(
 
   const competition = await db.competition.findUnique({
     where: { id },
-    select: { id: true, name: true, status: true },
+    select: { id: true, name: true, status: true, isPublic: true, publicSlug: true },
   })
   if (!competition) return { error: "Wettbewerb nicht gefunden." }
 
   if (!ALLOWED_TRANSITIONS[competition.status].includes(status)) {
     return {
       error: `Statuswechsel von ${competition.status} nach ${status} ist nicht erlaubt.`,
+    }
+  }
+
+  // Slug conflict check: only one ACTIVE+isPublic competition per slug is allowed
+  if (status === "ACTIVE" && competition.isPublic && competition.publicSlug) {
+    const conflict = await findActiveSlugConflict(competition.publicSlug, id)
+    if (conflict) {
+      return {
+        error: `Slug '${competition.publicSlug}' ist bereits vom aktiven Wettbewerb '${conflict.name}' belegt. Wählen Sie einen anderen Slug oder schließen Sie den anderen Wettbewerb zuerst ab.`,
+      }
     }
   }
 
@@ -208,6 +218,11 @@ export async function setCompetitionStatus(
       },
     },
   })
+
+  // Invalidate the public PDF cache when the competition's visibility changes
+  if (competition.publicSlug) {
+    revalidatePublicSlug(competition.publicSlug)
+  }
 
   revalidateCompetitionPaths()
   return { success: true }

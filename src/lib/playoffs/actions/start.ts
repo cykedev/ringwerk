@@ -1,11 +1,12 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { revalidatePath, revalidateTag } from "next/cache"
 import { db } from "@/lib/db"
 import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import { getStandingsForCompetition } from "@/lib/standings/queries"
 import { createFirstRoundMatchups } from "../calculatePlayoffs"
+import { publicPdfCacheTag } from "@/lib/competitions/actions/_shared"
 
 /**
  * Startet die Playoff-Phase für eine Liga.
@@ -85,6 +86,15 @@ export async function startPlayoffs(competitionId: string): Promise<ActionResult
     const msg = error instanceof Error ? error.message : String(error)
     console.error("Fehler beim Starten der Playoffs:", msg)
     return { error: "Playoffs konnten nicht gestartet werden." }
+  }
+
+  // Invalidate the public PDF cache — the Liga PDF switches from Spielplan to Playoffs view
+  const comp = await db.competition.findUnique({
+    where: { id: competitionId },
+    select: { isPublic: true, publicSlug: true },
+  })
+  if (comp?.isPublic && comp.publicSlug) {
+    revalidateTag(publicPdfCacheTag(comp.publicSlug), "max")
   }
 
   revalidatePath(`/competitions/${competitionId}/playoffs`)
