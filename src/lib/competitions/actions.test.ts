@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 const {
   getAuthSessionMock,
   revalidatePathMock,
+  revalidateTagMock,
   competitionFindUniqueMock,
+  competitionFindFirstMock,
   competitionDeleteMock,
   disciplineFindUniqueMock,
   competitionCreateMock,
@@ -16,7 +18,9 @@ const {
 } = vi.hoisted(() => ({
   getAuthSessionMock: vi.fn(),
   revalidatePathMock: vi.fn(),
+  revalidateTagMock: vi.fn(),
   competitionFindUniqueMock: vi.fn(),
+  competitionFindFirstMock: vi.fn(),
   competitionDeleteMock: vi.fn(),
   disciplineFindUniqueMock: vi.fn(),
   competitionCreateMock: vi.fn(),
@@ -33,11 +37,12 @@ vi.mock("@/lib/auth-helpers", () => ({
   canManage: (role: string) => role === "ADMIN" || role === "MANAGER",
   isAdmin: (role: string) => role === "ADMIN",
 }))
-vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock }))
+vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock, revalidateTag: revalidateTagMock }))
 vi.mock("@/lib/db", () => ({
   db: {
     competition: {
       findUnique: competitionFindUniqueMock,
+      findFirst: competitionFindFirstMock,
       create: competitionCreateMock,
       update: competitionUpdateMock,
       delete: competitionDeleteMock,
@@ -179,10 +184,17 @@ describe("updateCompetition", () => {
     competitionUpdateMock.mockResolvedValue({})
     competitionFindUniqueMock.mockResolvedValue({
       id: "c1",
+      name: "Liga C",
       type: "LEAGUE",
       scoringMode: "RINGTEILER",
+      status: "ACTIVE",
+      isPublic: false,
+      publicSlug: null,
+      publicPasswordHash: null,
     })
+    competitionFindFirstMock.mockResolvedValue(null)
     matchupCountMock.mockResolvedValue(0)
+    auditLogCreateMock.mockResolvedValue({})
   })
 
   it("liefert Fehler ohne Session", async () => {
@@ -239,6 +251,8 @@ describe("setCompetitionStatus", () => {
   beforeEach(() => {
     vi.resetAllMocks()
     competitionUpdateMock.mockResolvedValue({})
+    competitionFindFirstMock.mockResolvedValue(null)
+    auditLogCreateMock.mockResolvedValue({})
   })
 
   it("liefert Fehler ohne Session", async () => {
@@ -528,5 +542,261 @@ describe("forceDeleteCompetition", () => {
     transactionMock.mockRejectedValue(new Error("DB error"))
     const result = await forceDeleteCompetition("c1", "Winterliga 2026")
     expect(result).toMatchObject({ error: expect.stringContaining("nicht gelöscht") })
+  })
+})
+
+// ─── createCompetition — public slug ─────────────────────────────────────────
+
+describe("createCompetition — public slug", () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    disciplineFindUniqueMock.mockResolvedValue({ id: "d1" })
+    competitionCreateMock.mockResolvedValue({ id: "new-id" })
+    competitionFindFirstMock.mockResolvedValue(null) // no slug conflict by default
+    auditLogCreateMock.mockResolvedValue({})
+  })
+
+  it("creates a competition with isPublic + slug", async () => {
+    const fd = makeFormData({
+      name: "Public Test",
+      type: "EVENT",
+      scoringMode: "RINGS",
+      shotsPerSeries: "10",
+      isPublic: "on",
+      publicSlug: "public-test-event",
+    })
+    const result = await createCompetition(null, fd)
+    expect(result).toMatchObject({ success: true })
+    expect(competitionCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ isPublic: true, publicSlug: "public-test-event" }),
+      })
+    )
+  })
+
+  it("rejects a second ACTIVE+isPublic competition with the same slug", async () => {
+    competitionFindFirstMock.mockResolvedValue({ id: "existing-id", name: "First" })
+    const fd = makeFormData({
+      name: "Second",
+      type: "EVENT",
+      scoringMode: "RINGS",
+      shotsPerSeries: "10",
+      isPublic: "on",
+      publicSlug: "conflict-slug",
+    })
+    const result = await createCompetition(null, fd)
+    expect("error" in result && typeof result.error === "string").toBe(true)
+    expect((result as { error: string }).error).toContain("'First'")
+    expect(competitionCreateMock).not.toHaveBeenCalled()
+  })
+})
+
+// ─── updateCompetition — public slug ─────────────────────────────────────────
+
+describe("updateCompetition — public slug", () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    competitionFindUniqueMock.mockResolvedValue({
+      id: "c1",
+      name: "Target",
+      type: "EVENT",
+      scoringMode: "RINGS",
+      status: "ACTIVE",
+      isPublic: false,
+      publicSlug: null,
+      publicPasswordHash: null,
+    })
+    competitionUpdateMock.mockResolvedValue({})
+    competitionFindFirstMock.mockResolvedValue(null) // no slug conflict by default
+    auditLogCreateMock.mockResolvedValue({})
+  })
+
+  it("rejects switching to a slug held by another ACTIVE+isPublic competition", async () => {
+    competitionFindFirstMock.mockResolvedValue({ id: "other-id", name: "Other Active" })
+    const fd = makeFormData({
+      name: "Target",
+      scoringMode: "RINGS",
+      shotsPerSeries: "10",
+      isPublic: "on",
+      publicSlug: "taken",
+    })
+    const result = await updateCompetition("c1", null, fd)
+    expect("error" in result && typeof result.error === "string").toBe(true)
+    expect((result as { error: string }).error).toContain("'Other Active'")
+    expect(competitionUpdateMock).not.toHaveBeenCalled()
+  })
+
+  it("allows updating with own slug (no conflict with self)", async () => {
+    competitionFindUniqueMock.mockResolvedValue({
+      id: "c1",
+      name: "My Competition",
+      type: "EVENT",
+      scoringMode: "RINGS",
+      status: "ACTIVE",
+      isPublic: true,
+      publicSlug: "my-slug",
+      publicPasswordHash: null,
+    })
+    competitionFindFirstMock.mockResolvedValue(null) // self-exclusion works
+    const fd = makeFormData({
+      name: "My Competition",
+      scoringMode: "RINGS",
+      shotsPerSeries: "10",
+      isPublic: "on",
+      publicSlug: "my-slug",
+    })
+    const result = await updateCompetition("c1", null, fd)
+    expect(result).toMatchObject({ success: true })
+  })
+})
+
+// ─── setCompetitionStatus — public slug ──────────────────────────────────────
+
+describe("setCompetitionStatus — public slug", () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    competitionUpdateMock.mockResolvedValue({})
+    competitionFindFirstMock.mockResolvedValue(null) // no slug conflict by default
+    auditLogCreateMock.mockResolvedValue({})
+  })
+
+  it("blocks transition to ACTIVE when another ACTIVE+isPublic holds the slug", async () => {
+    competitionFindUniqueMock.mockResolvedValue({
+      id: "draft-id",
+      name: "Next Year",
+      status: "DRAFT",
+      isPublic: true,
+      publicSlug: "year-cup",
+    })
+    competitionFindFirstMock.mockResolvedValue({ id: "holder-id", name: "Holder" })
+
+    const result = await setCompetitionStatus("draft-id", "ACTIVE")
+    expect("error" in result && typeof result.error === "string").toBe(true)
+    expect((result as { error: string }).error).toContain("'Holder'")
+    expect(competitionUpdateMock).not.toHaveBeenCalled()
+  })
+
+  it("allows DRAFT → ACTIVE when no slug conflict exists", async () => {
+    competitionFindUniqueMock.mockResolvedValue({
+      id: "draft-id",
+      name: "New Competition",
+      status: "DRAFT",
+      isPublic: true,
+      publicSlug: "free-slug",
+    })
+    competitionFindFirstMock.mockResolvedValue(null)
+
+    const result = await setCompetitionStatus("draft-id", "ACTIVE")
+    expect(result).toMatchObject({ success: true })
+    expect(competitionUpdateMock).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ status: "ACTIVE" }) })
+    )
+  })
+})
+
+// ─── updateCompetition — public password ─────────────────────────────────────
+
+describe("updateCompetition — public password", () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    competitionFindUniqueMock.mockResolvedValue({
+      id: "c1",
+      name: "Pw Target",
+      type: "EVENT",
+      scoringMode: "RINGS",
+      status: "ACTIVE",
+      isPublic: true,
+      publicSlug: "pw-target",
+      publicPasswordHash: null,
+    })
+    competitionUpdateMock.mockResolvedValue({})
+    competitionFindFirstMock.mockResolvedValue(null)
+    auditLogCreateMock.mockResolvedValue({})
+  })
+
+  it("stores a bcrypt hash when password is provided (never stores plaintext)", async () => {
+    const fd = makeFormData({
+      name: "Pw Target",
+      scoringMode: "RINGS",
+      shotsPerSeries: "10",
+      isPublic: "on",
+      publicSlug: "pw-target",
+      publicPassword: "geheim",
+    })
+    await updateCompetition("c1", null, fd)
+    const updateCall = competitionUpdateMock.mock.calls[0][0]
+    const hash = updateCall.data.publicPasswordHash
+    expect(hash).toBeTruthy()
+    expect(hash).not.toContain("geheim") // never store plaintext
+    expect(hash).toMatch(/^\$2[ab]\$/) // bcrypt hash format
+  })
+
+  it("leaves existing hash unchanged when password input is empty", async () => {
+    const existingHash = "$2a$12$existinghashplaceholderfortest"
+    competitionFindUniqueMock.mockResolvedValue({
+      id: "c1",
+      name: "Keep Pw",
+      type: "EVENT",
+      scoringMode: "RINGS",
+      status: "ACTIVE",
+      isPublic: true,
+      publicSlug: "keep-pw",
+      publicPasswordHash: existingHash,
+    })
+    const fd = makeFormData({
+      name: "Keep Pw",
+      scoringMode: "RINGS",
+      shotsPerSeries: "10",
+      isPublic: "on",
+      publicSlug: "keep-pw",
+      // publicPassword intentionally NOT set
+    })
+    await updateCompetition("c1", null, fd)
+    const updateCall = competitionUpdateMock.mock.calls[0][0]
+    // undefined means Prisma should NOT touch the column
+    expect(updateCall.data.publicPasswordHash).toBeUndefined()
+  })
+
+  it("clears the hash when removePublicPassword is checked", async () => {
+    competitionFindUniqueMock.mockResolvedValue({
+      id: "c1",
+      name: "Clear Pw",
+      type: "EVENT",
+      scoringMode: "RINGS",
+      status: "ACTIVE",
+      isPublic: true,
+      publicSlug: "clear-pw",
+      publicPasswordHash: "$2a$12$existinghash",
+    })
+    const fd = makeFormData({
+      name: "Clear Pw",
+      scoringMode: "RINGS",
+      shotsPerSeries: "10",
+      isPublic: "on",
+      publicSlug: "clear-pw",
+      removePublicPassword: "on",
+    })
+    await updateCompetition("c1", null, fd)
+    const updateCall = competitionUpdateMock.mock.calls[0][0]
+    expect(updateCall.data.publicPasswordHash).toBeNull()
+  })
+
+  it("rejects passwords shorter than 4 characters", async () => {
+    const fd = makeFormData({
+      name: "Short Pw",
+      scoringMode: "RINGS",
+      shotsPerSeries: "10",
+      isPublic: "on",
+      publicSlug: "pw-target",
+      publicPassword: "abc",
+    })
+    const result = await updateCompetition("c1", null, fd)
+    // Zod validation error — action should not update the DB
+    expect(competitionUpdateMock).not.toHaveBeenCalled()
+    expect(result).toBeTruthy() // returns some error form
   })
 })
