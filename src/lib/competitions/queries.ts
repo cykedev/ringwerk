@@ -14,6 +14,9 @@ const listSelect = {
   name: true,
   type: true,
   status: true,
+  isPublic: true,
+  publicSlug: true,
+  publicPasswordHash: true,
   scoringMode: true,
   shotsPerSeries: true,
   discipline: { select: { id: true, name: true, scoringType: true } },
@@ -37,7 +40,10 @@ export async function getCompetitions(): Promise<CompetitionListItem[]> {
     select: listSelect,
     orderBy: { name: "asc" },
   })
-  return rows as unknown as CompetitionListItem[]
+  return rows.map(({ publicPasswordHash, ...row }) => ({
+    ...row,
+    hasPublicPassword: publicPasswordHash != null,
+  }))
 }
 
 /** Alle Wettbewerbe (alle Status) — für Admin-Verwaltungsansicht. */
@@ -46,7 +52,10 @@ export async function getCompetitionsForManagement(): Promise<CompetitionListIte
     select: listSelect,
     orderBy: [{ status: "asc" }, { name: "asc" }],
   })
-  return rows as unknown as CompetitionListItem[]
+  return rows.map(({ publicPasswordHash, ...row }) => ({
+    ...row,
+    hasPublicPassword: publicPasswordHash != null,
+  }))
 }
 
 /** Einzelner Wettbewerb mit allen Feldern — für Edit-Seite und Detail-Pages. */
@@ -58,6 +67,9 @@ export async function getCompetitionById(id: string): Promise<CompetitionDetail 
       name: true,
       type: true,
       status: true,
+      isPublic: true,
+      publicSlug: true,
+      publicPasswordHash: true,
       scoringMode: true,
       shotsPerSeries: true,
       disciplineId: true,
@@ -85,8 +97,10 @@ export async function getCompetitionById(id: string): Promise<CompetitionDetail 
     },
   })
   if (!row) return null
+  const { publicPasswordHash, ...rest } = row
   return {
-    ...row,
+    ...rest,
+    hasPublicPassword: publicPasswordHash != null,
     discipline: row.discipline
       ? { ...row.discipline, teilerFaktor: row.discipline.teilerFaktor.toNumber() }
       : null,

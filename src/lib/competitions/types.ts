@@ -12,6 +12,9 @@ export type CompetitionListItem = {
   name: string
   type: CompetitionType
   status: CompetitionStatus
+  isPublic: boolean
+  publicSlug: string | null
+  hasPublicPassword: boolean // derived: true if publicPasswordHash is set; hash itself is never exposed to client
   scoringMode: ScoringMode
   shotsPerSeries: number
   discipline: {
@@ -40,6 +43,9 @@ export type CompetitionDetail = {
   name: string
   type: CompetitionType
   status: CompetitionStatus
+  isPublic: boolean
+  publicSlug: string | null
+  hasPublicPassword: boolean // derived: true if publicPasswordHash is set; hash itself is never exposed to client
   scoringMode: ScoringMode
   shotsPerSeries: number
   disciplineId: string | null
