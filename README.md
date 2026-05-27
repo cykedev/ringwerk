@@ -9,7 +9,7 @@ Vereinsinterne Wettbewerbs-Plattform für Schützenvereine. Ligaverwaltung, Spie
 ### Voraussetzungen
 
 - [Docker](https://www.docker.com/) + Docker Compose v2.22+
-- Optional: Node.js 20+ (nur wenn `npm`/Prisma-Befehle lokal statt im Container laufen sollen)
+- Optional: Node.js 24+ (nur wenn `npm`/Prisma-Befehle lokal statt im Container laufen sollen)
 
 ### Erste Inbetriebnahme
 
