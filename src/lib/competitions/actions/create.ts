@@ -1,11 +1,13 @@
 "use server"
 
+import bcrypt from "bcryptjs"
 import { z } from "zod"
 import { db } from "@/lib/db"
 import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import type { AuditEventType } from "@/lib/auditLog/types"
-import { parseDate, revalidateCompetitionPaths, BaseSchema } from "./_shared"
+import { parseDate, revalidateCompetitionPaths, revalidatePublicSlug, BaseSchema } from "./_shared"
+import { findActiveSlugConflict } from "../publicSlug"
 
 const CreateSchema = BaseSchema.extend({
   type: z.enum(["LEAGUE", "EVENT", "SEASON"], { message: "Ungültiger Wettbewerbstyp" }),
@@ -43,6 +45,10 @@ export async function createCompetition(
     finaleTiebreaker1: formData.get("finaleTiebreaker1"),
     finaleTiebreaker2: formData.get("finaleTiebreaker2"),
     finaleHasSuddenDeath: formData.get("finaleHasSuddenDeath"),
+    isPublic: formData.get("isPublic"),
+    publicSlug: formData.get("publicSlug"),
+    publicPassword: formData.get("publicPassword"),
+    removePublicPassword: formData.get("removePublicPassword"),
   })
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
 
@@ -55,6 +61,22 @@ export async function createCompetition(
     })
     if (!discipline) return { error: "Disziplin nicht gefunden." }
   }
+
+  // New competitions default to ACTIVE — check for slug collision immediately
+  if (parsed.data.isPublic && parsed.data.publicSlug) {
+    const conflict = await findActiveSlugConflict(parsed.data.publicSlug, null)
+    if (conflict) {
+      return {
+        error: `Slug ist bereits vom aktiven Wettbewerb '${conflict.name}' belegt. Wählen Sie einen anderen Slug oder schließen Sie den anderen Wettbewerb zuerst ab.`,
+      }
+    }
+  }
+
+  // Hash password if provided; no existing hash to preserve on creation
+  const publicPasswordHash =
+    parsed.data.removePublicPassword || parsed.data.publicPassword == null
+      ? null
+      : await bcrypt.hash(parsed.data.publicPassword, 12)
 
   const competition = await db.competition.create({
     data: {
@@ -81,6 +103,9 @@ export async function createCompetition(
       finaleTiebreaker1: type === "LEAGUE" ? (parsed.data.finaleTiebreaker1 ?? null) : null,
       finaleTiebreaker2: type === "LEAGUE" ? (parsed.data.finaleTiebreaker2 ?? null) : null,
       finaleHasSuddenDeath: type === "LEAGUE" ? parsed.data.finaleHasSuddenDeath : null,
+      isPublic: parsed.data.isPublic ?? false,
+      publicSlug: parsed.data.publicSlug,
+      publicPasswordHash,
       createdByUserId: session.user.id,
     },
     select: { id: true },
@@ -101,6 +126,9 @@ export async function createCompetition(
     },
   })
 
+  if (parsed.data.isPublic && parsed.data.publicSlug) {
+    revalidatePublicSlug(parsed.data.publicSlug)
+  }
   revalidateCompetitionPaths()
   return { success: true, data: { id: competition.id } }
 }
