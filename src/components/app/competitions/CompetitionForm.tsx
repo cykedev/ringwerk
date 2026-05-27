@@ -18,6 +18,7 @@ import type { SerializableDiscipline } from "@/lib/disciplines/types"
 import type { CompetitionDetail } from "@/lib/competitions/types"
 import type { ActionResult } from "@/lib/types"
 import { SCORING_MODE_LABELS } from "@/lib/scoring/labels"
+import { slugify, SLUG_REGEX } from "@/lib/competitions/publicSlug"
 
 interface Props {
   competition?: CompetitionDetail
@@ -104,6 +105,13 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
     competition?.targetValueType ?? "RINGS"
   )
 
+  const [isPublic, setIsPublic] = useState<boolean>(competition?.isPublic ?? false)
+  const [publicSlug, setPublicSlug] = useState<string>(competition?.publicSlug ?? "")
+  const [publicPassword, setPublicPassword] = useState<string>("")
+  const [removePublicPassword, setRemovePublicPassword] = useState<boolean>(false)
+
+  const hasExistingPassword = competition?.hasPublicPassword ?? false
+
   useEffect(() => {
     if (state && "success" in state && state.success) {
       const id = (state.data as { id?: string } | undefined)?.id
@@ -114,6 +122,14 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
       }
     }
   }, [state, router])
+
+  // When the user first turns the publish switch on, pre-fill the slug from the name
+  // (only if the slug input is currently empty). Subsequent edits are left alone.
+  useEffect(() => {
+    if (isPublic && publicSlug.trim() === "" && name) {
+      setPublicSlug(slugify(name)) // eslint-disable-line react-hooks/set-state-in-effect
+    }
+  }, [isPublic]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fieldErrors =
     state && "error" in state && typeof state.error === "object" ? state.error : null
@@ -578,6 +594,97 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
           )}
         </>
       )}
+
+      {/* Veröffentlichung */}
+      <div className="space-y-4 rounded-lg border bg-card p-4">
+        <div className="flex items-start gap-3">
+          <Checkbox
+            id="isPublic"
+            name="isPublic"
+            checked={isPublic}
+            onCheckedChange={(v) => setIsPublic(v === true)}
+            disabled={isPending}
+          />
+          <div className="space-y-1">
+            <Label htmlFor="isPublic">Auf Vereins-Website veröffentlichen</Label>
+            <p className="text-sm text-muted-foreground">
+              Stellt das Haupt-PDF dieses Wettbewerbs unter einer öffentlichen URL bereit.
+            </p>
+          </div>
+        </div>
+
+        {isPublic && (
+          <div className="space-y-4 pl-7">
+            <div className="space-y-2">
+              <Label htmlFor="publicSlug">Slug</Label>
+              <Input
+                id="publicSlug"
+                name="publicSlug"
+                value={publicSlug}
+                onChange={(e) => setPublicSlug(e.target.value)}
+                placeholder="z.B. jahrespreisschiessen"
+                maxLength={60}
+                disabled={isPending}
+              />
+              <p className="text-xs text-muted-foreground">
+                URL:{" "}
+                <code className="text-xs">/api/public/c/{publicSlug || "<slug>"}/pdf</code>
+              </p>
+              {publicSlug && !SLUG_REGEX.test(publicSlug) && (
+                <p className="text-xs text-destructive">
+                  Slug: 3–60 Zeichen, nur a–z, 0–9 und Bindestriche, keine doppelten Bindestriche.
+                </p>
+              )}
+              {isEdit &&
+                competition?.publicSlug &&
+                competition.publicSlug !== publicSlug && (
+                  <p className="text-xs text-amber-700 dark:text-amber-400">
+                    Hinweis: Die bestehende öffentliche URL (/api/public/c/
+                    {competition.publicSlug}/pdf) wird ungültig.
+                  </p>
+                )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="publicPassword">Passwort (optional)</Label>
+              <Input
+                id="publicPassword"
+                name="publicPassword"
+                type="password"
+                value={publicPassword}
+                onChange={(e) => setPublicPassword(e.target.value)}
+                placeholder={hasExistingPassword ? "●●●●●●●●" : ""}
+                autoComplete="new-password"
+                disabled={isPending || removePublicPassword}
+              />
+              <p className="text-xs text-muted-foreground">
+                {hasExistingPassword
+                  ? "Passwort ist gesetzt. Leer lassen, um es beizubehalten."
+                  : "Optional — leer lassen für ungeschützten Zugriff. Mindestens 4 Zeichen."}
+              </p>
+              {publicPassword && publicPassword.length < 4 && (
+                <p className="text-xs text-destructive">
+                  Passwort muss mindestens 4 Zeichen haben.
+                </p>
+              )}
+              {hasExistingPassword && (
+                <div className="flex items-center gap-2 pt-1">
+                  <Checkbox
+                    id="removePublicPassword"
+                    name="removePublicPassword"
+                    checked={removePublicPassword}
+                    onCheckedChange={(v) => setRemovePublicPassword(v === true)}
+                    disabled={isPending}
+                  />
+                  <Label htmlFor="removePublicPassword" className="text-sm font-normal">
+                    Passwort entfernen
+                  </Label>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
       {generalError && <p className="text-sm text-destructive">{generalError}</p>}
 
