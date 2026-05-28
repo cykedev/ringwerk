@@ -68,13 +68,13 @@ export async function updateCompetition(
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
 
   const willBePublic = parsed.data.isPublic
-  const willHaveSlug = parsed.data.publicSlug
+  const nextSlug = parsed.data.publicSlug
   const isActive = competition.status === "ACTIVE"
 
   // Slug conflict check: only block when the updated competition itself will be ACTIVE+isPublic.
   // DRAFT/COMPLETED competitions may share a slug with an active one — only one ACTIVE+isPublic is blocked at a time.
-  if (willBePublic && willHaveSlug && isActive) {
-    const conflict = await findActiveSlugConflict(willHaveSlug, id)
+  if (willBePublic && nextSlug && isActive) {
+    const conflict = await findActiveSlugConflict(nextSlug, id)
     if (conflict) {
       return {
         error: `Slug ist bereits vom aktiven Wettbewerb '${conflict.name}' belegt. Wählen Sie einen anderen Slug oder schließen Sie den anderen Wettbewerb zuerst ab.`,
@@ -148,16 +148,14 @@ export async function updateCompetition(
     },
   })
 
-  // Revalidate old slug if it changed or publishing was turned off — cached PDF pages must reflect the change
-  if (competition.publicSlug && competition.publicSlug !== parsed.data.publicSlug) {
-    revalidatePublicSlug(competition.publicSlug)
-  }
-  if (competition.isPublic && !parsed.data.isPublic && competition.publicSlug) {
-    revalidatePublicSlug(competition.publicSlug)
-  }
-  // Revalidate new slug so the public PDF page reflects the updated data immediately
-  if (parsed.data.isPublic && parsed.data.publicSlug) {
-    revalidatePublicSlug(parsed.data.publicSlug)
+  // Conservatively invalidate the cache for any slug touched by this update — the previous one
+  // (slug changed, publishing turned off) and the next one (data behind the slug is now stale).
+  // Set deduplicates the no-op case where both are equal.
+  const slugsToInvalidate = new Set<string>()
+  if (competition.publicSlug) slugsToInvalidate.add(competition.publicSlug)
+  if (nextSlug) slugsToInvalidate.add(nextSlug)
+  for (const slug of slugsToInvalidate) {
+    revalidatePublicSlug(slug)
   }
 
   revalidateCompetitionPaths()
