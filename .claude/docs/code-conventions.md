@@ -536,7 +536,7 @@ export async function createLeague(formData: FormData): Promise<ActionResult>
 
 ## Aus Lernlog übernommen
 
-<!-- Zuletzt konsolidiert: 2026-05-23 -->
+<!-- Zuletzt konsolidiert: 2026-05-28 -->
 
 ### Prisma-Queries (ergänzt)
 
@@ -551,6 +551,7 @@ export async function createLeague(formData: FormData): Promise<ActionResult>
 - **Migrationen NIE nachträglich editieren**: Bereits angewendete Migration → Drift-Error bei erneutem `migrate dev`. Stattdessen neue Migration anlegen.
 - **`npx prisma generate` nach jeder Migration**: `prisma migrate dev` führt `prisma generate` NICHT automatisch aus. Vor Typecheck oder Build immer manuell aufrufen.
 - **Partielle Unique-Indizes für nullable FK-Felder**: Wenn ein nullable FK die Eindeutigkeitsbedingung kontrolliert, partielle Indizes statt globaler `@@unique`-Constraints verwenden (`WHERE col IS NULL` vs. `WHERE col IS NOT NULL`). Globale Unique-Indexes behandeln NULLs als distinct und erlauben dadurch Duplikate.
+- **Partial Unique Indexes als separate Migration**: Prisma kann Partial Unique Indexes (mit `WHERE`-Bedingung) nicht im Schema ausdrücken. Nach `prisma migrate dev` eine zweite Migration mit Future-Timestamp anlegen und das `CREATE UNIQUE INDEX ... WHERE ...` SQL manuell hineinschreiben — nicht versuchen, es im Schema zu modellieren.
 
 ### Dependency-Management
 
@@ -597,8 +598,17 @@ export async function createLeague(formData: FormData): Promise<ActionResult>
 - **HTML date input: ISO-Format für `defaultValue`**: `date.toISOString().slice(0, 10)`. `formatDateOnly()` ist für Display, nie für Form-`defaultValue`.
 - **Prisma `@default` gilt nur für neue Datensätze**: Bei bestehenden Zeilen keine Defaults rückwirkend gesetzt. Migrations-Strategie vorher klären: nullable + Backfill-Query vs. non-nullable mit Migration-`data`-Block.
 
+### Next.js & Caching
+
+- **`revalidateTag` braucht zweites Argument**: In Next.js 16 ist die einstellige Form `revalidateTag(tag)` deprecated und erzeugt Runtime-Warnungen. Immer `revalidateTag(tag, "max")` schreiben.
+
+### Server Actions
+
+- **Alle benötigten Felder in einem select konsolidieren**: Wenn eine Server-Action mit einem DB-Fetch beginnt, alle später benötigten Felder in diesem einen `select` zusammenfassen. Niemals einen zweiten Fetch nach dem ersten try/catch nachschieben — das umgeht die Fehlerbehandlung und kostet einen unnötigen Round-Trip.
+
 ### Tooling
 
+- **Reviewer-Aussagen mit echtem Lint verifizieren**: Behauptet ein Code-Reviewer (Mensch oder Agent), eine ESLint-Regel existiere nicht oder verhalte sich anders, immer mit echtem `/check`-Lauf gegenprüfen, bevor Code geändert wird. Reviewer-Urteile sind kein Ersatz für die echte Tool-Ausgabe.
 - **Prettier nach neuen Dateien**: Nach jeder neuen Datei lokal `npx prettier --write <datei>` ausführen, bevor CI-Check läuft.
 - **`<fieldset disabled>` für Form-Sektionen**: Deaktiviert alle enthaltenen Inputs, Labels und Buttons gleichzeitig — statt einzelne Inputs manuell zu disablen.
 
