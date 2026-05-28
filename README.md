@@ -250,3 +250,11 @@ scripts/                   # Docker-Startup- und Migrations-Scripts
 | Tests     | Vitest                      |
 | Container | Docker + Docker Compose     |
 | Hosting   | TrueNAS SCALE (self-hosted) |
+
+---
+
+## Lizenz
+
+Dieses Projekt steht unter der [Apache License 2.0](LICENSE).
+
+Copyright 2026 Christian Eiden
