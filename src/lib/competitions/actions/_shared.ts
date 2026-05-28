@@ -149,8 +149,7 @@ export const BaseSchema = z
       if (!data.publicSlug) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message:
-            "Slug ist erforderlich, wenn 'Auf Vereins-Website veröffentlichen' aktiv ist",
+          message: "Slug ist erforderlich, wenn 'Auf Vereins-Website veröffentlichen' aktiv ist",
           path: ["publicSlug"],
         })
       } else if (!SLUG_REGEX.test(data.publicSlug)) {

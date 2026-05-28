@@ -46,9 +46,7 @@ export async function GET(
   if (competition.publicPasswordHash) {
     const authHeader = req.headers.get("authorization")
     const provided = parseBasicAuthPassword(authHeader)
-    const ok =
-      provided != null &&
-      (await bcrypt.compare(provided, competition.publicPasswordHash))
+    const ok = provided != null && (await bcrypt.compare(provided, competition.publicPasswordHash))
     if (!ok) {
       return new NextResponse("Authentication required", {
         status: 401,
@@ -122,10 +120,7 @@ async function renderPdfBuffer(
   return cached()
 }
 
-async function buildAndRenderBuffer(
-  competitionId: string,
-  phaseTag: PhaseTag
-): Promise<Buffer> {
+async function buildAndRenderBuffer(competitionId: string, phaseTag: PhaseTag): Promise<Buffer> {
   let element: ReactElement<DocumentProps>
   if (phaseTag === "ranking") element = await buildEventRankingElement(competitionId)
   else if (phaseTag === "standings") element = await buildSeasonStandingsElement(competitionId)
@@ -151,9 +146,7 @@ async function buildEventRankingElement(
   })
   const isTeamEvent = (competition.teamSize ?? 0) >= 2
   const teamScoring = competition.teamScoring ?? "SUM"
-  const teamRanked = isTeamEvent
-    ? rankEventTeams(ranked, teamScoring, competition.scoringMode)
-    : []
+  const teamRanked = isTeamEvent ? rankEventTeams(ranked, teamScoring, competition.scoringMode) : []
 
   return createElement(EventRankingPdf, {
     competitionName: competition.name,
@@ -201,9 +194,7 @@ async function buildSeasonStandingsElement(
   }) as ReactElement<DocumentProps>
 }
 
-async function buildScheduleElement(
-  competitionId: string
-): Promise<ReactElement<DocumentProps>> {
+async function buildScheduleElement(competitionId: string): Promise<ReactElement<DocumentProps>> {
   const [competition, standings, matchups] = await Promise.all([
     getCompetitionById(competitionId),
     getStandingsForCompetition(competitionId),
@@ -223,9 +214,7 @@ async function buildScheduleElement(
   }) as ReactElement<DocumentProps>
 }
 
-async function buildPlayoffsElement(
-  competitionId: string
-): Promise<ReactElement<DocumentProps>> {
+async function buildPlayoffsElement(competitionId: string): Promise<ReactElement<DocumentProps>> {
   const [competition, bracket] = await Promise.all([
     getCompetitionById(competitionId),
     getPlayoffBracket(competitionId),

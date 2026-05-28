@@ -127,7 +127,7 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
   // (only if the slug input is currently empty). Subsequent edits are left alone.
   useEffect(() => {
     if (isPublic && publicSlug.trim() === "" && name) {
-      setPublicSlug(slugify(name))
+      setPublicSlug(slugify(name)) // eslint-disable-line react-hooks/set-state-in-effect
     }
   }, [isPublic]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -627,22 +627,19 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
                 disabled={isPending}
               />
               <p className="text-xs text-muted-foreground">
-                URL:{" "}
-                <code className="text-xs">/api/public/c/{publicSlug || "<slug>"}/pdf</code>
+                URL: <code className="text-xs">/api/public/c/{publicSlug || "<slug>"}/pdf</code>
               </p>
               {publicSlug && !SLUG_REGEX.test(publicSlug) && (
                 <p className="text-xs text-destructive">
                   Slug: 3–60 Zeichen, nur a–z, 0–9 und Bindestriche, keine doppelten Bindestriche.
                 </p>
               )}
-              {isEdit &&
-                competition?.publicSlug &&
-                competition.publicSlug !== publicSlug && (
-                  <p className="text-xs text-amber-700 dark:text-amber-400">
-                    Hinweis: Die bestehende öffentliche URL (/api/public/c/
-                    {competition.publicSlug}/pdf) wird ungültig.
-                  </p>
-                )}
+              {isEdit && competition?.publicSlug && competition.publicSlug !== publicSlug && (
+                <p className="text-xs text-amber-700 dark:text-amber-400">
+                  Hinweis: Die bestehende öffentliche URL (/api/public/c/
+                  {competition.publicSlug}/pdf) wird ungültig.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

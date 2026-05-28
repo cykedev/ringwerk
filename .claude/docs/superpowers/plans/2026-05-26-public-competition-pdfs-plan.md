@@ -48,6 +48,7 @@ Subagents implementing this plan must read the baseline docs from CLAUDE.md, plu
 ## Task 1: Schema + migration
 
 **Files:**
+
 - Modify: `prisma/schema.prisma` (around line 187, inside `model Competition`)
 - Create: `prisma/migrations/<timestamp>_competition_public_slug/migration.sql`
 
@@ -111,6 +112,7 @@ git commit -m "feat(schema): add Competition.isPublic, publicSlug, publicPasswor
 ## Task 2: Slug helpers (TDD)
 
 **Files:**
+
 - Create: `src/lib/competitions/publicSlug.ts`
 - Create: `src/lib/competitions/publicSlug.test.ts`
 
@@ -247,7 +249,11 @@ describe("resolveSlug", () => {
   })
 
   it("returns ACTIVE+isPublic competition when present", async () => {
-    const active = await createTestCompetition({ status: "ACTIVE", isPublic: true, publicSlug: "test-slug" })
+    const active = await createTestCompetition({
+      status: "ACTIVE",
+      isPublic: true,
+      publicSlug: "test-slug",
+    })
     const result = await resolveSlug("test-slug")
     expect(result?.id).toBe(active.id)
   })
@@ -276,7 +282,11 @@ describe("resolveSlug", () => {
 
   it("prefers ACTIVE claim over ARCHIVED predecessors", async () => {
     await createTestCompetition({ status: "ARCHIVED", isPublic: true, publicSlug: "test-slug" })
-    const active = await createTestCompetition({ status: "ACTIVE", isPublic: true, publicSlug: "test-slug" })
+    const active = await createTestCompetition({
+      status: "ACTIVE",
+      isPublic: true,
+      publicSlug: "test-slug",
+    })
     const result = await resolveSlug("test-slug")
     expect(result?.id).toBe(active.id)
   })
@@ -309,13 +319,15 @@ describe("findActiveSlugConflict", () => {
 })
 
 // Helper — adjust required fields to match your Competition schema (name, type, scoringMode, etc.)
-async function createTestCompetition(overrides: Partial<{
-  status: "DRAFT" | "ACTIVE" | "COMPLETED" | "ARCHIVED"
-  isPublic: boolean
-  publicSlug: string | null
-  name: string
-  createdAt: Date
-}>) {
+async function createTestCompetition(
+  overrides: Partial<{
+    status: "DRAFT" | "ACTIVE" | "COMPLETED" | "ARCHIVED"
+    isPublic: boolean
+    publicSlug: string | null
+    name: string
+    createdAt: Date
+  }>
+) {
   // Find or create a test user to satisfy createdByUserId
   const user =
     (await db.user.findFirst()) ??
@@ -417,6 +429,7 @@ git commit -m "feat(competitions): add publicSlug helpers (slugify, resolveSlug,
 ## Task 3: Extend types + queries
 
 **Files:**
+
 - Modify: `src/lib/competitions/types.ts`
 - Modify: `src/lib/competitions/queries.ts`
 
@@ -425,9 +438,9 @@ git commit -m "feat(competitions): add publicSlug helpers (slugify, resolveSlug,
 Open `src/lib/competitions/types.ts`. Add the following fields to **both** `CompetitionListItem` and `CompetitionDetail` types — place them after the `status` field in each:
 
 ```ts
-  isPublic: boolean
-  publicSlug: string | null
-  hasPublicPassword: boolean   // derived: true if publicPasswordHash is set; hash itself is never exposed to client
+isPublic: boolean
+publicSlug: string | null
+hasPublicPassword: boolean // derived: true if publicPasswordHash is set; hash itself is never exposed to client
 ```
 
 The hash itself is never typed into client-bound objects — only the boolean.
@@ -472,6 +485,7 @@ git commit -m "feat(competitions): expose isPublic and publicSlug in types and q
 ## Task 4: Extend `_shared.ts` (schema + revalidation helper)
 
 **Files:**
+
 - Modify: `src/lib/competitions/actions/_shared.ts`
 
 - [ ] **Step 1: Add `isPublic`, `publicSlug`, `publicPassword`, `removePublicPassword` to `BaseSchema`**
@@ -506,28 +520,28 @@ Open `src/lib/competitions/actions/_shared.ts`. Inside `BaseSchema` (right after
 Then in the existing `.superRefine` block, add the slug-format and password-length checks:
 
 ```ts
-    if (data.isPublic) {
-      if (!data.publicSlug) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Slug ist erforderlich, wenn 'Auf Vereins-Website veröffentlichen' aktiv ist",
-          path: ["publicSlug"],
-        })
-      } else if (!SLUG_REGEX.test(data.publicSlug)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Slug: 3–60 Zeichen, nur a–z, 0–9 und Bindestriche, keine doppelten Bindestriche",
-          path: ["publicSlug"],
-        })
-      }
-    }
-    if (data.publicPassword !== null && data.publicPassword.length < 4) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Passwort muss mindestens 4 Zeichen haben",
-        path: ["publicPassword"],
-      })
-    }
+if (data.isPublic) {
+  if (!data.publicSlug) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Slug ist erforderlich, wenn 'Auf Vereins-Website veröffentlichen' aktiv ist",
+      path: ["publicSlug"],
+    })
+  } else if (!SLUG_REGEX.test(data.publicSlug)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Slug: 3–60 Zeichen, nur a–z, 0–9 und Bindestriche, keine doppelten Bindestriche",
+      path: ["publicSlug"],
+    })
+  }
+}
+if (data.publicPassword !== null && data.publicPassword.length < 4) {
+  ctx.addIssue({
+    code: z.ZodIssueCode.custom,
+    message: "Passwort muss mindestens 4 Zeichen haben",
+    path: ["publicPassword"],
+  })
+}
 ```
 
 Add the import at the top:
@@ -577,6 +591,7 @@ git commit -m "feat(competitions): extend BaseSchema (publish + slug + password)
 ## Task 5: Update `createCompetition`
 
 **Files:**
+
 - Modify: `src/lib/competitions/actions/create.ts`
 
 - [ ] **Step 1: Add imports**
@@ -607,14 +622,14 @@ In the `safeParse` block (around line 22), add the four new form fields:
 After the discipline existence check and before `db.competition.create`, add:
 
 ```ts
-  if (parsed.data.isPublic && parsed.data.publicSlug) {
-    const conflict = await findActiveSlugConflict(parsed.data.publicSlug, null)
-    if (conflict) {
-      return {
-        error: `Slug ist bereits vom aktiven Wettbewerb '${conflict.name}' belegt. Wählen Sie einen anderen Slug oder schließen Sie den anderen Wettbewerb zuerst ab.`,
-      }
+if (parsed.data.isPublic && parsed.data.publicSlug) {
+  const conflict = await findActiveSlugConflict(parsed.data.publicSlug, null)
+  if (conflict) {
+    return {
+      error: `Slug ist bereits vom aktiven Wettbewerb '${conflict.name}' belegt. Wählen Sie einen anderen Slug oder schließen Sie den anderen Wettbewerb zuerst ab.`,
     }
   }
+}
 ```
 
 - [ ] **Step 4: Hash password if provided**
@@ -624,10 +639,10 @@ For creation, the "leave existing hash alone" case doesn't apply (no row yet), s
 Before `db.competition.create`, add:
 
 ```ts
-  const publicPasswordHash =
-    parsed.data.removePublicPassword || parsed.data.publicPassword == null
-      ? null
-      : await bcrypt.hash(parsed.data.publicPassword, 12)
+const publicPasswordHash =
+  parsed.data.removePublicPassword || parsed.data.publicPassword == null
+    ? null
+    : await bcrypt.hash(parsed.data.publicPassword, 12)
 ```
 
 - [ ] **Step 5: Persist the new fields in `db.competition.create`**
@@ -645,9 +660,9 @@ Inside the `create({ data: { … } })` payload, add (place near the top with oth
 After the `create()`, before the `revalidateCompetitionPaths()` call, add:
 
 ```ts
-  if (parsed.data.isPublic && parsed.data.publicSlug) {
-    revalidatePublicSlug(parsed.data.publicSlug)
-  }
+if (parsed.data.isPublic && parsed.data.publicSlug) {
+  revalidatePublicSlug(parsed.data.publicSlug)
+}
 ```
 
 - [ ] **Step 7: Verify TypeScript**
@@ -670,6 +685,7 @@ git commit -m "feat(competitions): support isPublic/publicSlug/publicPassword in
 ## Task 6: Update `updateCompetition`
 
 **Files:**
+
 - Modify: `src/lib/competitions/actions/update.ts`
 
 - [ ] **Step 1: Add imports**
@@ -717,41 +733,41 @@ Inside the `safeParse({ ... })` call, add:
 After `if (!parsed.success) return …`, before `db.competition.update`, add:
 
 ```ts
-  const willBePublic = parsed.data.isPublic
-  const willHaveSlug = parsed.data.publicSlug
-  const isActive = competition.status === "ACTIVE"
+const willBePublic = parsed.data.isPublic
+const willHaveSlug = parsed.data.publicSlug
+const isActive = competition.status === "ACTIVE"
 
-  if (willBePublic && willHaveSlug && isActive) {
-    const conflict = await findActiveSlugConflict(willHaveSlug, id)
-    if (conflict) {
-      return {
-        error: `Slug ist bereits vom aktiven Wettbewerb '${conflict.name}' belegt. Wählen Sie einen anderen Slug oder schließen Sie den anderen Wettbewerb zuerst ab.`,
-      }
+if (willBePublic && willHaveSlug && isActive) {
+  const conflict = await findActiveSlugConflict(willHaveSlug, id)
+  if (conflict) {
+    return {
+      error: `Slug ist bereits vom aktiven Wettbewerb '${conflict.name}' belegt. Wählen Sie einen anderen Slug oder schließen Sie den anderen Wettbewerb zuerst ab.`,
     }
   }
+}
 ```
 
 - [ ] **Step 5: Decide what to do with the password hash**
 
 The three-way semantics are:
 
-| Inputs                                                          | Result                          |
-| --------------------------------------------------------------- | ------------------------------- |
-| `removePublicPassword = true`                                   | hash → null                     |
-| `publicPassword` non-null (and `removePublicPassword` false)    | hash → bcrypt(publicPassword)   |
-| `publicPassword` null AND `removePublicPassword` false          | leave existing hash unchanged   |
+| Inputs                                                       | Result                        |
+| ------------------------------------------------------------ | ----------------------------- |
+| `removePublicPassword = true`                                | hash → null                   |
+| `publicPassword` non-null (and `removePublicPassword` false) | hash → bcrypt(publicPassword) |
+| `publicPassword` null AND `removePublicPassword` false       | leave existing hash unchanged |
 
 Implement before the `update`:
 
 ```ts
-  let publicPasswordHashUpdate: string | null | undefined
-  if (parsed.data.removePublicPassword) {
-    publicPasswordHashUpdate = null
-  } else if (parsed.data.publicPassword != null) {
-    publicPasswordHashUpdate = await bcrypt.hash(parsed.data.publicPassword, 12)
-  } else {
-    publicPasswordHashUpdate = undefined  // Prisma: do not touch the column
-  }
+let publicPasswordHashUpdate: string | null | undefined
+if (parsed.data.removePublicPassword) {
+  publicPasswordHashUpdate = null
+} else if (parsed.data.publicPassword != null) {
+  publicPasswordHashUpdate = await bcrypt.hash(parsed.data.publicPassword, 12)
+} else {
+  publicPasswordHashUpdate = undefined // Prisma: do not touch the column
+}
 ```
 
 - [ ] **Step 6: Persist the new fields in the update**
@@ -771,17 +787,17 @@ Inside the `update({ data: { … } })` payload, alongside `name:`, add:
 After the `db.competition.update` and `auditLog.create`, before `revalidateCompetitionPaths()`, add:
 
 ```ts
-  // Old slug must be revalidated if it changed or publishing was turned off
-  if (competition.publicSlug && competition.publicSlug !== parsed.data.publicSlug) {
-    revalidatePublicSlug(competition.publicSlug)
-  }
-  if (competition.isPublic && !parsed.data.isPublic && competition.publicSlug) {
-    revalidatePublicSlug(competition.publicSlug)
-  }
-  // New slug
-  if (parsed.data.isPublic && parsed.data.publicSlug) {
-    revalidatePublicSlug(parsed.data.publicSlug)
-  }
+// Old slug must be revalidated if it changed or publishing was turned off
+if (competition.publicSlug && competition.publicSlug !== parsed.data.publicSlug) {
+  revalidatePublicSlug(competition.publicSlug)
+}
+if (competition.isPublic && !parsed.data.isPublic && competition.publicSlug) {
+  revalidatePublicSlug(competition.publicSlug)
+}
+// New slug
+if (parsed.data.isPublic && parsed.data.publicSlug) {
+  revalidatePublicSlug(parsed.data.publicSlug)
+}
 ```
 
 Note: changing the password does **not** require cache invalidation — the auth check happens on every request, not from cache.
@@ -806,6 +822,7 @@ git commit -m "feat(competitions): support publicSlug/publicPassword edits with 
 ## Task 7: Update `setCompetitionStatus`
 
 **Files:**
+
 - Modify: `src/lib/competitions/actions/update.ts`
 
 - [ ] **Step 1: Load slug + publish state**
@@ -813,10 +830,10 @@ git commit -m "feat(competitions): support publicSlug/publicPassword edits with 
 In `setCompetitionStatus` (around line 118), extend the `findUnique` select:
 
 ```ts
-  const competition = await db.competition.findUnique({
-    where: { id },
-    select: { id: true, name: true, status: true, isPublic: true, publicSlug: true },
-  })
+const competition = await db.competition.findUnique({
+  where: { id },
+  select: { id: true, name: true, status: true, isPublic: true, publicSlug: true },
+})
 ```
 
 - [ ] **Step 2: Conflict check when transitioning into ACTIVE**
@@ -824,14 +841,14 @@ In `setCompetitionStatus` (around line 118), extend the `findUnique` select:
 After the `ALLOWED_TRANSITIONS` check, before the `db.competition.update`, add (using the static `findActiveSlugConflict` import added in Task 6 Step 1):
 
 ```ts
-  if (status === "ACTIVE" && competition.isPublic && competition.publicSlug) {
-    const conflict = await findActiveSlugConflict(competition.publicSlug, id)
-    if (conflict) {
-      return {
-        error: `Slug '${competition.publicSlug}' ist bereits vom aktiven Wettbewerb '${conflict.name}' belegt. Wählen Sie einen anderen Slug oder schließen Sie den anderen Wettbewerb zuerst ab.`,
-      }
+if (status === "ACTIVE" && competition.isPublic && competition.publicSlug) {
+  const conflict = await findActiveSlugConflict(competition.publicSlug, id)
+  if (conflict) {
+    return {
+      error: `Slug '${competition.publicSlug}' ist bereits vom aktiven Wettbewerb '${conflict.name}' belegt. Wählen Sie einen anderen Slug oder schließen Sie den anderen Wettbewerb zuerst ab.`,
     }
   }
+}
 ```
 
 - [ ] **Step 3: Revalidate public slug after any status change**
@@ -839,12 +856,13 @@ After the `ALLOWED_TRANSITIONS` check, before the `db.competition.update`, add (
 After the `auditLog.create`, before `revalidateCompetitionPaths()`, add:
 
 ```ts
-  if (competition.publicSlug) {
-    revalidatePublicSlug(competition.publicSlug)
-  }
+if (competition.publicSlug) {
+  revalidatePublicSlug(competition.publicSlug)
+}
 ```
 
 This covers two cases worth invalidating:
+
 - ACTIVE → COMPLETED/ARCHIVED: the slug now falls back to whichever other holder exists (or to historical view of this competition itself)
 - COMPLETED/ARCHIVED → ACTIVE: this competition becomes the live claimant
 
@@ -855,13 +873,13 @@ The `startPlayoffs` action (in `src/lib/playoffs/actions/start.ts`) currently do
 Open `src/lib/playoffs/actions/start.ts`. After the playoff matches are created and the audit log entry is written (search for `PLAYOFFS_STARTED`), and before the existing `revalidatePath` calls (if any), add:
 
 ```ts
-  const comp = await db.competition.findUnique({
-    where: { id: competitionId },
-    select: { isPublic: true, publicSlug: true },
-  })
-  if (comp?.isPublic && comp.publicSlug) {
-    revalidateTag(`public-pdf:${comp.publicSlug}`)
-  }
+const comp = await db.competition.findUnique({
+  where: { id: competitionId },
+  select: { isPublic: true, publicSlug: true },
+})
+if (comp?.isPublic && comp.publicSlug) {
+  revalidateTag(`public-pdf:${comp.publicSlug}`)
+}
 ```
 
 Add `import { revalidateTag } from "next/cache"` at the top if not already imported.
@@ -886,6 +904,7 @@ git commit -m "feat(competitions): invalidate public PDF cache on status change 
 ## Task 8: Action-level tests for slug rules
 
 **Files:**
+
 - Modify: `src/lib/competitions/actions.test.ts`
 
 - [ ] **Step 1: Add tests for `createCompetition` slug behavior**
@@ -934,7 +953,9 @@ describe("createCompetition — public slug", () => {
     fd.set("publicSlug", "conflict-slug")
 
     const result = await createCompetition(null, fd)
-    expect("error" in result && typeof result.error === "string" && result.error.includes("'First'")).toBe(true)
+    expect(
+      "error" in result && typeof result.error === "string" && result.error.includes("'First'")
+    ).toBe(true)
   })
 })
 ```
@@ -981,7 +1002,11 @@ describe("updateCompetition — public slug", () => {
     // ... include other form fields required by BaseSchema (eventDate, allowGuests, etc., empty strings)
 
     const result = await updateCompetition(target.id, null, fd)
-    expect("error" in result && typeof result.error === "string" && result.error.includes("'Other Active'")).toBe(true)
+    expect(
+      "error" in result &&
+        typeof result.error === "string" &&
+        result.error.includes("'Other Active'")
+    ).toBe(true)
   })
 })
 
@@ -1014,7 +1039,9 @@ describe("setCompetitionStatus — public slug", () => {
     })
 
     const result = await setCompetitionStatus(draft.id, "ACTIVE")
-    expect("error" in result && typeof result.error === "string" && result.error.includes("'Holder'")).toBe(true)
+    expect(
+      "error" in result && typeof result.error === "string" && result.error.includes("'Holder'")
+    ).toBe(true)
   })
 })
 ```
@@ -1173,6 +1200,7 @@ git commit -m "test(competitions): cover public-slug conflict checks on create/u
 ## Task 9: Public PDF route
 
 **Files:**
+
 - Create: `src/app/api/public/c/[slug]/pdf/route.ts`
 
 - [ ] **Step 1: Implement the route**
@@ -1228,9 +1256,7 @@ export async function GET(
   if (competition.publicPasswordHash) {
     const authHeader = req.headers.get("authorization")
     const provided = parseBasicAuthPassword(authHeader)
-    const ok =
-      provided != null &&
-      (await bcrypt.compare(provided, competition.publicPasswordHash))
+    const ok = provided != null && (await bcrypt.compare(provided, competition.publicPasswordHash))
     if (!ok) {
       return new NextResponse("Authentication required", {
         status: 401,
@@ -1304,10 +1330,7 @@ async function renderPdfBuffer(
   return cached()
 }
 
-async function buildAndRenderBuffer(
-  competitionId: string,
-  phaseTag: PhaseTag
-): Promise<Buffer> {
+async function buildAndRenderBuffer(competitionId: string, phaseTag: PhaseTag): Promise<Buffer> {
   let element: ReactElement<DocumentProps>
   if (phaseTag === "ranking") element = await buildEventRankingElement(competitionId)
   else if (phaseTag === "standings") element = await buildSeasonStandingsElement(competitionId)
@@ -1335,9 +1358,7 @@ async function buildEventRankingElement(
   })
   const isTeamEvent = (competition.teamSize ?? 0) >= 2
   const teamScoring = competition.teamScoring ?? "SUM"
-  const teamRanked = isTeamEvent
-    ? rankEventTeams(ranked, teamScoring, competition.scoringMode)
-    : []
+  const teamRanked = isTeamEvent ? rankEventTeams(ranked, teamScoring, competition.scoringMode) : []
 
   return createElement(EventRankingPdf, {
     competitionName: competition.name,
@@ -1385,9 +1406,7 @@ async function buildSeasonStandingsElement(
   }) as ReactElement<DocumentProps>
 }
 
-async function buildScheduleElement(
-  competitionId: string
-): Promise<ReactElement<DocumentProps>> {
+async function buildScheduleElement(competitionId: string): Promise<ReactElement<DocumentProps>> {
   const [competition, standings, matchups] = await Promise.all([
     getCompetitionById(competitionId),
     getStandingsForCompetition(competitionId),
@@ -1407,9 +1426,7 @@ async function buildScheduleElement(
   }) as ReactElement<DocumentProps>
 }
 
-async function buildPlayoffsElement(
-  competitionId: string
-): Promise<ReactElement<DocumentProps>> {
+async function buildPlayoffsElement(competitionId: string): Promise<ReactElement<DocumentProps>> {
   const [competition, bracket] = await Promise.all([
     getCompetitionById(competitionId),
     getPlayoffBracket(competitionId),
@@ -1427,6 +1444,7 @@ async function buildPlayoffsElement(
 ```
 
 **Notes:**
+
 - All four builders intentionally mirror the existing protected routes (`src/app/api/competitions/[id]/pdf/{ranking,standings,schedule,playoffs}/route.ts`). If you spot real duplication and want to extract shared builders into `src/lib/pdf/builders.ts`, do it — but only if it removes friction, not pre-emptively.
 - `dynamic = "force-dynamic"` ensures the route handler runs on every request so the Basic Auth check is always enforced. The expensive `renderToBuffer` is cached via `unstable_cache`, so cache hits are fast (~50 ms).
 - The cache tag is `public-pdf:<slug>` — server actions in Task 4 use the matching `revalidateTag` helper.
@@ -1508,6 +1526,7 @@ git commit -m "feat(api): add public PDF route /api/public/c/[slug]/pdf with pha
 ## Task 10: Edit-form UI (publish switch + slug input)
 
 **Files:**
+
 - Modify: `src/components/app/competitions/CompetitionForm.tsx`
 
 - [ ] **Step 1: Add state hooks**
@@ -1515,12 +1534,12 @@ git commit -m "feat(api): add public PDF route /api/public/c/[slug]/pdf with pha
 In the `CompetitionForm` component, after the existing `useState` calls (around line 80), add:
 
 ```tsx
-  const [isPublic, setIsPublic] = useState<boolean>(competition?.isPublic ?? false)
-  const [publicSlug, setPublicSlug] = useState<string>(competition?.publicSlug ?? "")
-  const [publicPassword, setPublicPassword] = useState<string>("")
-  const [removePublicPassword, setRemovePublicPassword] = useState<boolean>(false)
+const [isPublic, setIsPublic] = useState<boolean>(competition?.isPublic ?? false)
+const [publicSlug, setPublicSlug] = useState<string>(competition?.publicSlug ?? "")
+const [publicPassword, setPublicPassword] = useState<string>("")
+const [removePublicPassword, setRemovePublicPassword] = useState<boolean>(false)
 
-  const hasExistingPassword = competition?.hasPublicPassword ?? false
+const hasExistingPassword = competition?.hasPublicPassword ?? false
 ```
 
 Also import `slugify` at the top:
@@ -1534,13 +1553,13 @@ import { slugify, SLUG_REGEX } from "@/lib/competitions/publicSlug"
 Add a `useEffect`:
 
 ```tsx
-  // When the user first turns the publish switch on, pre-fill the slug from the name
-  // (only if the slug input is currently empty). Subsequent edits to either field are left alone.
-  useEffect(() => {
-    if (isPublic && publicSlug.trim() === "" && name) {
-      setPublicSlug(slugify(name))
-    }
-  }, [isPublic]) // eslint-disable-line react-hooks/exhaustive-deps
+// When the user first turns the publish switch on, pre-fill the slug from the name
+// (only if the slug input is currently empty). Subsequent edits to either field are left alone.
+useEffect(() => {
+  if (isPublic && publicSlug.trim() === "" && name) {
+    setPublicSlug(slugify(name))
+  }
+}, [isPublic]) // eslint-disable-line react-hooks/exhaustive-deps
 ```
 
 - [ ] **Step 3: Render the publish section in the form**
@@ -1548,91 +1567,87 @@ Add a `useEffect`:
 Find a sensible location in the JSX (after the name field and before type-specific sections — look for the closing tag of the "Allgemein" group). Insert:
 
 ```tsx
-        <div className="space-y-4 rounded-lg border bg-card p-4">
-          <div className="flex items-start gap-3">
+<div className="space-y-4 rounded-lg border bg-card p-4">
+  <div className="flex items-start gap-3">
+    <Checkbox
+      id="isPublic"
+      name="isPublic"
+      checked={isPublic}
+      onCheckedChange={(v) => setIsPublic(v === true)}
+    />
+    <div className="space-y-1">
+      <Label htmlFor="isPublic">Auf Vereins-Website veröffentlichen</Label>
+      <p className="text-sm text-muted-foreground">
+        Stellt das Haupt-PDF dieses Wettbewerbs unter einer öffentlichen URL bereit.
+      </p>
+    </div>
+  </div>
+
+  {isPublic && (
+    <div className="space-y-4 pl-7">
+      <div className="space-y-2">
+        <Label htmlFor="publicSlug">Slug</Label>
+        <Input
+          id="publicSlug"
+          name="publicSlug"
+          value={publicSlug}
+          onChange={(e) => setPublicSlug(e.target.value)}
+          placeholder="z.B. jahrespreisschiessen"
+          maxLength={60}
+        />
+        <p className="text-xs text-muted-foreground">
+          URL: <code>/api/public/c/{publicSlug || "<slug>"}/pdf</code>
+        </p>
+        {publicSlug && !SLUG_REGEX.test(publicSlug) && (
+          <p className="text-xs text-destructive">
+            Slug: 3–60 Zeichen, nur a–z, 0–9 und Bindestriche, keine doppelten Bindestriche.
+          </p>
+        )}
+        {isEdit && competition?.publicSlug && competition.publicSlug !== publicSlug && (
+          <p className="text-xs text-amber-700 dark:text-amber-400">
+            Hinweis: Die bestehende öffentliche URL (
+            <code>/api/public/c/{competition.publicSlug}/pdf</code>) wird ungültig.
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="publicPassword">Passwort (optional)</Label>
+        <Input
+          id="publicPassword"
+          name="publicPassword"
+          type="password"
+          value={publicPassword}
+          onChange={(e) => setPublicPassword(e.target.value)}
+          placeholder={hasExistingPassword ? "●●●●●●●●" : ""}
+          autoComplete="new-password"
+          disabled={removePublicPassword}
+        />
+        <p className="text-xs text-muted-foreground">
+          {hasExistingPassword
+            ? "Passwort ist gesetzt. Leer lassen, um es beizubehalten."
+            : "Optional — leer lassen für ungeschützten Zugriff. Mindestens 4 Zeichen."}
+        </p>
+        {publicPassword && publicPassword.length < 4 && (
+          <p className="text-xs text-destructive">Passwort muss mindestens 4 Zeichen haben.</p>
+        )}
+        {hasExistingPassword && (
+          <div className="flex items-center gap-2 pt-1">
             <Checkbox
-              id="isPublic"
-              name="isPublic"
-              checked={isPublic}
-              onCheckedChange={(v) => setIsPublic(v === true)}
+              id="removePublicPassword"
+              name="removePublicPassword"
+              checked={removePublicPassword}
+              onCheckedChange={(v) => setRemovePublicPassword(v === true)}
             />
-            <div className="space-y-1">
-              <Label htmlFor="isPublic">Auf Vereins-Website veröffentlichen</Label>
-              <p className="text-sm text-muted-foreground">
-                Stellt das Haupt-PDF dieses Wettbewerbs unter einer öffentlichen URL bereit.
-              </p>
-            </div>
+            <Label htmlFor="removePublicPassword" className="text-sm font-normal">
+              Passwort entfernen
+            </Label>
           </div>
-
-          {isPublic && (
-            <div className="space-y-4 pl-7">
-              <div className="space-y-2">
-                <Label htmlFor="publicSlug">Slug</Label>
-                <Input
-                  id="publicSlug"
-                  name="publicSlug"
-                  value={publicSlug}
-                  onChange={(e) => setPublicSlug(e.target.value)}
-                  placeholder="z.B. jahrespreisschiessen"
-                  maxLength={60}
-                />
-                <p className="text-xs text-muted-foreground">
-                  URL: <code>/api/public/c/{publicSlug || "<slug>"}/pdf</code>
-                </p>
-                {publicSlug && !SLUG_REGEX.test(publicSlug) && (
-                  <p className="text-xs text-destructive">
-                    Slug: 3–60 Zeichen, nur a–z, 0–9 und Bindestriche, keine doppelten Bindestriche.
-                  </p>
-                )}
-                {isEdit &&
-                  competition?.publicSlug &&
-                  competition.publicSlug !== publicSlug && (
-                    <p className="text-xs text-amber-700 dark:text-amber-400">
-                      Hinweis: Die bestehende öffentliche URL (
-                      <code>/api/public/c/{competition.publicSlug}/pdf</code>) wird ungültig.
-                    </p>
-                  )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="publicPassword">Passwort (optional)</Label>
-                <Input
-                  id="publicPassword"
-                  name="publicPassword"
-                  type="password"
-                  value={publicPassword}
-                  onChange={(e) => setPublicPassword(e.target.value)}
-                  placeholder={hasExistingPassword ? "●●●●●●●●" : ""}
-                  autoComplete="new-password"
-                  disabled={removePublicPassword}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {hasExistingPassword
-                    ? "Passwort ist gesetzt. Leer lassen, um es beizubehalten."
-                    : "Optional — leer lassen für ungeschützten Zugriff. Mindestens 4 Zeichen."}
-                </p>
-                {publicPassword && publicPassword.length < 4 && (
-                  <p className="text-xs text-destructive">
-                    Passwort muss mindestens 4 Zeichen haben.
-                  </p>
-                )}
-                {hasExistingPassword && (
-                  <div className="flex items-center gap-2 pt-1">
-                    <Checkbox
-                      id="removePublicPassword"
-                      name="removePublicPassword"
-                      checked={removePublicPassword}
-                      onCheckedChange={(v) => setRemovePublicPassword(v === true)}
-                    />
-                    <Label htmlFor="removePublicPassword" className="text-sm font-normal">
-                      Passwort entfernen
-                    </Label>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+        )}
+      </div>
+    </div>
+  )}
+</div>
 ```
 
 If the form is large, prefer adding this block near the top of the JSX, just below the name input — it's part of the "general" fields, not type-specific.
@@ -1673,6 +1688,7 @@ git commit -m "feat(ui): add 'Auf Vereins-Website veröffentlichen' switch and s
 ## Task 11: "Öffentlich" badge on competitions list
 
 **Files:**
+
 - Modify: `src/app/(app)/competitions/page.tsx`
 
 - [ ] **Step 1: Add badge next to the competition name on active competitions**
@@ -1680,11 +1696,13 @@ git commit -m "feat(ui): add 'Auf Vereins-Website veröffentlichen' switch and s
 In `src/app/(app)/competitions/page.tsx`, find the active competitions block (around line 207) — the `<div className="flex flex-wrap items-center gap-2">` that already contains `<span>{c.name}</span>`, `<CompetitionTypeBadge />`, and the discipline `<Badge>`. After the discipline badge, add:
 
 ```tsx
-                    {c.isPublic && (
-                      <Badge variant="outline" className="text-xs">
-                        Öffentlich
-                      </Badge>
-                    )}
+{
+  c.isPublic && (
+    <Badge variant="outline" className="text-xs">
+      Öffentlich
+    </Badge>
+  )
+}
 ```
 
 Do the **same** for the draft block higher up (around line 181) so the marker is visible everywhere a competition appears in the list. Skip the archived/completed sections — those competitions no longer hold the active claim and showing the badge would be misleading.
@@ -1705,6 +1723,7 @@ git commit -m "feat(ui): show 'Öffentlich' badge on active competitions that ar
 ## Task 12: Documentation sync
 
 **Files:**
+
 - Modify: `.claude/docs/features.md`
 - Modify: `.claude/docs/architecture.md`
 

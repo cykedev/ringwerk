@@ -44,12 +44,12 @@ GET /api/public/c/<slug>/pdf
 
 For the competition resolved by the slug lookup (see next section), the route serves:
 
-| Competition type | Condition                       | PDF                             |
-| ---------------- | ------------------------------- | ------------------------------- |
-| EVENT            | always                          | `EventRankingPdf`               |
-| SEASON           | always                          | `SeasonStandingsPdf`            |
-| LEAGUE           | no `PlayoffMatch` rows exist    | `SchedulePdf` (Spielplan+Tab.)  |
-| LEAGUE           | one or more `PlayoffMatch` rows | `PlayoffsPdf` (Bracket)         |
+| Competition type | Condition                       | PDF                            |
+| ---------------- | ------------------------------- | ------------------------------ |
+| EVENT            | always                          | `EventRankingPdf`              |
+| SEASON           | always                          | `SeasonStandingsPdf`           |
+| LEAGUE           | no `PlayoffMatch` rows exist    | `SchedulePdf` (Spielplan+Tab.) |
+| LEAGUE           | one or more `PlayoffMatch` rows | `PlayoffsPdf` (Bracket)        |
 
 The "playoff phase active" check reuses whatever query/flag the existing Liga implementation already uses to detect Playoff start — discovered during plan writing, not specified here.
 
@@ -172,22 +172,22 @@ const getCachedPdfBuffer = unstable_cache(
 
 `revalidateTag('public-pdf:<slug>')` is called from any server action that can change which PDF should be served under a slug. The tag-based approach evicts the cached buffers for that slug regardless of phase.
 
-| Action                                 | When                                                     |
-| -------------------------------------- | -------------------------------------------------------- |
-| `updateCompetition`                    | After save, if `isPublic`, slug or name changed          |
-| `updateCompetitionStatus`              | After save, if competition has `isPublic = true`         |
-| `startPlayoffs`                        | After Playoffs start (Liga URL must switch PDF)          |
-| `forceDeleteCompetition`               | After delete, if the deleted competition had a slug      |
+| Action                    | When                                                |
+| ------------------------- | --------------------------------------------------- |
+| `updateCompetition`       | After save, if `isPublic`, slug or name changed     |
+| `updateCompetitionStatus` | After save, if competition has `isPublic = true`    |
+| `startPlayoffs`           | After Playoffs start (Liga URL must switch PDF)     |
+| `forceDeleteCompetition`  | After delete, if the deleted competition had a slug |
 
 For actions like `enterResult`, `addEventSeries`, `addSeasonSeries` — these can change the contents of the PDF but not which competition the slug points at. We accept up to 24h staleness here; otherwise we'd be invalidating on every result entry, defeating the cache. This trade-off is consistent with the "täglich aktualisiert reicht" requirement.
 
-For affected slugs, both the *previously* and the *newly* responsible slugs get their tags revalidated when applicable (e.g. on slug edit, both old and new tag get evicted). The password change does NOT require cache invalidation because the auth check runs on every request, not from cache.
+For affected slugs, both the _previously_ and the _newly_ responsible slugs get their tags revalidated when applicable (e.g. on slug edit, both old and new tag get evicted). The password change does NOT require cache invalidation because the auth check runs on every request, not from cache.
 
 ## Auth and Security
 
 - `proxy.ts` matcher does **not** match `/api/public/*` — verify during implementation that the existing matcher list excludes this prefix
 - Route is unauthenticated by design
-- Server-side check inside the route: 404 if no competition resolves; never expose details about *why* a slug 404s
+- Server-side check inside the route: 404 if no competition resolves; never expose details about _why_ a slug 404s
 - Slug regex prevents path traversal or weird characters; Prisma parameter binding prevents injection
 - Password check (when enabled): bcrypt `compare` on every request — constant-time within bcrypt's implementation; protects against timing-leak password discovery
 - Response headers:
@@ -198,20 +198,20 @@ For affected slugs, both the *previously* and the *newly* responsible slugs get 
 
 ## Components Touched / Added
 
-| Path                                                                  | Change          |
-| --------------------------------------------------------------------- | --------------- |
-| `prisma/schema.prisma`                                                | + `isPublic`, `publicSlug`, `publicPasswordHash` |
-| `prisma/migrations/<timestamp>_add_competition_public_slug/…`         | new migration with partial unique index |
-| `src/app/api/public/c/[slug]/pdf/route.ts`                            | new route handler |
-| `src/lib/competitions/publicSlug.ts`                                  | new: `slugify(name)`, `resolveSlug(slug)`, conflict check |
-| `src/lib/competitions/publicSlug.test.ts`                             | new: slug generation + resolution test cases |
-| `src/lib/competitions/actions.ts`                                     | extend update/status actions with slug validation + `revalidatePath` |
-| `src/lib/competitions/types.ts`                                       | include `isPublic`, `publicSlug` in returned shapes |
-| `src/lib/competitions/queries.ts`                                     | include new fields in selects |
-| `src/components/app/competitions/CompetitionForm.tsx`                 | add publish switch + slug input |
-| `src/app/(app)/competitions/page.tsx`                                 | "Öffentlich" badge on the competition card/row |
-| `.claude/docs/features.md`                                            | document the public PDF feature |
-| `.claude/docs/architecture.md`                                        | add `/api/public/c/[slug]/pdf` route to the routes list |
+| Path                                                          | Change                                                               |
+| ------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `prisma/schema.prisma`                                        | + `isPublic`, `publicSlug`, `publicPasswordHash`                     |
+| `prisma/migrations/<timestamp>_add_competition_public_slug/…` | new migration with partial unique index                              |
+| `src/app/api/public/c/[slug]/pdf/route.ts`                    | new route handler                                                    |
+| `src/lib/competitions/publicSlug.ts`                          | new: `slugify(name)`, `resolveSlug(slug)`, conflict check            |
+| `src/lib/competitions/publicSlug.test.ts`                     | new: slug generation + resolution test cases                         |
+| `src/lib/competitions/actions.ts`                             | extend update/status actions with slug validation + `revalidatePath` |
+| `src/lib/competitions/types.ts`                               | include `isPublic`, `publicSlug` in returned shapes                  |
+| `src/lib/competitions/queries.ts`                             | include new fields in selects                                        |
+| `src/components/app/competitions/CompetitionForm.tsx`         | add publish switch + slug input                                      |
+| `src/app/(app)/competitions/page.tsx`                         | "Öffentlich" badge on the competition card/row                       |
+| `.claude/docs/features.md`                                    | document the public PDF feature                                      |
+| `.claude/docs/architecture.md`                                | add `/api/public/c/[slug]/pdf` route to the routes list              |
 
 ## Test Plan
 

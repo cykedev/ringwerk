@@ -37,7 +37,10 @@ vi.mock("@/lib/auth-helpers", () => ({
   canManage: (role: string) => role === "ADMIN" || role === "MANAGER",
   isAdmin: (role: string) => role === "ADMIN",
 }))
-vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock, revalidateTag: revalidateTagMock }))
+vi.mock("next/cache", () => ({
+  revalidatePath: revalidatePathMock,
+  revalidateTag: revalidateTagMock,
+}))
 vi.mock("@/lib/db", () => ({
   db: {
     competition: {
