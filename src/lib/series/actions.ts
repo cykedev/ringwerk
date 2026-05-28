@@ -7,6 +7,7 @@ import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import { calculateRingteiler } from "@/lib/results/calculateResult"
 import { getEffectiveScoringType, getMaxRings } from "@/lib/series/scoring-format"
+import { revalidatePublicSlugForCompetition } from "@/lib/competitions/actions/_shared"
 
 const SeriesSchema = z.object({
   rings: z
@@ -21,14 +22,16 @@ const SeriesSchema = z.object({
     .pipe(z.number().min(0, "Teiler muss ≥ 0 sein").max(9999.9, "Teiler zu groß")),
 })
 
-function revalidateEventPaths(competitionId: string): void {
+async function revalidateEventPaths(competitionId: string): Promise<void> {
   revalidatePath(`/competitions/${competitionId}/series`)
   revalidatePath(`/competitions/${competitionId}/ranking`)
+  await revalidatePublicSlugForCompetition(competitionId)
 }
 
-function revalidateSeasonPaths(competitionId: string): void {
+async function revalidateSeasonPaths(competitionId: string): Promise<void> {
   revalidatePath(`/competitions/${competitionId}/series`)
   revalidatePath(`/competitions/${competitionId}/standings`)
+  await revalidatePublicSlugForCompetition(competitionId)
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -180,7 +183,7 @@ export async function saveEventSeries(
     },
   })
 
-  revalidateEventPaths(competitionId)
+  await revalidateEventPaths(competitionId)
   return { success: true }
 }
 
@@ -227,7 +230,7 @@ export async function deleteEventSeries(
     },
   })
 
-  revalidateEventPaths(competitionId)
+  await revalidateEventPaths(competitionId)
   return { success: true }
 }
 
@@ -370,7 +373,7 @@ export async function saveSeasonSeries(
     },
   })
 
-  revalidateSeasonPaths(competitionId)
+  await revalidateSeasonPaths(competitionId)
   return { success: true }
 }
 
@@ -509,7 +512,7 @@ export async function updateSeasonSeries(
     },
   })
 
-  revalidateSeasonPaths(competitionId)
+  await revalidateSeasonPaths(competitionId)
   return { success: true }
 }
 
@@ -554,6 +557,6 @@ export async function deleteSeasonSeries(
     },
   })
 
-  revalidateSeasonPaths(competitionId)
+  await revalidateSeasonPaths(competitionId)
   return { success: true }
 }

@@ -5,6 +5,7 @@ import { db } from "@/lib/db"
 import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import { calculateRingteiler, MAX_RINGS } from "@/lib/results/calculateResult"
+import { revalidatePublicSlugForCompetition } from "@/lib/competitions/actions/_shared"
 import {
   determineFinaleRoundWinner,
   determinePlayoffDuelWinner,
@@ -341,6 +342,7 @@ export async function savePlayoffDuelResult(
   }
 
   revalidatePath(`/competitions/${match.competitionId}/playoffs`)
+  await revalidatePublicSlugForCompetition(match.competitionId)
   return { success: true }
 }
 
@@ -511,6 +513,7 @@ export async function deleteLastPlayoffDuel(duelId: string): Promise<ActionResul
   })
 
   revalidatePath(`/competitions/${match.competitionId}/playoffs`)
+  await revalidatePublicSlugForCompetition(match.competitionId)
   return { success: true }
 }
 

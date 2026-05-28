@@ -1,6 +1,7 @@
 import { revalidatePath, revalidateTag } from "next/cache"
 import { z } from "zod"
 import { ScoringMode, TeamScoring, TargetValueType } from "@/generated/prisma/client"
+import { db } from "@/lib/db"
 import { SLUG_REGEX } from "../publicSlug"
 
 const PLAYOFF_SCORING_MODES = ["RINGTEILER", "RINGS", "RINGS_DECIMAL", "TEILER"] as const
@@ -24,6 +25,25 @@ export function revalidatePublicSlug(slug: string | null | undefined): void {
   if (!slug) return
   // "max" profile: evict all cached entries with this tag immediately
   revalidateTag(publicPdfCacheTag(slug), "max")
+}
+
+/**
+ * Invalidate the public PDF cache for the given competition, if it currently holds an active
+ * public slug. No-op for competitions that are not published.
+ *
+ * Call this from any write action that mutates data appearing in the public PDF — results,
+ * series, playoff duels, participant enrollment/withdrawal, etc. The 24h render cache stays in
+ * place but is forcibly evicted on each meaningful change, so anonymous readers see a stale
+ * view at most until the next mutating action.
+ */
+export async function revalidatePublicSlugForCompetition(competitionId: string): Promise<void> {
+  const c = await db.competition.findUnique({
+    where: { id: competitionId },
+    select: { isPublic: true, publicSlug: true },
+  })
+  if (c?.isPublic && c.publicSlug) {
+    revalidatePublicSlug(c.publicSlug)
+  }
 }
 
 export const BaseSchema = z

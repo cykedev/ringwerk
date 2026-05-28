@@ -5,10 +5,12 @@ import { z } from "zod"
 import { db } from "@/lib/db"
 import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
+import { revalidatePublicSlugForCompetition } from "@/lib/competitions/actions/_shared"
 
-function revalidateCompetitionParticipantPaths(competitionId: string): void {
+async function revalidateCompetitionParticipantPaths(competitionId: string): Promise<void> {
   revalidatePath(`/competitions/${competitionId}/participants`)
   revalidatePath("/competitions")
+  await revalidatePublicSlugForCompetition(competitionId)
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -210,7 +212,7 @@ export async function enrollParticipant(
     })
   }
 
-  revalidateCompetitionParticipantPaths(competitionId)
+  await revalidateCompetitionParticipantPaths(competitionId)
   return { success: true }
 }
 
@@ -282,7 +284,7 @@ export async function unenrollParticipant(competitionParticipantId: string): Pro
     await db.competitionParticipant.delete({ where: { id: competitionParticipantId } })
   }
 
-  revalidateCompetitionParticipantPaths(cp.competitionId)
+  await revalidateCompetitionParticipantPaths(cp.competitionId)
   return { success: true }
 }
 
@@ -348,7 +350,7 @@ export async function withdrawParticipant(
     }),
   ])
 
-  revalidateCompetitionParticipantPaths(cp.competitionId)
+  await revalidateCompetitionParticipantPaths(cp.competitionId)
   return { success: true }
 }
 
@@ -401,7 +403,7 @@ export async function revokeWithdrawal(competitionParticipantId: string): Promis
     }),
   ])
 
-  revalidateCompetitionParticipantPaths(cp.competitionId)
+  await revalidateCompetitionParticipantPaths(cp.competitionId)
   return { success: true }
 }
 
@@ -428,7 +430,7 @@ export async function updateStartNumber(
     data: { startNumber },
   })
 
-  revalidateCompetitionParticipantPaths(cp.competitionId)
+  await revalidateCompetitionParticipantPaths(cp.competitionId)
   return { success: true }
 }
 
@@ -476,7 +478,6 @@ export async function updateParticipantDiscipline(
     data: { disciplineId },
   })
 
-  revalidatePath(`/competitions/${cp.competitionId}/participants`)
-  revalidatePath("/competitions")
+  await revalidateCompetitionParticipantPaths(cp.competitionId)
   return { success: true }
 }
