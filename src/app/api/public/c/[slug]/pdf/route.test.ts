@@ -26,12 +26,9 @@ const {
   renderToBufferMock: vi.fn(),
 }))
 
-vi.mock("@/lib/competitions/publicSlug", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/competitions/publicSlug")>(
-    "@/lib/competitions/publicSlug"
-  )
-  return { ...actual, resolveSlug: resolveSlugMock }
-})
+vi.mock("@/lib/competitions/publicSlugQueries", () => ({
+  resolveSlug: resolveSlugMock,
+}))
 vi.mock("@/lib/playoffs/queries", () => ({
   hasPlayoffsStarted: hasPlayoffsStartedMock,
   getPlayoffBracket: getPlayoffBracketMock,

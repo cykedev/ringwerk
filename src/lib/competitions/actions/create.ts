@@ -7,7 +7,7 @@ import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import type { AuditEventType } from "@/lib/auditLog/types"
 import { parseDate, revalidateCompetitionPaths, revalidatePublicSlug, BaseSchema } from "./_shared"
-import { findActiveSlugConflict } from "../publicSlug"
+import { findActiveSlugConflict } from "../publicSlugQueries"
 
 const CreateSchema = BaseSchema.extend({
   type: z.enum(["LEAGUE", "EVENT", "SEASON"], { message: "Ungültiger Wettbewerbstyp" }),

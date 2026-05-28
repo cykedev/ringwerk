@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest"
-import { slugify, SLUG_REGEX, resolveSlug, findActiveSlugConflict } from "./publicSlug"
+import { slugify, SLUG_REGEX } from "./publicSlug"
+import { resolveSlug, findActiveSlugConflict } from "./publicSlugQueries"
 import { db } from "@/lib/db"
 
 describe("slugify", () => {

@@ -7,7 +7,7 @@ import type { ActionResult } from "@/lib/types"
 import type { CompetitionStatus } from "@/generated/prisma/client"
 import type { AuditEventType } from "@/lib/auditLog/types"
 import { parseDate, revalidateCompetitionPaths, BaseSchema, revalidatePublicSlug } from "./_shared"
-import { findActiveSlugConflict } from "../publicSlug"
+import { findActiveSlugConflict } from "../publicSlugQueries"
 
 export async function updateCompetition(
   id: string,

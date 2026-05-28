@@ -3,7 +3,8 @@ import { unstable_cache } from "next/cache"
 import { renderToBuffer, type DocumentProps } from "@react-pdf/renderer"
 import { createElement, type ReactElement } from "react"
 import bcrypt from "bcryptjs"
-import { resolveSlug, SLUG_REGEX } from "@/lib/competitions/publicSlug"
+import { SLUG_REGEX } from "@/lib/competitions/publicSlug"
+import { resolveSlug } from "@/lib/competitions/publicSlugQueries"
 import { hasPlayoffsStarted, getPlayoffBracket } from "@/lib/playoffs/queries"
 import {
   getCompetitionById,
