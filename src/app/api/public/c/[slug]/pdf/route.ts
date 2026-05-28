@@ -72,6 +72,7 @@ export async function GET(
 
   const buffer = await renderPdfBuffer(competition.id, phaseTag, slug)
 
+  // Wrap in Uint8Array via .buffer slice so the typing matches BodyInit.
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
@@ -107,6 +108,10 @@ function escapeRealm(name: string): string {
 
 // === PDF buffer cache ========================================================
 // Key: (competitionId, phaseTag). Tagged so server actions can revalidate per slug.
+//
+// IMPORTANT: unstable_cache serialises return values (JSON for the persistent cache),
+// so a raw Buffer would deserialise as `{ type: "Buffer", data: [...] }` on cache hit
+// and turn into an empty Uint8Array. We cache base64 instead and decode here.
 
 async function renderPdfBuffer(
   competitionId: string,
@@ -114,11 +119,16 @@ async function renderPdfBuffer(
   slug: string
 ): Promise<Buffer> {
   const cached = unstable_cache(
-    () => buildAndRenderBuffer(competitionId, phaseTag),
+    async () => {
+      const buf = await buildAndRenderBuffer(competitionId, phaseTag)
+      return buf.toString("base64")
+    },
     ["public-pdf-buffer", competitionId, phaseTag],
     { revalidate: 86400, tags: [`public-pdf:${slug}`] }
   )
-  return cached()
+  const b64 = await cached()
+  // Buffer is a Uint8Array subclass and is accepted as BodyInit by Next's Response.
+  return Buffer.from(b64, "base64")
 }
 
 async function buildAndRenderBuffer(competitionId: string, phaseTag: PhaseTag): Promise<Buffer> {
