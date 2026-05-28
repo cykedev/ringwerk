@@ -429,6 +429,19 @@ Die Seite `/competitions` zeigt Wettbewerbe in Karten mit:
 - **Alle:** Paarungsplan/Serienliste, Profil-Seite je Teilnehmer
 - **Export:** Spielplan + Tabelle als druckoptimiertes PDF (Liga); Rangliste als PDF (Event); Saison-Standings als PDF (Saison)
 
+### Öffentliche PDF-URL (Website-Verlinkung)
+
+Wettbewerbe können mit `isPublic = true` und einem `publicSlug` markiert werden, um ihr Haupt-PDF unter `/api/public/c/<slug>/pdf` ohne Login verfügbar zu machen.
+
+- **Auswahl Haupt-PDF:** EVENT → Rangliste, SEASON → Standings, LEAGUE → Spielplan+Tabelle vor Playoff-Start, Playoff-Bracket nach Start
+- **Slug-Verwaltung:** Ein Slug darf nur von **einem** ACTIVE+isPublic Wettbewerb gleichzeitig belegt sein (Partial Unique Index). Sobald der Wettbewerb auf COMPLETED/ARCHIVED gesetzt wird, ist der Slug für einen Nachfolger wieder frei.
+- **Stabile URL über Jahre:** Beispiel Jahrespreisschiessen → jährlich neuer Wettbewerb übernimmt denselben Slug, die Website-URL bleibt gleich.
+- **Lookup-Reihenfolge:** ACTIVE-Claimant zuerst, sonst jüngster (createdAt DESC) COMPLETED/ARCHIVED-Holder.
+- **Optionaler Passwortschutz:** Pro Wettbewerb kann ein bcrypt-gehashtes Passwort gesetzt werden. Browser zeigt nativen HTTP-Basic-Auth-Dialog. Benutzername wird ignoriert (geteiltes Passwort pro Wettbewerb).
+- **Cache:** PDF-Buffer 24h via `unstable_cache` (keyed by competitionId + phaseTag, tagged `public-pdf:<slug>`); Auth-Check läuft auf jeder Anfrage. Invalidierung via `revalidateTag` in update/status/startPlayoffs Actions.
+- **Berechtigung:** Schalter im Edit-Formular für ADMIN/MANAGER. Öffentliche Route ist unauthentisiert (außer optional via Basic-Auth-Passwort).
+- **UI-Indikator:** Wettbewerbe mit `isPublic = true` erhalten in der Competitions-Liste (ACTIVE, DRAFT) ein "Öffentlich"-Badge.
+
 ---
 
 ## Nutzerverwaltung & Zugriffskontrolle

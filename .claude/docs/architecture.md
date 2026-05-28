@@ -43,6 +43,7 @@ Verbindlich gleichrangig mit `.claude/docs/technical.md`. Neue Dateien immer gem
 /api/competitions/[id]/pdf/playoffs  ← PDF-Export: Playoff-Bracket
 /api/competitions/[id]/pdf/ranking   ← PDF-Export: Event-Rangliste
 /api/competitions/[id]/pdf/standings ← PDF-Export: Saison-Standings
+/api/public/c/[slug]/pdf            ← Öffentliches PDF (Haupt-Artefakt des Wettbewerbs, 24h Cache)
 ```
 
 ---
@@ -118,6 +119,11 @@ src/
               route.ts        ← PDF-Export: Spielplan + Tabelle
             playoffs/
               route.ts        ← PDF-Export: Playoff-Bracket
+      public/
+        c/
+          [slug]/
+            pdf/
+              route.ts        ← Öffentliches PDF (resolveSlug, phase-aware, 24h Cache)
   components/
     ui/
       checkbox.tsx            ← shadcn/ui Checkbox
@@ -159,6 +165,8 @@ src/
       actions.ts              ← Server Actions: Wettbewerb anlegen/bearbeiten/abschliessen/force-delete, Event/Saison-Felder (type, scoringMode, allowGuests, disciplineId, seasonStart/seasonEnd)
       queries.ts              ← Datenbankabfragen: Wettbewerb laden, getEventWithSeries, getSeasonWithSeries
       types.ts                ← CompetitionDetail, CompetitionListItem, Event/Saison-Typen
+      publicSlug.ts           ← slugify, resolveSlug, findActiveSlugConflict (testpflichtig)
+      publicSlug.test.ts
     competitionParticipants/
       actions.ts              ← Einschreiben, Rückzug, Rückzug rückgängig, isGuest + disciplineId Support
       queries.ts
