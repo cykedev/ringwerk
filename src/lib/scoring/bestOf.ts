@@ -1,4 +1,47 @@
+import type { ScoringMode } from "@/generated/prisma/client"
+
 export type DuelOutcome = "A" | "B" | "TIE"
+
+export interface DuelSeries {
+  rings: number
+  /** teiler × effectiveTeilerFaktor — already normalized by the caller (factor only when mixed). */
+  correctedTeiler: number
+  /** stored Ringteiler (already effective-factor-corrected at save time). */
+  ringteiler: number
+}
+
+/** -1 if A is better, 1 if B is better, 0 if equal on this mode. */
+function compareByMode(a: DuelSeries, b: DuelSeries, mode: ScoringMode): -1 | 0 | 1 {
+  if (mode === "RINGS" || mode === "RINGS_DECIMAL") {
+    if (a.rings > b.rings) return -1
+    if (a.rings < b.rings) return 1
+    return 0
+  }
+  if (mode === "TEILER") {
+    if (a.correctedTeiler < b.correctedTeiler) return -1
+    if (a.correctedTeiler > b.correctedTeiler) return 1
+    return 0
+  }
+  // RINGTEILER (and any fallback)
+  if (a.ringteiler < b.ringteiler) return -1
+  if (a.ringteiler > b.ringteiler) return 1
+  return 0
+}
+
+export function duelOutcome(
+  a: DuelSeries,
+  b: DuelSeries,
+  mode: ScoringMode,
+  tiebreaker1: ScoringMode | null,
+  tiebreaker2: ScoringMode | null
+): DuelOutcome {
+  for (const m of [mode, tiebreaker1, tiebreaker2]) {
+    if (!m) continue
+    const c = compareByMode(a, b, m)
+    if (c !== 0) return c < 0 ? "A" : "B"
+  }
+  return "TIE"
+}
 
 export type BestOfStatus =
   | { kind: "in_progress" }

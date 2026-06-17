@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { resolveBestOf } from "./bestOf"
+import { duelOutcome, resolveBestOf } from "./bestOf"
 
 const opts = (o: Partial<{ bestOf: number; playAll: boolean }> = {}) => ({
   bestOf: 3,
@@ -42,5 +42,32 @@ describe("resolveBestOf", () => {
       kind: "complete",
       winner: "A",
     })
+  })
+})
+
+const s = (rings: number, correctedTeiler: number, ringteiler: number) => ({
+  rings,
+  correctedTeiler,
+  ringteiler,
+})
+
+describe("duelOutcome", () => {
+  it("RINGTEILER: lower ringteiler wins", () => {
+    expect(duelOutcome(s(96, 3.7, 7.7), s(95, 2.0, 7.0), "RINGTEILER", null, null)).toBe("B")
+  })
+  it("RINGTEILER: equal ringteiler from different rings/teiler -> TIE", () => {
+    expect(duelOutcome(s(96, 3.7, 7.7), s(95, 2.7, 7.7), "RINGTEILER", null, null)).toBe("TIE")
+  })
+  it("RINGTEILER: optional tiebreaker RINGS breaks the tie -> A (more rings)", () => {
+    expect(duelOutcome(s(96, 3.7, 7.7), s(95, 2.7, 7.7), "RINGTEILER", "RINGS", null)).toBe("A")
+  })
+  it("RINGS: higher rings wins", () => {
+    expect(duelOutcome(s(96, 9, 0), s(95, 1, 0), "RINGS", null, null)).toBe("A")
+  })
+  it("RINGS: equal rings -> TIE without tiebreaker", () => {
+    expect(duelOutcome(s(95, 1, 0), s(95, 9, 0), "RINGS", null, null)).toBe("TIE")
+  })
+  it("TEILER: lower corrected teiler wins", () => {
+    expect(duelOutcome(s(90, 2.0, 12), s(90, 3.0, 13), "TEILER", null, null)).toBe("A")
   })
 })
