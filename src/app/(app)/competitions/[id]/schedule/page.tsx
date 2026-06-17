@@ -7,6 +7,7 @@ import { getMatchupsForCompetition, getScheduleStatus } from "@/lib/matchups/que
 import { hasPlayoffsStarted } from "@/lib/playoffs/queries"
 import { getStandingsForCompetition } from "@/lib/standings/queries"
 import { getEffectiveScoringType } from "@/lib/series/scoring-format"
+import { effectiveTeilerFaktor } from "@/lib/scoring/calculateScore"
 import { GenerateScheduleButton } from "@/components/app/matchups/GenerateScheduleButton"
 import { ScheduleView } from "@/components/app/matchups/ScheduleView"
 import { StandingsTable } from "@/components/app/standings/StandingsTable"
@@ -96,7 +97,7 @@ export default async function CompetitionSchedulePage({ params }: Props) {
         scoringMode={competition.scoringMode}
         scoringType={scoringType}
         shotsPerSeries={competition.shotsPerSeries}
-        competitionTeilerFaktor={competition.discipline?.teilerFaktor ?? 1}
+        competitionTeilerFaktor={effectiveTeilerFaktor(competition.disciplineId, competition.discipline?.teilerFaktor ?? 1)}
       />
 
       {/* Tabelle */}

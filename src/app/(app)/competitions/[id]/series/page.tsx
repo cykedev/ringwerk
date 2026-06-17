@@ -7,6 +7,7 @@ import { getCompetitionParticipants } from "@/lib/competitionParticipants/querie
 import { getDisciplines } from "@/lib/disciplines/queries"
 import { db } from "@/lib/db"
 import { getEffectiveScoringType, formatRings, formatDecimal1 } from "@/lib/series/scoring-format"
+import { effectiveTeilerFaktor } from "@/lib/scoring/calculateScore"
 import { EventSeriesDialog } from "@/components/app/series/EventSeriesDialog"
 import { DeleteEventSeriesButton } from "@/components/app/series/DeleteEventSeriesButton"
 import { SeasonParticipantItem } from "@/components/app/series/SeasonParticipantItem"
@@ -158,7 +159,7 @@ export default async function SeriesPage({ params }: Props) {
                         competition.targetValueType
                       )}
                       shotsPerSeries={competition.shotsPerSeries}
-                      teilerFaktor={(cp.discipline ?? competition.discipline)?.teilerFaktor ?? 1}
+                      teilerFaktor={effectiveTeilerFaktor(competition.disciplineId, (cp.discipline ?? competition.discipline)?.teilerFaktor ?? 1)}
                       existingSeries={series}
                     />
                     {series && <DeleteEventSeriesButton seriesId={series.id} competitionId={id} />}
