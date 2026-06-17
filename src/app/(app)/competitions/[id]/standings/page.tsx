@@ -33,7 +33,8 @@ export default async function SeasonStandingsPage({ params }: Props) {
       participantName: `${p.lastName}, ${p.firstName}`,
       series: p.series,
     })),
-    competition.minSeries
+    competition.minSeries,
+    competition.disciplineId
   )
 
   return (

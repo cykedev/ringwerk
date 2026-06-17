@@ -68,7 +68,8 @@ export default async function DashboardPage() {
                 participantName: `${p.lastName}, ${p.firstName}`,
                 series: p.series,
               })),
-              data.competition.minSeries
+              data.competition.minSeries,
+              data.competition.disciplineId
             )
           : []
         return { competition: c, standings, minSeries: data?.competition.minSeries ?? null }

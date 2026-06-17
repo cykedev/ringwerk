@@ -1,4 +1,4 @@
-import { calculateCorrectedTeiler } from "./calculateScore"
+import { calculateCorrectedTeiler, effectiveTeilerFaktor } from "./calculateScore"
 import type { SeasonSeriesItem } from "@/lib/series/types"
 import type { ScoringType } from "@/generated/prisma/client"
 
@@ -35,7 +35,8 @@ type ParticipantInput = {
  */
 export function calculateSeasonStandings(
   participants: ParticipantInput[],
-  minSeries: number | null
+  minSeries: number | null,
+  competitionDisciplineId: string | null = null
 ): SeasonStandingsEntry[] {
   if (participants.length === 0) return []
 
@@ -71,7 +72,9 @@ export function calculateSeasonStandings(
 
     // Bester Teiler — min korrigierter Teiler
     const bestCorrectedTeiler = Math.min(
-      ...p.series.map((s) => calculateCorrectedTeiler(s.teiler, s.discipline.teilerFaktor))
+      ...p.series.map((s) =>
+        calculateCorrectedTeiler(s.teiler, effectiveTeilerFaktor(competitionDisciplineId, s.discipline.teilerFaktor))
+      )
     )
 
     // Bester Ringteiler — min (aus derselben Serie, bereits vorberechnet)

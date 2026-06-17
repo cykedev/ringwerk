@@ -334,3 +334,31 @@ describe("calculateSeasonStandings", () => {
     })
   })
 })
+
+describe("calculateSeasonStandings – Faktor nur bei gemischt", () => {
+  const lp = (teiler: number) =>
+    makeSeries("p1", {
+      rings: 90,
+      teiler,
+      ringteiler: 30,
+      discipline: { name: "LP", teilerFaktor: 0.3333333, scoringType: "WHOLE" as const },
+    })
+
+  it("feste Saison-Disziplin: bestCorrectedTeiler OHNE Faktor", () => {
+    const result = calculateSeasonStandings(
+      [{ participantId: "p1", participantName: "Müller, Max", series: [lp(60)] }],
+      null,
+      "d-lp"
+    )
+    expect(result[0].bestCorrectedTeiler).toBeCloseTo(60)
+  })
+
+  it("gemischte Saison (disciplineId null): bestCorrectedTeiler MIT Faktor", () => {
+    const result = calculateSeasonStandings(
+      [{ participantId: "p1", participantName: "Müller, Max", series: [lp(60)] }],
+      null,
+      null
+    )
+    expect(result[0].bestCorrectedTeiler).toBeCloseTo(20)
+  })
+})

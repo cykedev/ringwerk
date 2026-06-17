@@ -30,7 +30,8 @@ export async function GET(
       participantName: `${p.lastName}, ${p.firstName}`,
       series: p.series,
     })),
-    competition.minSeries
+    competition.minSeries,
+    competition.disciplineId
   )
 
   const element = createElement(SeasonStandingsPdf, {
