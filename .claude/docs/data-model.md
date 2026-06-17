@@ -201,6 +201,8 @@ korrigierterTeiler = Teiler * Disziplin.teilerFaktor
 - LP Auflage: Faktor 0.6 → Teiler \* 0.6 (= 1.8 \* 0.333)
 - Faktor ist frei konfigurierbar pro Disziplin
 
+**Faktor greift nur bei gemischter Disziplin** (`Competition.disciplineId === null`). Bei fester Disziplin (`disciplineId !== null`) ist der effektive Faktor **1.0** — der Teiler bleibt unverändert. Maßgeblich ist die **Competition**-`disciplineId`, nicht die aufgelöste Teilnehmer-Disziplin. Zentral implementiert in `effectiveTeilerFaktor(competitionDisciplineId, faktor)` (`src/lib/scoring/calculateScore.ts`); alle Persistenz-Actions, Ranking-Funktionen und Live-UI-Hints ziehen den Faktor durch diese Funktion.
+
 ### Wertungsmodus: RINGTEILER
 
 ```

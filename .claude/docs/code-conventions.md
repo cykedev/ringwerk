@@ -536,7 +536,7 @@ export async function createLeague(formData: FormData): Promise<ActionResult>
 
 ## Aus Lernlog übernommen
 
-<!-- Zuletzt konsolidiert: 2026-05-28 -->
+<!-- Zuletzt konsolidiert: 2026-06-17 -->
 
 ### Prisma-Queries (ergänzt)
 
@@ -623,3 +623,5 @@ export async function createLeague(formData: FormData): Promise<ActionResult>
 - **Prettier auch für `.claude/` Markdown**: Plan-, Spec- und Lessons-Files unter `.claude/` werden von Prettier mitformatiert. Nach dem Erstellen oder Bearbeiten solcher Files immer `npx prettier --write <pfad>` laufen lassen, bevor committed wird — sonst schlägt `npm run format:check` im `/check`-Gate fehl.
 - **PDF-Render-Tests: `extractPdfText`-Helper erforderlich**: Beim Testen von `@react-pdf/renderer`-Output immer einen dedizierten Helper schreiben, der `inflateSync` auf komprimierte Content-Streams anwendet und einen TJ-Hex-Regex nutzt, um lesbaren Text zurückzugewinnen. Rohe String-Checks auf den Buffer funktionieren nicht, da Content-Streams FlateDecode-komprimiert und Texte hex-kodiert sind.
 - **DB-Feldnamenkollisionen vor neuen Feldern prüfen**: Vor dem Einführen eines neuen Schema-Felds oder Props prüfen, ob ein bestehendes Feld auf demselben Model denselben oder semantisch überlappenden Namen hat. Eindeutigen Namen wählen (z.B. `nr` statt `startNumber`), um Verwechslung mit persistierten Anwendungsdaten zu vermeiden.
+- **Dokumentierte Domänen-Wertungsregeln zentral kodieren**: Eine in den Docs beschriebene Berechnungsregel (z.B. "Korrekturfaktor nur bei gemischter Disziplin") in genau einer reinen Helper-Funktion kodieren, durch die alle Persistenz- und Anzeige-Pfade ziehen. Nie je Aufrufer reimplementieren — sonst greift die Regel an manchen Stellen und an anderen nicht. Bei mehreren Auflösungsquellen (z.B. feste Competition-Disziplin vs. per-Teilnehmer) den Kontext aus der maßgeblichen Quelle nehmen (hier: `Competition.disciplineId`).
+- **Invarianten am Code verifizieren, nicht aus Prosa-Docs ableiten**: Bevor man sich auf ein vermeintliches Constraint verlässt (z.B. "Saison ist immer gemischt"), die erzwingende Stelle prüfen — Zod-Schema, Action, DB-Constraint. `features.md`/`data-model.md` beschreiben Konvention und Soll, nicht garantierte Invarianten.
