@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest"
-import { calculateCorrectedTeiler, calculateRingteiler, calculateScore } from "./calculateScore"
+import {
+  calculateCorrectedTeiler,
+  calculateRingteiler,
+  calculateScore,
+  effectiveTeilerFaktor,
+} from "./calculateScore"
 
 describe("calculateCorrectedTeiler", () => {
   it("Faktor 1.0 lässt Teiler unverändert", () => {
@@ -263,5 +268,16 @@ describe("calculateScore – TARGET_UNDER", () => {
       targetValue: 100,
     })
     expect(score).toBe(0)
+  })
+})
+
+describe("effectiveTeilerFaktor", () => {
+  it("feste Disziplin (disciplineId gesetzt) → Faktor 1.0", () => {
+    expect(effectiveTeilerFaktor("disc-1", 0.3333333)).toBe(1)
+    expect(effectiveTeilerFaktor("disc-1", 1.8)).toBe(1)
+  })
+  it("gemischte Disziplin (disciplineId null) → Faktor unverändert", () => {
+    expect(effectiveTeilerFaktor(null, 0.3333333)).toBe(0.3333333)
+    expect(effectiveTeilerFaktor(null, 1.0)).toBe(1.0)
   })
 })

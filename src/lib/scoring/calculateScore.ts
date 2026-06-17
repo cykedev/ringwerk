@@ -10,6 +10,18 @@ export function calculateCorrectedTeiler(teiler: number, faktor: number): number
 }
 
 /**
+ * Effektiver Teiler-Faktor: Die Faktor-Korrektur greift nur bei gemischter
+ * Disziplin (Competition.disciplineId === null). Bei fester Disziplin ist der
+ * effektive Faktor 1,0 (keine Korrektur).
+ */
+export function effectiveTeilerFaktor(
+  competitionDisciplineId: string | null,
+  faktor: number
+): number {
+  return competitionDisciplineId === null ? faktor : 1
+}
+
+/**
  * Berechnet den Ringteiler einer Serie.
  * Formel: MaxRinge − Ringe + (Teiler × Faktor)
  * Niedrigerer Wert = besseres Ergebnis.
