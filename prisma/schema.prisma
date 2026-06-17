@@ -92,6 +92,11 @@ enum TeamScoring {
   BEST // Teamergebnis = bestes Einzelergebnis im Team
 }
 
+enum LeagueFormat {
+  DOUBLE_ROUND_ROBIN
+  BEST_OF_SINGLE
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // User
 // ─────────────────────────────────────────────────────────────────────────────
@@ -208,6 +213,17 @@ model Competition {
   playoffHasViertelfinale    Boolean  @default(true)
   playoffHasAchtelfinale     Boolean  @default(false)
   finalePrimary              ScoringMode  @default(RINGS)
+  // Liga-Format: DOUBLE_ROUND_ROBIN (Standard) oder BEST_OF_SINGLE (Jeder-gegen-Jeden als Best-of-N)
+  leagueFormat               LeagueFormat @default(DOUBLE_ROUND_ROBIN)
+  // N in Best-of-N (ungerade). Default 3 = Best-of-3. Siege benötigt = ceil(N/2).
+  groupBestOf                Int?         @default(3)
+  // Alle N Duelle immer austragen (kein vorzeitiger Abbruch). Standard für BEST_OF_SINGLE.
+  groupPlayAllDuels          Boolean      @default(false)
+  // Optionaler Override: sekundäres Kriterium bei Duel-Wert-Gleichstand statt Stechschuss.
+  groupTiebreaker1           ScoringMode?
+  groupTiebreaker2           ScoringMode?
+  // Paarungs-Gleichstandsauflösung: true = Stechschuss (Standard), false = Wiederholungsduell.
+  groupHasSuddenDeath        Boolean      @default(true)
   finaleTiebreaker1          ScoringMode?
   finaleTiebreaker2          ScoringMode?
   finaleHasSuddenDeath       Boolean?
@@ -398,14 +414,18 @@ model Series {
   // Nullable für Rückwärtskompatibilität (bestehende Serien ohne CP-Referenz)
   competitionParticipantId String?
   competitionParticipant   CompetitionParticipant? @relation(fields: [competitionParticipantId], references: [id])
+  // Liga BEST_OF_SINGLE: 1..N Duell-Nummer; Stechschuss-Runden gehen über N hinaus. Sonst 1; Event/Saison: null.
+  duelNumber    Int?
+  // Stechschuss-Schuss (einzelner dezimal-gewerteter Schuss). shots/teiler ungenutzt; Wert in `rings`.
+  isTiebreak    Boolean     @default(false)
   // Audit: wer hat das Ergebnis erfasst
   recordedByUserId String
   recordedBy       User    @relation(fields: [recordedByUserId], references: [id])
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
-  // Liga: genau eine Serie pro Schütze pro Paarung (NULL-Werte sind per SQL-Standard distinct)
-  @@unique([matchupId, participantId])
+  // Liga: genau eine Serie pro Schütze pro Paarung pro Duell (NULL-Werte sind per SQL-Standard distinct)
+  @@unique([matchupId, participantId, duelNumber])
   // Event: eine Serie pro CP-Einschreibung (NULL = alte Daten ohne CP-Referenz; NULLs sind distinct)
   @@unique([competitionParticipantId])
   @@index([matchupId])
