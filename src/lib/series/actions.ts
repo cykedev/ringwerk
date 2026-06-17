@@ -340,7 +340,7 @@ export async function saveSeasonSeries(
     return { error: { rings: ["Nur ganze Ringe erlaubt"] } }
   }
 
-  const teilerFaktor = discipline.teilerFaktor.toNumber()
+  const teilerFaktor = effectiveTeilerFaktor(competition.disciplineId, discipline.teilerFaktor.toNumber())
   const ringteiler = calculateRingteiler(rings, teiler, teilerFaktor, maxRings)
 
   await db.series.create({
@@ -478,7 +478,7 @@ export async function updateSeasonSeries(
     return { error: { rings: ["Nur ganze Ringe erlaubt"] } }
   }
 
-  const teilerFaktor = discipline.teilerFaktor.toNumber()
+  const teilerFaktor = effectiveTeilerFaktor(competition.disciplineId, discipline.teilerFaktor.toNumber())
   const ringteiler = calculateRingteiler(rings, teiler, teilerFaktor, maxRings)
 
   await db.series.update({

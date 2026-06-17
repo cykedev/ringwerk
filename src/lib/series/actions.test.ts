@@ -527,6 +527,37 @@ describe("saveSeasonSeries", () => {
     const result = await saveSeasonSeries("c2", "p1", null, fd)
     expect(result).not.toMatchObject({ error: { rings: expect.anything() } })
   })
+
+  it("feste Saison-Disziplin: Ringteiler ohne Faktor", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    const lpDiscipline = {
+      id: "d-lp",
+      name: "Luftpistole",
+      scoringType: "WHOLE" as const,
+      teilerFaktor: { toNumber: () => 0.3333333 },
+    }
+    competitionFindUniqueMock.mockResolvedValue({
+      ...seasonCompetition,
+      shotsPerSeries: 10,
+      disciplineId: "d-lp",
+    })
+    competitionParticipantFindFirstMock.mockResolvedValue({
+      id: "cp1",
+      disciplineId: "d-lp",
+      discipline: lpDiscipline,
+      participant: { firstName: "Max", lastName: "Mustermann" },
+    })
+    seriesFindUniqueMock.mockResolvedValue(null)
+    await saveSeasonSeries(
+      "c2",
+      "p1",
+      null,
+      makeFormData({ rings: "90", teiler: "60", sessionDate: "2026-02-01" })
+    )
+    expect(seriesCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ ringteiler: 70 }) })
+    )
+  })
 })
 
 // ─── updateSeasonSeries ───────────────────────────────────────────────────────
