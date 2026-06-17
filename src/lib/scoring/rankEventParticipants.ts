@@ -1,6 +1,6 @@
 import type { ScoringMode, ScoringType, TargetValueType } from "@/generated/prisma/client"
 import type { EventSeriesItem } from "@/lib/series/types"
-import { calculateScore, calculateCorrectedTeiler } from "./calculateScore"
+import { calculateScore, calculateCorrectedTeiler, effectiveTeilerFaktor } from "./calculateScore"
 import { rankByScore } from "./rankParticipants"
 import { getMaxRings } from "@/lib/series/scoring-format"
 
@@ -38,6 +38,8 @@ type EventConfig = {
   scoringMode: ScoringMode
   targetValue: number | null
   targetValueType: TargetValueType | null
+  /** Competition.disciplineId — null = gemischt (Faktor aktiv), sonst feste Disziplin (Faktor 1.0). */
+  competitionDisciplineId: string | null
   /**
    * @deprecated No longer used for maxRings calculation — per-series discipline.scoringType is used instead.
    * Kept for API compatibility with existing callers.
@@ -57,7 +59,7 @@ export function rankEventParticipants(
   if (series.length === 0) return []
 
   const entries = series.map((s) => {
-    const faktor = s.discipline.teilerFaktor
+    const faktor = effectiveTeilerFaktor(config.competitionDisciplineId, s.discipline.teilerFaktor)
     // Use per-series scoringType so mixed events correctly use 109 for DECIMAL disciplines.
     const maxRings = getMaxRings(s.discipline.scoringType, s.shotCount)
     const correctedTeiler = calculateCorrectedTeiler(s.teiler, faktor)

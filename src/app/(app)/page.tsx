@@ -48,6 +48,7 @@ export default async function DashboardPage() {
           scoringMode: data.competition.scoringMode,
           targetValue: data.competition.targetValue,
           targetValueType: data.competition.targetValueType,
+          competitionDisciplineId: data.competition.disciplineId,
           discipline: data.competition.discipline,
         })
         const isTeamEvent = (c.teamSize ?? 0) >= 2

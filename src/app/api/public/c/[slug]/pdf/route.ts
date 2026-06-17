@@ -153,6 +153,7 @@ async function buildEventRankingElement(
     scoringMode: competition.scoringMode,
     targetValue: competition.targetValue,
     targetValueType: competition.targetValueType,
+    competitionDisciplineId: competition.disciplineId,
     discipline: competition.discipline,
   })
   const isTeamEvent = (competition.teamSize ?? 0) >= 2

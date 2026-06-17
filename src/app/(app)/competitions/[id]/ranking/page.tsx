@@ -32,6 +32,7 @@ export default async function EventRankingPage({ params }: Props) {
     scoringMode: competition.scoringMode,
     targetValue: competition.targetValue,
     targetValueType: competition.targetValueType,
+    competitionDisciplineId: competition.disciplineId,
     discipline: competition.discipline,
   }
 

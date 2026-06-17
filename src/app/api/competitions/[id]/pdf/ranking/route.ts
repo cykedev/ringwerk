@@ -28,6 +28,7 @@ export async function GET(
     scoringMode: competition.scoringMode,
     targetValue: competition.targetValue,
     targetValueType: competition.targetValueType,
+    competitionDisciplineId: competition.disciplineId,
     discipline: competition.discipline,
   })
 

@@ -41,6 +41,7 @@ const BASE_CONFIG = {
   targetValue: null,
   targetValueType: null,
   discipline: { scoringType: "WHOLE" as const },
+  competitionDisciplineId: null,
 }
 
 describe("rankEventParticipants", () => {
@@ -198,6 +199,7 @@ describe("rankEventParticipants", () => {
       scoringMode: "RINGTEILER" as const,
       targetValue: null,
       targetValueType: null,
+      competitionDisciplineId: null,
       discipline: null, // Gemischt — kein Competition-Level-scoringType
     }
     const result = rankEventParticipants(series, mixedConfig)
@@ -348,5 +350,34 @@ describe("rankEventTeams", () => {
     const names = result[0].members.map((m) => m.participantId)
     expect(names).toContain("mueller")
     expect(names).toContain("schmidt")
+  })
+})
+
+describe("rankEventParticipants – Faktor nur bei gemischt", () => {
+  const lpSeries = (id: string, teiler: number) =>
+    makeSeries({
+      participantId: id,
+      rings: 90,
+      teiler,
+      discipline: { name: "LP", teilerFaktor: 0.3333333, scoringType: "WHOLE" as const },
+    })
+
+  it("festes Event (disciplineId gesetzt): correctedTeiler OHNE Faktor", () => {
+    const result = rankEventParticipants([lpSeries("A", 60)], {
+      ...BASE_CONFIG,
+      scoringMode: "TEILER",
+      competitionDisciplineId: "d-lp",
+    })
+    expect(result[0].correctedTeiler).toBeCloseTo(60)
+    expect(result[0].score).toBeCloseTo(60)
+  })
+
+  it("gemischtes Event (disciplineId null): correctedTeiler MIT Faktor", () => {
+    const result = rankEventParticipants([lpSeries("A", 60)], {
+      ...BASE_CONFIG,
+      scoringMode: "TEILER",
+      competitionDisciplineId: null,
+    })
+    expect(result[0].correctedTeiler).toBeCloseTo(20)
   })
 })
