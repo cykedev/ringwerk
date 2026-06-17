@@ -24,20 +24,20 @@ Der bisherige Modus bleibt unverändert erhalten. Die Wahl erfolgt pro Liga beim
 
 ## 2. Geklärte Entscheidungen
 
-| # | Thema | Entscheidung |
-| - | ----- | ------------ |
-| 1 | Format | Neues `leagueFormat`: `DOUBLE_ROUND_ROBIN` (Default = heute) \| `BEST_OF_SINGLE` (neu). Wahl beim Anlegen, **nach Spielplan-Generierung gesperrt**. |
-| 2 | Spielplan | Einfache Runde (Single Round Robin). Ungerade TN-Zahl → rotierendes Freilos = **Pause ohne Wertung** (kein Phantomsieg). |
-| 3 | Begegnung | Best-of-N, Default Best-of-3 (`groupBestOf`). Playoffs Best-of-5 (`playoffBestOf`, unverändert). |
-| 3a | Alle Duelle ausspielen | `groupPlayAllDuels` — **Standard: an** (immer alle N Duelle, z. B. 3 bei Best-of-3). Wirkt **nur** auf die Satzdifferenz, **nicht** auf Match-Siege (siehe §7). |
-| 4 | Duell-Sieger | Allein über `scoringMode`. **Gleicher Wertungswert → Duell unentschieden** (z. B. gleicher Ringteiler, auch aus unterschiedlichen Ringen/Teilern). Optionales Sekundärkriterium (`groupTiebreaker1/2`, Default aus) nur als Override, v. a. für reine Ringe-Ligen. |
-| 5 | Match-Gleichstand → **Stechschuss** | Steht eine Begegnung nach allen Duellen gleich (gleich viele Duell-Siege): **Stechschuss** — je ein Schuss in **Zehntelwertung**, höherer gewinnt, bei Gleichstand wiederholen bis einer besser ist. **Standard** (`groupHasSuddenDeath = true`), einheitlich mit dem Finale. Alternative: Wiederholungsduell. Details §4.2. |
-| 5a | Stechschuss erfassbar | Der Stechschuss **muss in der Erfassungsmaske eingegeben werden** (Zehntelwert pro Schütze), damit die Software den Gleichstand korrekt wertet — nicht nur „am Stand" entscheiden. Siehe §6. |
-| 6 | Wertungsmodi | Nur `RINGS`, `RINGS_DECIMAL`, `TEILER`, `RINGTEILER` (kein `DECIMAL_REST`, kein `TARGET`). |
-| 7 | Tabelle | Zähl-Einheit = **Match-Siege**. Sortierkette: Siege → direkter Vergleich → Satzdifferenz → bestes Einzelergebnis. **Keine Unentschieden** möglich (Stechschuss erzwingt einen Sieger). |
-| 8 | Datenmodell | Ansatz „Matchup bleibt Paarung, Duelle als Serien" (`Series.duelNumber`, Stechschuss via `Series.isTiebreak`). Playoff-Strukturen unberührt. |
-| 9 | Terminabstimmung | „Heimrecht" entfällt fachlich. **Termin wird gemeinsam abgestimmt** (keine feste Zuständigkeit). `homeParticipantId`/`awayParticipantId` nur zur Speicherung der Paarung. Datenmodell unverändert. |
-| 10 | Playoffs | Best-of-5, **unverändert**. Seeding aus der neuen Tabelle. Stechschuss-Konzept = dasselbe wie der bestehende Finale-Sudden-Death. |
+| #   | Thema                               | Entscheidung                                                                                                                                                                                                                                                                                                                 |
+| --- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Format                              | Neues `leagueFormat`: `DOUBLE_ROUND_ROBIN` (Default = heute) \| `BEST_OF_SINGLE` (neu). Wahl beim Anlegen, **nach Spielplan-Generierung gesperrt**.                                                                                                                                                                          |
+| 2   | Spielplan                           | Einfache Runde (Single Round Robin). Ungerade TN-Zahl → rotierendes Freilos = **Pause ohne Wertung** (kein Phantomsieg).                                                                                                                                                                                                     |
+| 3   | Begegnung                           | Best-of-N, Default Best-of-3 (`groupBestOf`). Playoffs Best-of-5 (`playoffBestOf`, unverändert).                                                                                                                                                                                                                             |
+| 3a  | Alle Duelle ausspielen              | `groupPlayAllDuels` — **Standard: an** (immer alle N Duelle, z. B. 3 bei Best-of-3). Wirkt **nur** auf die Satzdifferenz, **nicht** auf Match-Siege (siehe §7).                                                                                                                                                              |
+| 4   | Duell-Sieger                        | Allein über `scoringMode`. **Gleicher Wertungswert → Duell unentschieden** (z. B. gleicher Ringteiler, auch aus unterschiedlichen Ringen/Teilern). Optionales Sekundärkriterium (`groupTiebreaker1/2`, Default aus) nur als Override, v. a. für reine Ringe-Ligen.                                                           |
+| 5   | Match-Gleichstand → **Stechschuss** | Steht eine Begegnung nach allen Duellen gleich (gleich viele Duell-Siege): **Stechschuss** — je ein Schuss in **Zehntelwertung**, höherer gewinnt, bei Gleichstand wiederholen bis einer besser ist. **Standard** (`groupHasSuddenDeath = true`), einheitlich mit dem Finale. Alternative: Wiederholungsduell. Details §4.2. |
+| 5a  | Stechschuss erfassbar               | Der Stechschuss **muss in der Erfassungsmaske eingegeben werden** (Zehntelwert pro Schütze), damit die Software den Gleichstand korrekt wertet — nicht nur „am Stand" entscheiden. Siehe §6.                                                                                                                                 |
+| 6   | Wertungsmodi                        | Nur `RINGS`, `RINGS_DECIMAL`, `TEILER`, `RINGTEILER` (kein `DECIMAL_REST`, kein `TARGET`).                                                                                                                                                                                                                                   |
+| 7   | Tabelle                             | Zähl-Einheit = **Match-Siege**. Sortierkette: Siege → direkter Vergleich → Satzdifferenz → bestes Einzelergebnis. **Keine Unentschieden** möglich (Stechschuss erzwingt einen Sieger).                                                                                                                                       |
+| 8   | Datenmodell                         | Ansatz „Matchup bleibt Paarung, Duelle als Serien" (`Series.duelNumber`, Stechschuss via `Series.isTiebreak`). Playoff-Strukturen unberührt.                                                                                                                                                                                 |
+| 9   | Terminabstimmung                    | „Heimrecht" entfällt fachlich. **Termin wird gemeinsam abgestimmt** (keine feste Zuständigkeit). `homeParticipantId`/`awayParticipantId` nur zur Speicherung der Paarung. Datenmodell unverändert.                                                                                                                           |
+| 10  | Playoffs                            | Best-of-5, **unverändert**. Seeding aus der neuen Tabelle. Stechschuss-Konzept = dasselbe wie der bestehende Finale-Sudden-Death.                                                                                                                                                                                            |
 
 ---
 
@@ -144,11 +144,11 @@ von Playoffs **und** Gruppen-Best-of genutzt.
 Ein Duell wird **allein über den league-`scoringMode`** entschieden. **Ist der Wertungswert gleich,
 ist das Duell unentschieden** — standardmäßig wird es **nicht** über ein Zweitkriterium getrennt:
 
-| Modus | Duell-Sieger | unentschieden, wenn … |
-| ----- | ------------ | --------------------- |
-| RINGS / RINGS_DECIMAL | höhere Ringe | gleiche Ringzahl |
-| TEILER | kleinerer (korrigierter) Teiler | gleicher Teiler |
-| RINGTEILER | niedrigerer Ringteiler | **gleicher Ringteiler** (auch aus unterschiedlichen Ringen/Teilern) |
+| Modus                 | Duell-Sieger                    | unentschieden, wenn …                                               |
+| --------------------- | ------------------------------- | ------------------------------------------------------------------- |
+| RINGS / RINGS_DECIMAL | höhere Ringe                    | gleiche Ringzahl                                                    |
+| TEILER                | kleinerer (korrigierter) Teiler | gleicher Teiler                                                     |
+| RINGTEILER            | niedrigerer Ringteiler          | **gleicher Ringteiler** (auch aus unterschiedlichen Ringen/Teilern) |
 
 Das ist für den Ringteiler bewusst so: Bei gleichem Ringteiler sind beide nach der gewählten Wertung
 gleichwertig — statt sie über ein willkürliches Zweitkriterium (mehr Ringe / besserer Teiler) zu
@@ -318,13 +318,13 @@ Duell-Ergebnis (z. B. 1:1).
 
 ## 13. Risiken & Altlasten
 
-| Risiko | Mitigation |
-| ------ | ---------- |
-| **`playoffBestOf`-Unstimmigkeit** (Schema-Kommentar „Siege nötig" vs. `requiredWinsFromBestOf` rechnet „N in Best-of-N") — Bestandsthema im Playoff-Code | Hier **nicht** angefasst. `groupBestOf` eindeutig als „N in Best-of-N" definiert. Empfehlung: Playoff-Benennung separat sauberziehen. |
-| **Stechschuss nur „am Stand" statt erfasst** → Tabelle wertet Gleichstand falsch | Stechschuss ist Pflichtbestandteil der Erfassungsmaske (§6, Entscheidung 5a); `resolveBestOf` schließt ein Match bei Gleichstand erst mit erfasstem Stechschuss ab. |
-| `Series`-Konsumenten erwarten 1 Serie pro Matchup/Schütze (Profil, PDF, Statistik) | Beim Umsetzen jede Konsumstelle prüfen; jetzt **mehrere** Serien pro Matchup/Schütze möglich; `isTiebreak`-Serien aus Statistik/„bestes Ergebnis" filtern. |
-| `groupPlayAllDuels` / Sekundärkriterien / Stechschuss müssen liga-weit & gesperrt sein | Sonst unfaire Vergleiche über unterschiedliche Regeln. Als Liga-Config mit Regelset-Sperre umsetzen, nicht pro Paarung. |
-| Zehntel-Messung für den Stechschuss nötig | Setzt messfähigen Stand voraus (wie beim Finale ohnehin). |
+| Risiko                                                                                                                                                   | Mitigation                                                                                                                                                          |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`playoffBestOf`-Unstimmigkeit** (Schema-Kommentar „Siege nötig" vs. `requiredWinsFromBestOf` rechnet „N in Best-of-N") — Bestandsthema im Playoff-Code | Hier **nicht** angefasst. `groupBestOf` eindeutig als „N in Best-of-N" definiert. Empfehlung: Playoff-Benennung separat sauberziehen.                               |
+| **Stechschuss nur „am Stand" statt erfasst** → Tabelle wertet Gleichstand falsch                                                                         | Stechschuss ist Pflichtbestandteil der Erfassungsmaske (§6, Entscheidung 5a); `resolveBestOf` schließt ein Match bei Gleichstand erst mit erfasstem Stechschuss ab. |
+| `Series`-Konsumenten erwarten 1 Serie pro Matchup/Schütze (Profil, PDF, Statistik)                                                                       | Beim Umsetzen jede Konsumstelle prüfen; jetzt **mehrere** Serien pro Matchup/Schütze möglich; `isTiebreak`-Serien aus Statistik/„bestes Ergebnis" filtern.          |
+| `groupPlayAllDuels` / Sekundärkriterien / Stechschuss müssen liga-weit & gesperrt sein                                                                   | Sonst unfaire Vergleiche über unterschiedliche Regeln. Als Liga-Config mit Regelset-Sperre umsetzen, nicht pro Paarung.                                             |
+| Zehntel-Messung für den Stechschuss nötig                                                                                                                | Setzt messfähigen Stand voraus (wie beim Finale ohnehin).                                                                                                           |
 
 ---
 

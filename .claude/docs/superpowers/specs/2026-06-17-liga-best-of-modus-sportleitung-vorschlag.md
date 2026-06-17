@@ -67,7 +67,7 @@ Welche Wertung in den Duellen gilt, ist pro Liga einstellbar — wie schon heute
 denselben Wertungswert, gilt das Duell als **unentschieden** (kein Sieger):
 
 - **Ringteiler (Standard):** Gleicher Ringteiler → unentschieden — auch wenn er aus
-  *unterschiedlichen* Ringen/Teilern entsteht. Bewusst so: bei gleichem Ringteiler sind beide nach der
+  _unterschiedlichen_ Ringen/Teilern entsteht. Bewusst so: bei gleichem Ringteiler sind beide nach der
   Wertung gleichwertig; statt sie über ein willkürliches Zweitkriterium zu trennen, wird gestochen.
 - **Serie (Ringe) / Teiler:** Gleiche Ringzahl bzw. gleicher Teiler → unentschieden.
 
@@ -76,7 +76,7 @@ denselben Wertungswert, gilt das Duell als **unentschieden** (kein Sieger):
 Begegnung. Sind beide gleich, folgt der nächste Stechschuss, so lange bis einer besser ist. Das ist
 **dasselbe Prinzip wie im Finale** und damit vertraut; so bleibt die Tabelle ohne Unentschieden.
 
-*Konfigurierbar bleibt:* Eine Liga kann Gleichstände optional doch über ein Zweitkriterium trennen
+_Konfigurierbar bleibt:_ Eine Liga kann Gleichstände optional doch über ein Zweitkriterium trennen
 (v. a. sinnvoll bei reiner Ringe-Wertung, wo gleiche Ringe häufig sind) — Standard ist aber der
 **Stechschuss**.
 
@@ -151,14 +151,14 @@ ausgetragen (Standard Best-of-5: wer zuerst 3 Duelle gewinnt).
 
 **Finale (Sondermodus, aktuelle Regelung):**
 
-| Regel            | Aktuell                                                                       |
-| ---------------- | ----------------------------------------------------------------------------- |
+| Regel            | Aktuell                                                                                                     |
+| ---------------- | ----------------------------------------------------------------------------------------------------------- |
 | Wertung          | Kriterien-Kette (Hauptkriterium → optional 2 Tiebreaker); Standard: **nur Ringe**, höchste Ringzahl gewinnt |
-| Gleichstand      | Bleibt es nach allen Kriterien gleich: **Stechen** (weitere Duelle bis zur Entscheidung) |
-| Einrichtungszeit | 3 Minuten                                                                     |
-| Probeschuss      | keiner                                                                        |
-| Ansage           | jeder Schuss einzeln                                                          |
-| Zeit pro Schuss  | 75 Sekunden                                                                   |
+| Gleichstand      | Bleibt es nach allen Kriterien gleich: **Stechen** (weitere Duelle bis zur Entscheidung)                    |
+| Einrichtungszeit | 3 Minuten                                                                                                   |
+| Probeschuss      | keiner                                                                                                      |
+| Ansage           | jeder Schuss einzeln                                                                                        |
+| Zeit pro Schuss  | 75 Sekunden                                                                                                 |
 
 Die App unterstützt dabei **nur die Ergebniserfassung** (keine Zeitnahme oder Ansage).
 

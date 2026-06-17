@@ -38,6 +38,7 @@ Subagents read these **before writing code** (baseline per CLAUDE.md): `code-con
 ## File Structure
 
 **Create:**
+
 - `src/lib/scoring/bestOf.ts` (+ `.test.ts`) — pure best-of resolution (`resolveBestOf`, duel/match status).
 - `src/lib/standings/calculateBestOfStandings.ts` (+ `.test.ts`) — match-win standings + sort chain.
 - `src/lib/matchups/generateBestOfSchedule.ts` (+ `.test.ts`) — single round-robin (one leg of circle method).
@@ -47,6 +48,7 @@ Subagents read these **before writing code** (baseline per CLAUDE.md): `code-con
 - Prisma migration folder under `prisma/migrations/<timestamp>_best_of_single/`.
 
 **Modify:**
+
 - `prisma/schema.prisma` — enum + Competition/Series fields + Series unique index.
 - `src/lib/scoring/types.ts` — duel/best-of types.
 - `src/lib/competitions/{actions,types}.ts` — create/edit fields + validation; lock after schedule gen.
@@ -173,13 +175,14 @@ git commit -m "feat(migration): best_of_single columns + Series duel unique inde
 **Files:** Create `src/lib/scoring/bestOf.ts`, `src/lib/scoring/bestOf.test.ts`
 
 **Semantics (authoritative):**
-- A *duel* outcome is `"A" | "B" | "TIE"`. `"TIE"` = both series equal on the league `scoringMode` (and the optional secondary chain). TIE counts for neither side.
+
+- A _duel_ outcome is `"A" | "B" | "TIE"`. `"TIE"` = both series equal on the league `scoringMode` (and the optional secondary chain). TIE counts for neither side.
 - `requiredWins = ceil(bestOf / 2)`.
 - The match plays **at most `bestOf` duels**:
   - `playAll = true` (standard): always play all `bestOf` duels.
   - `playAll = false`: stop early once a side reaches `requiredWins`.
 - After the duels: most wins → winner. **Level at `bestOf` duels** (only possible via TIEs) → needs Stechschuss.
-- *Stechschuss* rounds are also `"A" | "B" | "TIE"` (single decimal shot each; TIE = shoot again). First non-TIE round decides; while empty or TIE → still needs Stechschuss.
+- _Stechschuss_ rounds are also `"A" | "B" | "TIE"` (single decimal shot each; TIE = shoot again). First non-TIE round decides; while empty or TIE → still needs Stechschuss.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -219,7 +222,9 @@ describe("resolveBestOf", () => {
     })
   })
   it("Stechschuss tie repeats", () => {
-    expect(resolveBestOf(["TIE", "TIE", "TIE"], ["TIE"], opts())).toEqual({ kind: "needs_tiebreak" })
+    expect(resolveBestOf(["TIE", "TIE", "TIE"], ["TIE"], opts())).toEqual({
+      kind: "needs_tiebreak",
+    })
   })
   it("best-of-5 early end at 3 wins", () => {
     expect(resolveBestOf(["A", "B", "A", "A"], [], opts({ bestOf: 5, playAll: false }))).toEqual({
@@ -405,7 +410,10 @@ import { generateBestOfSchedule } from "./generateBestOfSchedule"
 describe("generateBestOfSchedule", () => {
   it("4 players: 6 pairings, every pair once, no byes", () => {
     const s = generateBestOfSchedule(["a", "b", "c", "d"])
-    const pairs = s.filter((m) => m.awayId).map((m) => [m.homeId, m.awayId].sort().join("-")).sort()
+    const pairs = s
+      .filter((m) => m.awayId)
+      .map((m) => [m.homeId, m.awayId].sort().join("-"))
+      .sort()
     expect(pairs).toEqual(["a-b", "a-c", "a-d", "b-c", "b-d", "c-d"])
     expect(s.some((m) => m.awayId === null)).toBe(false)
   })
@@ -464,10 +472,10 @@ describe("generateBestOfSchedule", () => {
 
 ### Task 5.2: Schedule generation switch
 
-**Files:** Modify `src/lib/matchups/actions.ts`. 
+**Files:** Modify `src/lib/matchups/actions.ts`.
 
-- [ ] In the generate-schedule action, branch on `competition.leagueFormat`: `BEST_OF_SINGLE` → `generateBestOfSchedule` (single leg); else the existing double round-robin. Persist `Matchup` rows (BYE handling unchanged). 
-- [ ] **Test:** action test asserts a BEST_OF_SINGLE competition with 4 participants produces 6 matchups (no return leg). 
+- [ ] In the generate-schedule action, branch on `competition.leagueFormat`: `BEST_OF_SINGLE` → `generateBestOfSchedule` (single leg); else the existing double round-robin. Persist `Matchup` rows (BYE handling unchanged).
+- [ ] **Test:** action test asserts a BEST_OF_SINGLE competition with 4 participants produces 6 matchups (no return leg).
 - [ ] **Commit.**
 
 ### Task 5.3: Form UI
@@ -542,6 +550,7 @@ describe("generateBestOfSchedule", () => {
 ## Integration (after the branch is complete)
 
 Not a coding task, but record it:
+
 1. In `main` (docker works): apply the migration (`prisma migrate dev` / deploy), run the full dockerized `/check`.
 2. Reconcile with the parallel **teiler-faktor** change — both touch the Ringteiler/`determineOutcome` area; verify `duelOutcome`/`calculateRingteiler` still agree with the corrected teiler-faktor semantics.
 3. Merge `feat/liga-best-of-modus` into `main` with `git merge --ff-only`, then remove the worktree + branch.

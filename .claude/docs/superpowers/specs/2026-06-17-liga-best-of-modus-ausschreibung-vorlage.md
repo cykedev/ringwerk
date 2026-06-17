@@ -28,7 +28,7 @@ alle, sich für die Playoffs zu schießen.
 
 ## 1. Warum ein neuer Modus?
 
-Bisher lief die Liga in Hin- und Rückrunde mit *einer* Serie pro Begegnung. Das bedeutete viele
+Bisher lief die Liga in Hin- und Rückrunde mit _einer_ Serie pro Begegnung. Das bedeutete viele
 Einzeltermine, und eine schwache (oder glückliche) Serie konnte ein Duell sofort entscheiden. Der
 neue Modus halbiert die Termine und macht jede Begegnung durch mehrere Serien fairer — ohne den
 Reiz der direkten Duelle zu verlieren.
@@ -84,14 +84,14 @@ System):
 
 **Finale (Sondermodus):**
 
-| Regel            | Ablauf                                                                       |
-| ---------------- | ----------------------------------------------------------------------------- |
-| Wertung          | Standard: **Ringe** (höchste Ringzahl gewinnt; ggf. mit Zusatzkriterien)       |
-| Gleichstand      | **Stechen** (weitere Schüsse bis zur Entscheidung)                            |
-| Einrichtungszeit | 3 Minuten                                                                     |
-| Probeschuss      | keiner                                                                        |
-| Ansage           | jeder Schuss einzeln                                                          |
-| Zeit pro Schuss  | 75 Sekunden                                                                   |
+| Regel            | Ablauf                                                                   |
+| ---------------- | ------------------------------------------------------------------------ |
+| Wertung          | Standard: **Ringe** (höchste Ringzahl gewinnt; ggf. mit Zusatzkriterien) |
+| Gleichstand      | **Stechen** (weitere Schüsse bis zur Entscheidung)                       |
+| Einrichtungszeit | 3 Minuten                                                                |
+| Probeschuss      | keiner                                                                   |
+| Ansage           | jeder Schuss einzeln                                                     |
+| Zeit pro Schuss  | 75 Sekunden                                                              |
 
 ## 6. Wer kann mitmachen & Anmeldung
 
@@ -107,4 +107,4 @@ Bei Fragen zum Modus oder zur Anmeldung wendet euch an **[Ansprechpartner · Kon
 
 Wir freuen uns auf eine spannende Saison — und auf das eine oder andere Stechen.
 
-*[Ort, Datum] · [Sportleitung / Veranstalter]*
+_[Ort, Datum] · [Sportleitung / Veranstalter]_
