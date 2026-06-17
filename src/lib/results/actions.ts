@@ -6,6 +6,7 @@ import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import type { SaveMatchResultInput } from "./types"
 import { calculateRingteiler, MAX_RINGS } from "./calculateResult"
+import { effectiveTeilerFaktor } from "@/lib/scoring/calculateScore"
 import { revalidatePublicSlugForCompetition } from "@/lib/competitions/actions/_shared"
 
 /**
@@ -36,6 +37,7 @@ export async function saveMatchResult(
       competition: {
         select: {
           shotsPerSeries: true,
+          disciplineId: true,
           discipline: {
             select: { id: true, scoringType: true, teilerFaktor: true },
           },
@@ -74,8 +76,9 @@ export async function saveMatchResult(
 
   const homeMaxRings = MAX_RINGS[homeDiscipline.scoringType]
   const awayMaxRings = MAX_RINGS[awayDiscipline.scoringType]
-  const homeFaktor = homeDiscipline.teilerFaktor.toNumber()
-  const awayFaktor = awayDiscipline.teilerFaktor.toNumber()
+  const competitionDisciplineId = matchup.competition.disciplineId
+  const homeFaktor = effectiveTeilerFaktor(competitionDisciplineId, homeDiscipline.teilerFaktor.toNumber())
+  const awayFaktor = effectiveTeilerFaktor(competitionDisciplineId, awayDiscipline.teilerFaktor.toNumber())
   const sessionDate = matchup.dueDate ?? new Date()
   const shotCount = matchup.competition.shotsPerSeries
 

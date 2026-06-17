@@ -202,4 +202,32 @@ describe("saveMatchResult", () => {
     const result = await saveMatchResult("m1", resultInput)
     expect(result).toEqual({ error: "Ergebnis konnte nicht gespeichert werden." })
   })
+
+  it("feste Disziplin: Ringteiler ohne Faktor (LP 0.333 → effektiv 1.0)", async () => {
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    const seriesUpsertMock = vi.fn().mockResolvedValue({})
+    matchupFindUniqueMock.mockResolvedValue({
+      ...matchupBase,
+      competition: {
+        shotsPerSeries: 10,
+        disciplineId: "d-lp",
+        discipline: { id: "d-lp", scoringType: "WHOLE", teilerFaktor: { toNumber: () => 0.3333333 } },
+      },
+      series: [],
+    })
+    transactionMock.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
+      const tx = {
+        series: { upsert: seriesUpsertMock },
+        matchup: { update: vi.fn().mockResolvedValue({}) },
+      }
+      return fn(tx)
+    })
+    await saveMatchResult("m1", {
+      homeResult: { rings: 90, teiler: 60 },
+      awayResult: { rings: 90, teiler: 60 },
+    })
+    const homeCall = seriesUpsertMock.mock.calls[0][0]
+    expect(homeCall.create.ringteiler).toBe(70)
+    expect(homeCall.update.ringteiler).toBe(70)
+  })
 })
