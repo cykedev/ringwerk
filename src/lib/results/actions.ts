@@ -105,74 +105,69 @@ export async function saveMatchResult(
 
   try {
     await db.$transaction(async (tx) => {
-      // DOUBLE_ROUND_ROBIN: duelNumber is null — find existing row by matchupId + participantId + null duelNumber
-      const existingHome = await tx.series.findFirst({
-        where: { matchupId, participantId: matchup.homeParticipantId, duelNumber: null },
-        select: { id: true },
-      })
-      if (existingHome) {
-        await tx.series.update({
-          where: { id: existingHome.id },
-          data: {
-            disciplineId: homeDiscipline.id,
-            shotCount,
-            sessionDate,
-            rings: data.homeResult.rings,
-            teiler: data.homeResult.teiler,
-            ringteiler: homeRingteiler,
-            recordedByUserId: session.user.id,
-          },
-        })
-      } else {
-        await tx.series.create({
-          data: {
+      await tx.series.upsert({
+        where: {
+          matchupId_participantId_duelNumber: {
             matchupId,
             participantId: matchup.homeParticipantId,
-            disciplineId: homeDiscipline.id,
-            shotCount,
-            sessionDate,
-            rings: data.homeResult.rings,
-            teiler: data.homeResult.teiler,
-            ringteiler: homeRingteiler,
-            importSource: "MANUAL",
-            recordedByUserId: session.user.id,
+            duelNumber: 1,
           },
-        })
-      }
-
-      const existingAway = await tx.series.findFirst({
-        where: { matchupId, participantId: matchup.awayParticipantId!, duelNumber: null },
-        select: { id: true },
+        },
+        create: {
+          matchupId,
+          participantId: matchup.homeParticipantId,
+          disciplineId: homeDiscipline.id,
+          shotCount,
+          sessionDate,
+          rings: data.homeResult.rings,
+          teiler: data.homeResult.teiler,
+          ringteiler: homeRingteiler,
+          importSource: "MANUAL",
+          recordedByUserId: session.user.id,
+          duelNumber: 1,
+        },
+        update: {
+          disciplineId: homeDiscipline.id,
+          shotCount,
+          sessionDate,
+          rings: data.homeResult.rings,
+          teiler: data.homeResult.teiler,
+          ringteiler: homeRingteiler,
+          recordedByUserId: session.user.id,
+        },
       })
-      if (existingAway) {
-        await tx.series.update({
-          where: { id: existingAway.id },
-          data: {
-            disciplineId: awayDiscipline.id,
-            shotCount,
-            sessionDate,
-            rings: data.awayResult.rings,
-            teiler: data.awayResult.teiler,
-            ringteiler: awayRingteiler,
-            recordedByUserId: session.user.id,
-          },
-        })
-      } else {
-        await tx.series.create({
-          data: {
+
+      await tx.series.upsert({
+        where: {
+          matchupId_participantId_duelNumber: {
             matchupId,
             participantId: matchup.awayParticipantId!,
-            disciplineId: awayDiscipline.id,
-            shotCount,
-            sessionDate,
-            rings: data.awayResult.rings,
-            teiler: data.awayResult.teiler,
-            ringteiler: awayRingteiler,
-            importSource: "MANUAL",
-            recordedByUserId: session.user.id,
+            duelNumber: 1,
           },
-        })
-      }
+        },
+        create: {
+          matchupId,
+          participantId: matchup.awayParticipantId!,
+          disciplineId: awayDiscipline.id,
+          shotCount,
+          sessionDate,
+          rings: data.awayResult.rings,
+          teiler: data.awayResult.teiler,
+          ringteiler: awayRingteiler,
+          importSource: "MANUAL",
+          recordedByUserId: session.user.id,
+          duelNumber: 1,
+        },
+        update: {
+          disciplineId: awayDiscipline.id,
+          shotCount,
+          sessionDate,
+          rings: data.awayResult.rings,
+          teiler: data.awayResult.teiler,
+          ringteiler: awayRingteiler,
+          recordedByUserId: session.user.id,
+        },
+      })
 
       await tx.matchup.update({
         where: { id: matchupId },
