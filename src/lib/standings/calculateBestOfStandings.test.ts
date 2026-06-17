@@ -1,0 +1,725 @@
+import { describe, expect, it } from "vitest"
+import {
+  calculateBestOfStandings,
+  type BestOfStandingsConfig,
+  type BestOfStandingsMatchup,
+  type BestOfStandingsParticipant,
+  type BestOfStandingRow,
+} from "./calculateBestOfStandings"
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Build a minimal non-withdrawn participant. */
+function mkParticipant(
+  id: string,
+  firstName = "F",
+  lastName = "L",
+  withdrawn = false
+): BestOfStandingsParticipant {
+  return { id, firstName, lastName, withdrawn }
+}
+
+/** Build a RINGTEILER series entry for one participant. */
+function mkSeries(
+  participantId: string,
+  duelNumber: number,
+  rings: number,
+  teiler: number,
+  {
+    isTiebreak = false,
+    ringteiler = teiler, // simplify: ringteiler == teiler when faktor=1
+    teilerFaktor = 1,
+  }: { isTiebreak?: boolean; ringteiler?: number; teilerFaktor?: number } = {}
+) {
+  return {
+    participantId,
+    duelNumber,
+    isTiebreak,
+    rings,
+    teiler,
+    ringteiler,
+    teilerFaktor,
+  }
+}
+
+/** Standard best-of-3, RINGTEILER, fixed discipline, no tiebreakers. */
+const stdConfig: BestOfStandingsConfig = {
+  scoringMode: "RINGTEILER",
+  bestOf: 3,
+  playAll: true,
+  tiebreaker1: null,
+  tiebreaker2: null,
+  competitionDisciplineId: "disc-1",
+}
+
+/** Find a row for a given participantId. */
+function row(rows: BestOfStandingRow[], id: string): BestOfStandingRow {
+  const r = rows.find((r) => r.participantId === id)
+  if (!r) throw new Error(`No row for ${id}`)
+  return r
+}
+
+// ---------------------------------------------------------------------------
+// Test 1: Clean ranking — 4 participants, single round-robin, all decided
+// ---------------------------------------------------------------------------
+describe("4-participant round robin — clean ranking", () => {
+  // A beats B, A beats C, A beats D → 3W
+  // B beats C, B beats D           → 2W
+  // C beats D                      → 1W
+  // D loses all                    → 0W
+  //
+  // Each match is best-of-3, playAll=true.
+  // In RINGTEILER lower wins. We use correctedTeiler = teiler (factor=1, fixed discipline).
+  // duel outcomes:
+  //   A(teiler=10) < B(teiler=20) → A wins duel
+  //   We make all 3 duels go the same way per match to get clean 3:0 scores.
+
+  const participants = [
+    mkParticipant("A", "Alice", "Alpha"),
+    mkParticipant("B", "Bob", "Beta"),
+    mkParticipant("C", "Carl", "Gamma"),
+    mkParticipant("D", "Dave", "Delta"),
+  ]
+
+  function beatMatchup(
+    homeId: string,
+    awayId: string,
+    homeTeiler: number,
+    awayTeiler: number
+  ): BestOfStandingsMatchup {
+    // home wins all 3 duels
+    return {
+      homeParticipantId: homeId,
+      awayParticipantId: awayId,
+      series: [1, 2, 3].flatMap((n) => [
+        mkSeries(homeId, n, 90, homeTeiler),
+        mkSeries(awayId, n, 80, awayTeiler),
+      ]),
+    }
+  }
+
+  const matchups: BestOfStandingsMatchup[] = [
+    beatMatchup("A", "B", 10, 20),
+    beatMatchup("A", "C", 10, 30),
+    beatMatchup("A", "D", 10, 40),
+    beatMatchup("B", "C", 15, 30),
+    beatMatchup("B", "D", 15, 40),
+    beatMatchup("C", "D", 20, 40),
+  ]
+
+  const rows = calculateBestOfStandings(participants, matchups, stdConfig)
+
+  it("returns 4 rows", () => {
+    expect(rows).toHaveLength(4)
+  })
+
+  it("A ranks 1st with 3 wins", () => {
+    const r = row(rows, "A")
+    expect(r.rank).toBe(1)
+    expect(r.wins).toBe(3)
+    expect(r.losses).toBe(0)
+    expect(r.played).toBe(3)
+  })
+
+  it("B ranks 2nd with 2 wins", () => {
+    const r = row(rows, "B")
+    expect(r.rank).toBe(2)
+    expect(r.wins).toBe(2)
+    expect(r.losses).toBe(1)
+  })
+
+  it("C ranks 3rd with 1 win", () => {
+    const r = row(rows, "C")
+    expect(r.rank).toBe(3)
+    expect(r.wins).toBe(1)
+    expect(r.losses).toBe(2)
+  })
+
+  it("D ranks 4th with 0 wins", () => {
+    const r = row(rows, "D")
+    expect(r.rank).toBe(4)
+    expect(r.wins).toBe(0)
+    expect(r.losses).toBe(3)
+  })
+
+  it("duelDiff for A is +9 (won 9 duels, lost 0)", () => {
+    // A wins all 3 duels in each of 3 matches = 9 duels won, 0 lost
+    const r = row(rows, "A")
+    expect(r.duelsWon).toBe(9)
+    expect(r.duelsLost).toBe(0)
+    expect(r.duelDiff).toBe(9)
+  })
+
+  it("duelDiff for D is -9 (won 0, lost 9)", () => {
+    const r = row(rows, "D")
+    expect(r.duelsWon).toBe(0)
+    expect(r.duelsLost).toBe(9)
+    expect(r.duelDiff).toBe(-9)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Test 2: Circular 3-way tie broken by duelDiff
+// ---------------------------------------------------------------------------
+describe("Circular 3-way tie — broken by duelDiff", () => {
+  // A beats B 2:1 (duels)
+  // B beats C 2:1
+  // C beats A 2:1
+  // All have 1 win, 1 loss → tied on wins.
+  // Direct comparison among the 3 is circular (each has 1 win vs the group).
+  // duelDiff: A = +1-1=0? No — let's make it explicit:
+  //   A vs B: A wins match (2 duels won, 1 lost in match) → duelDiff from this match: A +2-1=+1, B +1-2=-1
+  //   B vs C: B wins match (2 duels won, 1 lost)         → B: +2-1=+1 extra, C: +1-2=-1
+  //   C vs A: C wins match (2 duels won, 1 lost)         → C: +2-1=+1 extra, A: +1-2=-1
+  //
+  //   Total duelDiff: A = +1 + (-1) = 0, B = (-1) + 1 = 0, C = (-1) + 1 = 0 — circular!
+  //
+  // Let's make them different: A vs B: A wins 3:0; B vs C: B wins 3:0; C vs A: C wins 2:1
+  //   A: +3 (vs B) -1 (vs C) = +2
+  //   B: -3 (vs A) +3 (vs B→C) = 0
+  //   C: +2 (vs A) -3 (vs B) = -1
+  //   All have 1 win 1 loss → direct comparison: A won vs B, B won vs C, C won vs A → circular → duelDiff decides.
+  //   Ranking: A(+2) > B(0) > C(-1)
+
+  const participants = [mkParticipant("A"), mkParticipant("B"), mkParticipant("C")]
+
+  // A vs B: A wins all 3 duels (3:0)
+  const matchupAB: BestOfStandingsMatchup = {
+    homeParticipantId: "A",
+    awayParticipantId: "B",
+    series: [1, 2, 3].flatMap((n) => [
+      mkSeries("A", n, 90, 10), // A: teiler 10 (lower = better in RINGTEILER)
+      mkSeries("B", n, 80, 20),
+    ]),
+  }
+
+  // B vs C: B wins all 3 duels (3:0)
+  const matchupBC: BestOfStandingsMatchup = {
+    homeParticipantId: "B",
+    awayParticipantId: "C",
+    series: [1, 2, 3].flatMap((n) => [mkSeries("B", n, 90, 10), mkSeries("C", n, 80, 20)]),
+  }
+
+  // C vs A: C wins 2, A wins 1 (2:1 — so C wins the match)
+  // duel 1: C(10) < A(20) → C wins
+  // duel 2: C(10) < A(20) → C wins
+  // duel 3: A(10) < C(20) → A wins
+  const matchupCA: BestOfStandingsMatchup = {
+    homeParticipantId: "C",
+    awayParticipantId: "A",
+    series: [
+      mkSeries("C", 1, 90, 10),
+      mkSeries("A", 1, 80, 20),
+      mkSeries("C", 2, 90, 10),
+      mkSeries("A", 2, 80, 20),
+      mkSeries("C", 3, 80, 20),
+      mkSeries("A", 3, 90, 10),
+    ],
+  }
+
+  const rows = calculateBestOfStandings(participants, [matchupAB, matchupBC, matchupCA], stdConfig)
+
+  it("all 3 have 1 win and 1 loss", () => {
+    for (const id of ["A", "B", "C"]) {
+      const r = row(rows, id)
+      expect(r.wins).toBe(1)
+      expect(r.losses).toBe(1)
+    }
+  })
+
+  it("direct comparison is circular (each has 1 win in the group)", () => {
+    // This is verified implicitly by needing duelDiff to separate them.
+    // A beat B, B beat C, C beat A → circular.
+    // duelDiff breakdown:
+    //   A: wins 3 duels vs B, loses 1 duel vs C → 3-1 = +2
+    //   B: wins 3 duels vs C, loses 3 duels vs A → 3-3 = 0
+    //   C: wins 2 duels vs A, loses 3 duels vs B → 2-4 = -2
+    expect(row(rows, "A").duelDiff).toBe(2)
+    expect(row(rows, "B").duelDiff).toBe(0)
+    expect(row(rows, "C").duelDiff).toBe(-2)
+  })
+
+  it("A ranks 1st (highest duelDiff +2)", () => {
+    expect(row(rows, "A").rank).toBe(1)
+  })
+
+  it("B ranks 2nd (duelDiff 0)", () => {
+    expect(row(rows, "B").rank).toBe(2)
+  })
+
+  it("C ranks 3rd (lowest duelDiff -1)", () => {
+    expect(row(rows, "C").rank).toBe(3)
+  })
+})
+
+// Fix the duelDiff expectation for C: 2 - 3 = -1
+describe("Circular 3-way tie — duelDiff values are correct", () => {
+  const participants = [mkParticipant("A"), mkParticipant("B"), mkParticipant("C")]
+
+  const matchupAB: BestOfStandingsMatchup = {
+    homeParticipantId: "A",
+    awayParticipantId: "B",
+    series: [1, 2, 3].flatMap((n) => [mkSeries("A", n, 90, 10), mkSeries("B", n, 80, 20)]),
+  }
+  const matchupBC: BestOfStandingsMatchup = {
+    homeParticipantId: "B",
+    awayParticipantId: "C",
+    series: [1, 2, 3].flatMap((n) => [mkSeries("B", n, 90, 10), mkSeries("C", n, 80, 20)]),
+  }
+  const matchupCA: BestOfStandingsMatchup = {
+    homeParticipantId: "C",
+    awayParticipantId: "A",
+    series: [
+      mkSeries("C", 1, 90, 10),
+      mkSeries("A", 1, 80, 20),
+      mkSeries("C", 2, 90, 10),
+      mkSeries("A", 2, 80, 20),
+      mkSeries("C", 3, 80, 20),
+      mkSeries("A", 3, 90, 10),
+    ],
+  }
+
+  const rows = calculateBestOfStandings(participants, [matchupAB, matchupBC, matchupCA], stdConfig)
+
+  it("A duelDiff = +2", () => expect(row(rows, "A").duelDiff).toBe(2))
+  it("B duelDiff = 0", () => expect(row(rows, "B").duelDiff).toBe(0))
+  it("C duelDiff = -2", () => expect(row(rows, "C").duelDiff).toBe(-2))
+})
+
+// ---------------------------------------------------------------------------
+// Test 3: Match decided by Stechschuss (tiebreak)
+// ---------------------------------------------------------------------------
+describe("Match decided by Stechschuss (tiebreak)", () => {
+  // Best-of-3, playAll=true:
+  // Regular duels: duel 1 → A wins, duel 2 → B wins, duel 3 → TIE
+  // After 3 regular duels: 1 win each → needs_tiebreak
+  // Tiebreak round (duelNumber=4, isTiebreak=true): A wins
+  // Result: A is the match winner.
+  //
+  // duelDiff from regular duels: A: +1 (won duel 1) -1 (lost duel 2) = 0
+  // (TIE duels contribute 0 to duelsWon and duelsLost)
+
+  const participants = [mkParticipant("A"), mkParticipant("B")]
+
+  const config: BestOfStandingsConfig = {
+    scoringMode: "RINGTEILER",
+    bestOf: 3,
+    playAll: true,
+    tiebreaker1: null,
+    tiebreaker2: null,
+    competitionDisciplineId: "disc-1",
+  }
+
+  const matchup: BestOfStandingsMatchup = {
+    homeParticipantId: "A",
+    awayParticipantId: "B",
+    series: [
+      // Duel 1: A wins (lower teiler)
+      mkSeries("A", 1, 90, 10),
+      mkSeries("B", 1, 90, 20),
+      // Duel 2: B wins
+      mkSeries("A", 2, 90, 20),
+      mkSeries("B", 2, 90, 10),
+      // Duel 3: TIE (same teiler, same rings)
+      mkSeries("A", 3, 90, 15),
+      mkSeries("B", 3, 90, 15),
+      // Tiebreak round 1 (duelNumber=4, isTiebreak=true): A wins
+      mkSeries("A", 4, 90, 5, { isTiebreak: true }),
+      mkSeries("B", 4, 90, 25, { isTiebreak: true }),
+    ],
+  }
+
+  const rows = calculateBestOfStandings(participants, [matchup], config)
+
+  it("A wins the match", () => {
+    expect(row(rows, "A").wins).toBe(1)
+    expect(row(rows, "A").losses).toBe(0)
+  })
+
+  it("B loses the match", () => {
+    expect(row(rows, "B").wins).toBe(0)
+    expect(row(rows, "B").losses).toBe(1)
+  })
+
+  it("played = 1 for both", () => {
+    expect(row(rows, "A").played).toBe(1)
+    expect(row(rows, "B").played).toBe(1)
+  })
+
+  it("duelDiff reflects only regular duels: A=0, B=0 (1 won, 1 lost each; TIE not counted)", () => {
+    // A won duel 1, lost duel 2, duel 3 was TIE
+    expect(row(rows, "A").duelsWon).toBe(1)
+    expect(row(rows, "A").duelsLost).toBe(1)
+    expect(row(rows, "A").duelDiff).toBe(0)
+    expect(row(rows, "B").duelsWon).toBe(1)
+    expect(row(rows, "B").duelsLost).toBe(1)
+    expect(row(rows, "B").duelDiff).toBe(0)
+  })
+
+  it("bestRingteiler does NOT include tiebreak series", () => {
+    // A's regular series teilers: 10, 20, 15 → min = 10
+    expect(row(rows, "A").bestRingteiler).toBe(10)
+    // B's regular series teilers: 20, 10, 15 → min = 10
+    expect(row(rows, "B").bestRingteiler).toBe(10)
+  })
+
+  it("A ranks 1st", () => {
+    expect(row(rows, "A").rank).toBe(1)
+    expect(row(rows, "B").rank).toBe(2)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Test 4: Withdrawn participant
+// ---------------------------------------------------------------------------
+describe("Withdrawn participant", () => {
+  // 3 participants: A, B, C. C is withdrawn.
+  // Matchups: A vs B (A wins), A vs C, B vs C — last two involve withdrawn C.
+  // Only A vs B should count.
+
+  const participants = [
+    mkParticipant("A"),
+    mkParticipant("B"),
+    mkParticipant("C", "Chuck", "Charlie", true),
+  ]
+
+  const matchupAB: BestOfStandingsMatchup = {
+    homeParticipantId: "A",
+    awayParticipantId: "B",
+    series: [1, 2, 3].flatMap((n) => [mkSeries("A", n, 90, 10), mkSeries("B", n, 80, 20)]),
+  }
+
+  const matchupAC: BestOfStandingsMatchup = {
+    homeParticipantId: "A",
+    awayParticipantId: "C",
+    series: [1, 2, 3].flatMap((n) => [mkSeries("A", n, 90, 10), mkSeries("C", n, 80, 20)]),
+  }
+
+  const matchupBC: BestOfStandingsMatchup = {
+    homeParticipantId: "B",
+    awayParticipantId: "C",
+    series: [1, 2, 3].flatMap((n) => [mkSeries("B", n, 90, 10), mkSeries("C", n, 80, 20)]),
+  }
+
+  const rows = calculateBestOfStandings(participants, [matchupAB, matchupAC, matchupBC], stdConfig)
+
+  it("returns 3 rows", () => {
+    expect(rows).toHaveLength(3)
+  })
+
+  it("C is withdrawn and ranked last", () => {
+    const c = row(rows, "C")
+    expect(c.withdrawn).toBe(true)
+    expect(c.rank).toBe(3) // activeCount=2, so withdrawn rank = 3
+  })
+
+  it("C has zero stats (their matches not counted)", () => {
+    const c = row(rows, "C")
+    expect(c.wins).toBe(0)
+    expect(c.losses).toBe(0)
+    expect(c.played).toBe(0)
+    expect(c.duelsWon).toBe(0)
+    expect(c.duelsLost).toBe(0)
+  })
+
+  it("A has 1 win from A vs B only", () => {
+    const a = row(rows, "A")
+    expect(a.wins).toBe(1)
+    expect(a.played).toBe(1)
+  })
+
+  it("B has 0 wins (lost to A)", () => {
+    const b = row(rows, "B")
+    expect(b.wins).toBe(0)
+    expect(b.losses).toBe(1)
+    expect(b.played).toBe(1)
+  })
+
+  it("A ranks 1st, B ranks 2nd", () => {
+    expect(row(rows, "A").rank).toBe(1)
+    expect(row(rows, "B").rank).toBe(2)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Test 5: BYE matchup is skipped
+// ---------------------------------------------------------------------------
+describe("BYE matchup is skipped", () => {
+  const participants = [mkParticipant("A"), mkParticipant("B")]
+
+  const matchupABye: BestOfStandingsMatchup = {
+    homeParticipantId: "A",
+    awayParticipantId: null, // BYE
+    series: [],
+  }
+
+  const matchupAB: BestOfStandingsMatchup = {
+    homeParticipantId: "A",
+    awayParticipantId: "B",
+    series: [1, 2, 3].flatMap((n) => [mkSeries("A", n, 90, 10), mkSeries("B", n, 80, 20)]),
+  }
+
+  const rows = calculateBestOfStandings(participants, [matchupABye, matchupAB], stdConfig)
+
+  it("BYE does not contribute to A's wins or played", () => {
+    // Only A vs B counts
+    expect(row(rows, "A").wins).toBe(1)
+    expect(row(rows, "A").played).toBe(1)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Test 6: RINGS mode — best result is bestRings desc
+// ---------------------------------------------------------------------------
+describe("RINGS mode — bestRings used for tiebreak", () => {
+  // A and B both have 1 win:
+  //   A beats C, B beats D, then A and B haven't played each other.
+  //   But let's use 2 participants: A beats B in one match, B beats A in another (not possible with round-robin once).
+  //
+  // Simpler: 3 participants, 2 have same wins, bestRings decides.
+  //   A: 1 win (beat C), bestRings from those 3 duels = 270 (90+90+90)? No, bestRings = max single series rings.
+  //   Wait: bestRings is max rings over regular series (individual series, not sum).
+  //
+  // A: beats C with rings [95, 90, 88] → bestRings = 95
+  // B: beats C with rings [93, 91, 89] → bestRings = 93
+  // (C loses to both)
+  // Both A and B have 1 win — RINGS mode → A ranks higher (bestRings 95 > 93)
+
+  const participants = [mkParticipant("A"), mkParticipant("B"), mkParticipant("C")]
+
+  const config: BestOfStandingsConfig = {
+    scoringMode: "RINGS",
+    bestOf: 3,
+    playAll: true,
+    tiebreaker1: null,
+    tiebreaker2: null,
+    competitionDisciplineId: "disc-1",
+  }
+
+  const matchupAC: BestOfStandingsMatchup = {
+    homeParticipantId: "A",
+    awayParticipantId: "C",
+    series: [
+      mkSeries("A", 1, 95, 0, { ringteiler: 0 }),
+      mkSeries("C", 1, 70, 0, { ringteiler: 0 }),
+      mkSeries("A", 2, 90, 0, { ringteiler: 0 }),
+      mkSeries("C", 2, 70, 0, { ringteiler: 0 }),
+      mkSeries("A", 3, 88, 0, { ringteiler: 0 }),
+      mkSeries("C", 3, 70, 0, { ringteiler: 0 }),
+    ],
+  }
+
+  const matchupBC: BestOfStandingsMatchup = {
+    homeParticipantId: "B",
+    awayParticipantId: "C",
+    series: [
+      mkSeries("B", 1, 93, 0, { ringteiler: 0 }),
+      mkSeries("C", 1, 68, 0, { ringteiler: 0 }),
+      mkSeries("B", 2, 91, 0, { ringteiler: 0 }),
+      mkSeries("C", 2, 68, 0, { ringteiler: 0 }),
+      mkSeries("B", 3, 89, 0, { ringteiler: 0 }),
+      mkSeries("C", 3, 68, 0, { ringteiler: 0 }),
+    ],
+  }
+
+  const rows = calculateBestOfStandings(participants, [matchupAC, matchupBC], config)
+
+  it("A and B both have 1 win", () => {
+    expect(row(rows, "A").wins).toBe(1)
+    expect(row(rows, "B").wins).toBe(1)
+  })
+
+  it("A has bestRings=95, B has bestRings=93", () => {
+    expect(row(rows, "A").bestRings).toBe(95)
+    expect(row(rows, "B").bestRings).toBe(93)
+  })
+
+  it("A ranks above B due to higher bestRings in RINGS mode", () => {
+    expect(row(rows, "A").rank).toBe(1)
+    expect(row(rows, "B").rank).toBe(2)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Test 7: RINGTEILER mode — bestRingteiler asc (lower is better)
+// ---------------------------------------------------------------------------
+describe("RINGTEILER mode — bestRingteiler used for tiebreak", () => {
+  // A and B both have 1 win:
+  // A: beats C, bestRingteiler from their series = 5 (min of 5, 10, 8)
+  // B: beats C, bestRingteiler = 7 (min of 7, 12, 9)
+  // A ranks higher (lower ringteiler = better)
+
+  const participants = [mkParticipant("A"), mkParticipant("B"), mkParticipant("C")]
+
+  const matchupAC: BestOfStandingsMatchup = {
+    homeParticipantId: "A",
+    awayParticipantId: "C",
+    series: [
+      mkSeries("A", 1, 90, 5, { ringteiler: 5 }),
+      mkSeries("C", 1, 70, 50, { ringteiler: 50 }),
+      mkSeries("A", 2, 90, 10, { ringteiler: 10 }),
+      mkSeries("C", 2, 70, 50, { ringteiler: 50 }),
+      mkSeries("A", 3, 90, 8, { ringteiler: 8 }),
+      mkSeries("C", 3, 70, 50, { ringteiler: 50 }),
+    ],
+  }
+
+  const matchupBC: BestOfStandingsMatchup = {
+    homeParticipantId: "B",
+    awayParticipantId: "C",
+    series: [
+      mkSeries("B", 1, 90, 7, { ringteiler: 7 }),
+      mkSeries("C", 1, 70, 50, { ringteiler: 50 }),
+      mkSeries("B", 2, 90, 12, { ringteiler: 12 }),
+      mkSeries("C", 2, 70, 50, { ringteiler: 50 }),
+      mkSeries("B", 3, 90, 9, { ringteiler: 9 }),
+      mkSeries("C", 3, 70, 50, { ringteiler: 50 }),
+    ],
+  }
+
+  const rows = calculateBestOfStandings(participants, [matchupAC, matchupBC], stdConfig)
+
+  it("A bestRingteiler=5, B bestRingteiler=7", () => {
+    expect(row(rows, "A").bestRingteiler).toBe(5)
+    expect(row(rows, "B").bestRingteiler).toBe(7)
+  })
+
+  it("A ranks above B due to lower bestRingteiler in RINGTEILER mode", () => {
+    expect(row(rows, "A").rank).toBe(1)
+    expect(row(rows, "B").rank).toBe(2)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Test 8: Mixed discipline — effectiveTeilerFaktor applies
+// ---------------------------------------------------------------------------
+describe("Mixed discipline — effectiveTeilerFaktor applies", () => {
+  // competitionDisciplineId = null → factor is active.
+  // A: teiler=10, teilerFaktor=2 → correctedTeiler = 10*2 = 20
+  // B: teiler=15, teilerFaktor=1 → correctedTeiler = 15*1 = 15 (lower = better in RINGTEILER)
+  // Without factor correction, A(10) would beat B(15). With factor, B(15 corrected) beats A(20 corrected).
+  // So in TEILER mode with factor: B wins each duel.
+
+  const participants = [mkParticipant("A"), mkParticipant("B")]
+
+  const config: BestOfStandingsConfig = {
+    scoringMode: "TEILER",
+    bestOf: 3,
+    playAll: true,
+    tiebreaker1: null,
+    tiebreaker2: null,
+    competitionDisciplineId: null, // mixed — factor active
+  }
+
+  const matchup: BestOfStandingsMatchup = {
+    homeParticipantId: "A",
+    awayParticipantId: "B",
+    series: [1, 2, 3].flatMap((n) => [
+      // A: teiler=10, factor=2 → corrected=20
+      mkSeries("A", n, 90, 10, { teilerFaktor: 2 }),
+      // B: teiler=15, factor=1 → corrected=15 (lower = wins)
+      mkSeries("B", n, 90, 15, { teilerFaktor: 1 }),
+    ]),
+  }
+
+  const rows = calculateBestOfStandings(participants, [matchup], config)
+
+  it("B wins the match (corrected teiler 15 < 20)", () => {
+    expect(row(rows, "B").wins).toBe(1)
+    expect(row(rows, "A").wins).toBe(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Test 9: In-progress match (not all duels played) — not counted
+// ---------------------------------------------------------------------------
+describe("In-progress match is not counted as win or loss", () => {
+  // best-of-3, playAll=true: only 1 duel played → in_progress → not counted
+  const participants = [mkParticipant("A"), mkParticipant("B")]
+
+  const matchup: BestOfStandingsMatchup = {
+    homeParticipantId: "A",
+    awayParticipantId: "B",
+    series: [mkSeries("A", 1, 90, 10), mkSeries("B", 1, 80, 20)], // only 1 of 3 duels played
+  }
+
+  const rows = calculateBestOfStandings(participants, [matchup], stdConfig)
+
+  it("neither participant gets a win or loss", () => {
+    expect(row(rows, "A").wins).toBe(0)
+    expect(row(rows, "A").losses).toBe(0)
+    expect(row(rows, "B").wins).toBe(0)
+    expect(row(rows, "B").losses).toBe(0)
+  })
+
+  it("played = 0 for both", () => {
+    expect(row(rows, "A").played).toBe(0)
+    expect(row(rows, "B").played).toBe(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Test 10: TIE duels count for neither side in duelDiff
+// ---------------------------------------------------------------------------
+describe("TIE duels don't count towards duelsWon or duelsLost", () => {
+  // Best-of-3, playAll=true, all 3 duels TIE → needs_tiebreak (no winner yet).
+  const participants = [mkParticipant("A"), mkParticipant("B")]
+
+  const matchup: BestOfStandingsMatchup = {
+    homeParticipantId: "A",
+    awayParticipantId: "B",
+    series: [1, 2, 3].flatMap((n) => [
+      mkSeries("A", n, 90, 10),
+      mkSeries("B", n, 90, 10), // same → TIE
+    ]),
+  }
+
+  const rows = calculateBestOfStandings(participants, [matchup], stdConfig)
+
+  it("match is not counted as win or loss (needs_tiebreak → not complete)", () => {
+    expect(row(rows, "A").wins).toBe(0)
+    expect(row(rows, "A").losses).toBe(0)
+  })
+
+  it("duelsWon and duelsLost are both 0 for both participants", () => {
+    expect(row(rows, "A").duelsWon).toBe(0)
+    expect(row(rows, "A").duelsLost).toBe(0)
+    expect(row(rows, "B").duelsWon).toBe(0)
+    expect(row(rows, "B").duelsLost).toBe(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Test 11: Early clinch (playAll=false)
+// ---------------------------------------------------------------------------
+describe("Early clinch — playAll=false, best-of-3", () => {
+  // A wins duels 1 and 2 → clinches (2 = ceil(3/2)) without playing duel 3.
+  // Only 2 series pairs present.
+  const participants = [mkParticipant("A"), mkParticipant("B")]
+
+  const config: BestOfStandingsConfig = {
+    ...stdConfig,
+    playAll: false,
+  }
+
+  const matchup: BestOfStandingsMatchup = {
+    homeParticipantId: "A",
+    awayParticipantId: "B",
+    series: [1, 2].flatMap((n) => [mkSeries("A", n, 90, 10), mkSeries("B", n, 80, 20)]),
+  }
+
+  const rows = calculateBestOfStandings(participants, [matchup], config)
+
+  it("A wins the match via early clinch", () => {
+    expect(row(rows, "A").wins).toBe(1)
+    expect(row(rows, "B").losses).toBe(1)
+  })
+
+  it("duelsWon for A = 2, duelsLost = 0", () => {
+    expect(row(rows, "A").duelsWon).toBe(2)
+    expect(row(rows, "A").duelsLost).toBe(0)
+    expect(row(rows, "A").duelDiff).toBe(2)
+  })
+})
