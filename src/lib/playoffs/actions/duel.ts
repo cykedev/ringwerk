@@ -5,6 +5,7 @@ import { db } from "@/lib/db"
 import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import { calculateRingteiler, MAX_RINGS } from "@/lib/results/calculateResult"
+import { effectiveTeilerFaktor } from "@/lib/scoring/calculateScore"
 import { revalidatePublicSlugForCompetition } from "@/lib/competitions/actions/_shared"
 import {
   determineFinaleRoundWinner,
@@ -59,6 +60,7 @@ export async function savePlayoffDuelResult(
           participantB: { select: { firstName: true, lastName: true } },
           competition: {
             select: {
+              disciplineId: true,
               discipline: { select: { scoringType: true, teilerFaktor: true } },
               playoffBestOf: true,
               finalePrimary: true,
@@ -156,16 +158,17 @@ export async function savePlayoffDuelResult(
 
     const maxRingsA = MAX_RINGS[disciplineA.scoringType]
     const maxRingsB = MAX_RINGS[disciplineB.scoringType]
+    const competitionDisciplineId = duel.playoffMatch.competition.disciplineId
     ringteilerA = calculateRingteiler(
       input.totalRingsA,
       input.teilerA ?? 0,
-      disciplineA.teilerFaktor.toNumber(),
+      effectiveTeilerFaktor(competitionDisciplineId, disciplineA.teilerFaktor.toNumber()),
       maxRingsA
     )
     ringteilerB = calculateRingteiler(
       input.totalRingsB,
       input.teilerB ?? 0,
-      disciplineB.teilerFaktor.toNumber(),
+      effectiveTeilerFaktor(competitionDisciplineId, disciplineB.teilerFaktor.toNumber()),
       maxRingsB
     )
     if (isFinal) {
