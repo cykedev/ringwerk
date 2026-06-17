@@ -5,6 +5,7 @@ import { db } from "@/lib/db"
 import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import { generateSchedule } from "./generateSchedule"
+import { generateBestOfSchedule } from "./generateBestOfSchedule"
 
 /**
  * Generiert den Spielplan für einen aktiven Wettkampf.
@@ -26,6 +27,7 @@ export async function generateCompetitionSchedule(competitionId: string): Promis
     select: {
       id: true,
       status: true,
+      leagueFormat: true,
       hinrundeDeadline: true,
       rueckrundeDeadline: true,
     },
@@ -60,23 +62,49 @@ export async function generateCompetitionSchedule(competitionId: string): Promis
 
   // Spielplan berechnen
   const participantIds = enrollments.map((e) => e.participantId)
-  const matchups = generateSchedule(participantIds)
+
+  type MatchupData = {
+    competitionId: string
+    homeParticipantId: string
+    awayParticipantId: string | null
+    round: "FIRST_LEG" | "SECOND_LEG"
+    roundIndex: number
+    status: "PENDING" | "BYE"
+    dueDate: Date | null
+  }
+
+  let matchupData: MatchupData[]
+
+  if (competition.leagueFormat === "BEST_OF_SINGLE") {
+    const pairings = generateBestOfSchedule(participantIds)
+    matchupData = pairings.map((m) => ({
+      competitionId,
+      homeParticipantId: m.homeId,
+      awayParticipantId: m.awayId,
+      round: "FIRST_LEG" as const,
+      roundIndex: m.roundIndex,
+      status: m.awayId === null ? ("BYE" as const) : ("PENDING" as const),
+      dueDate: competition.hinrundeDeadline,
+    }))
+  } else {
+    // DOUBLE_ROUND_ROBIN (default)
+    const matchups = generateSchedule(participantIds)
+    matchupData = matchups.map((m) => ({
+      competitionId,
+      homeParticipantId: m.homeId,
+      awayParticipantId: m.awayId,
+      round: m.round,
+      roundIndex: m.roundIndex,
+      status: m.awayId === null ? ("BYE" as const) : ("PENDING" as const),
+      dueDate:
+        m.round === "FIRST_LEG" ? competition.hinrundeDeadline : competition.rueckrundeDeadline,
+    }))
+  }
 
   // Transaktional: PENDING-Paarungen löschen + neue anlegen
   await db.$transaction([
     db.matchup.deleteMany({ where: { competitionId, status: "PENDING" } }),
-    db.matchup.createMany({
-      data: matchups.map((m) => ({
-        competitionId,
-        homeParticipantId: m.homeId,
-        awayParticipantId: m.awayId,
-        round: m.round,
-        roundIndex: m.roundIndex,
-        status: m.awayId === null ? "BYE" : "PENDING",
-        dueDate:
-          m.round === "FIRST_LEG" ? competition.hinrundeDeadline : competition.rueckrundeDeadline,
-      })),
-    }),
+    db.matchup.createMany({ data: matchupData }),
   ])
 
   revalidatePath(`/competitions/${competitionId}/schedule`)
