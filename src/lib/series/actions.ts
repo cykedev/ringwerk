@@ -6,6 +6,7 @@ import { db } from "@/lib/db"
 import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import { calculateRingteiler } from "@/lib/results/calculateResult"
+import { effectiveTeilerFaktor } from "@/lib/scoring/calculateScore"
 import { getEffectiveScoringType, getMaxRings } from "@/lib/series/scoring-format"
 import { revalidatePublicSlugForCompetition } from "@/lib/competitions/actions/_shared"
 
@@ -124,7 +125,7 @@ export async function saveEventSeries(
     return { error: { rings: ["Nur ganze Ringe erlaubt"] } }
   }
 
-  const teilerFaktor = discipline.teilerFaktor.toNumber()
+  const teilerFaktor = effectiveTeilerFaktor(competition.disciplineId, discipline.teilerFaktor.toNumber())
   const ringteiler = calculateRingteiler(rings, teiler, teilerFaktor, maxRings)
 
   const sessionDate = new Date()
