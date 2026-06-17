@@ -12,6 +12,7 @@
 
 Baseline (immer): `code-conventions.md`, `reference-files.md`, `data-model.md`, `architecture.md`, `features.md`.
 Zusätzlich:
+
 - `ui-patterns.md` — für Task 8 (Änderungen an Server-Pages, die Props an Dialoge geben).
 
 ## Domänenregel (Referenz für alle Tasks)
@@ -26,6 +27,7 @@ Zusätzlich:
 ### Task 1: Zentrale Helper-Funktion `effectiveTeilerFaktor`
 
 **Files:**
+
 - Modify: `src/lib/scoring/calculateScore.ts`
 - Test: `src/lib/scoring/calculateScore.test.ts`
 
@@ -91,6 +93,7 @@ git commit -m "feat(scoring): add effectiveTeilerFaktor helper (factor only when
 ### Task 2: Liga-Paarungen — `saveMatchResult`
 
 **Files:**
+
 - Modify: `src/lib/results/actions.ts:36-93`
 - Test: `src/lib/results/actions.test.ts`
 
@@ -154,9 +157,15 @@ import { calculateRingteiler, MAX_RINGS } from "./calculateResult"
 import { effectiveTeilerFaktor } from "@/lib/scoring/calculateScore"
 
 // Zeilen 77-78 ersetzen:
-  const competitionDisciplineId = matchup.competition.disciplineId
-  const homeFaktor = effectiveTeilerFaktor(competitionDisciplineId, homeDiscipline.teilerFaktor.toNumber())
-  const awayFaktor = effectiveTeilerFaktor(competitionDisciplineId, awayDiscipline.teilerFaktor.toNumber())
+const competitionDisciplineId = matchup.competition.disciplineId
+const homeFaktor = effectiveTeilerFaktor(
+  competitionDisciplineId,
+  homeDiscipline.teilerFaktor.toNumber()
+)
+const awayFaktor = effectiveTeilerFaktor(
+  competitionDisciplineId,
+  awayDiscipline.teilerFaktor.toNumber()
+)
 ```
 
 - [ ] **Step 4: Test ausführen, Erfolg verifizieren**
@@ -176,6 +185,7 @@ git commit -m "fix(results): apply teilerFaktor only for mixed discipline in sav
 ### Task 3: Event-Serien — `saveEventSeries`
 
 **Files:**
+
 - Modify: `src/lib/series/actions.ts:8, 127-128`
 - Test: `src/lib/series/actions.test.ts`
 
@@ -226,8 +236,11 @@ import { effectiveTeilerFaktor } from "@/lib/scoring/calculateScore"
 (b) Zeilen 127-128 ersetzen:
 
 ```ts
-  const teilerFaktor = effectiveTeilerFaktor(competition.disciplineId, discipline.teilerFaktor.toNumber())
-  const ringteiler = calculateRingteiler(rings, teiler, teilerFaktor, maxRings)
+const teilerFaktor = effectiveTeilerFaktor(
+  competition.disciplineId,
+  discipline.teilerFaktor.toNumber()
+)
+const ringteiler = calculateRingteiler(rings, teiler, teilerFaktor, maxRings)
 ```
 
 Hinweis: `competition.disciplineId` ist in der `saveEventSeries`-Query bereits selektiert (Zeile 62).
@@ -249,6 +262,7 @@ git commit -m "fix(series): apply teilerFaktor only for mixed discipline in save
 ### Task 4: Saison-Serien — `saveSeasonSeries` + `updateSeasonSeries`
 
 **Files:**
+
 - Modify: `src/lib/series/actions.ts:342-343, 480-481`
 - Test: `src/lib/series/actions.test.ts`
 
@@ -296,8 +310,11 @@ Expected: FAIL — `ringteiler: 30` statt `70`. (Falls das Mock-Setup für `save
 - [ ] **Step 3: Implementierung** — in `src/lib/series/actions.ts` an **beiden** Stellen (Zeilen 342-343 in `saveSeasonSeries` und 480-481 in `updateSeasonSeries`) identisch ersetzen:
 
 ```ts
-  const teilerFaktor = effectiveTeilerFaktor(competition.disciplineId, discipline.teilerFaktor.toNumber())
-  const ringteiler = calculateRingteiler(rings, teiler, teilerFaktor, maxRings)
+const teilerFaktor = effectiveTeilerFaktor(
+  competition.disciplineId,
+  discipline.teilerFaktor.toNumber()
+)
+const ringteiler = calculateRingteiler(rings, teiler, teilerFaktor, maxRings)
 ```
 
 (Der Import aus Task 3 deckt beide Stellen ab.)
@@ -319,6 +336,7 @@ git commit -m "fix(series): apply teilerFaktor only for mixed discipline in seas
 ### Task 5: Playoff-Duelle — `savePlayoffDuelResult`
 
 **Files:**
+
 - Modify: `src/lib/playoffs/actions/duel.ts:7, 62/141-148, 159-170`
 
 **Test-Hinweis:** Es gibt keinen bestehenden Action-Test für `savePlayoffDuelResult`; das Mock-Setup (Duel-Query mit verschachteltem `playoffMatch.competition`, Finale-Logik, Win-Berechnung) wäre für einen 1-Zeilen-Faktorwechsel unverhältnismäßig. Die Kernregel ist durch den `effectiveTeilerFaktor`-Unit-Test (Task 1) und `tsc` abgedeckt. **Bewusste YAGNI-Entscheidung: kein dedizierter Action-Test hier.**
@@ -346,19 +364,19 @@ import { effectiveTeilerFaktor } from "@/lib/scoring/calculateScore"
 - [ ] **Step 3: Faktor über `effectiveTeilerFaktor`** — Zeilen 159-170 ersetzen:
 
 ```ts
-    const competitionDisciplineId = duel.playoffMatch.competition.disciplineId
-    ringteilerA = calculateRingteiler(
-      input.totalRingsA,
-      input.teilerA ?? 0,
-      effectiveTeilerFaktor(competitionDisciplineId, disciplineA.teilerFaktor.toNumber()),
-      maxRingsA
-    )
-    ringteilerB = calculateRingteiler(
-      input.totalRingsB,
-      input.teilerB ?? 0,
-      effectiveTeilerFaktor(competitionDisciplineId, disciplineB.teilerFaktor.toNumber()),
-      maxRingsB
-    )
+const competitionDisciplineId = duel.playoffMatch.competition.disciplineId
+ringteilerA = calculateRingteiler(
+  input.totalRingsA,
+  input.teilerA ?? 0,
+  effectiveTeilerFaktor(competitionDisciplineId, disciplineA.teilerFaktor.toNumber()),
+  maxRingsA
+)
+ringteilerB = calculateRingteiler(
+  input.totalRingsB,
+  input.teilerB ?? 0,
+  effectiveTeilerFaktor(competitionDisciplineId, disciplineB.teilerFaktor.toNumber()),
+  maxRingsB
+)
 ```
 
 - [ ] **Step 4: Typecheck + bestehende Playoff-Tests**
@@ -378,6 +396,7 @@ git commit -m "fix(playoffs): apply teilerFaktor only for mixed discipline in du
 ### Task 6: Event-Rangliste — `rankEventParticipants` (on-the-fly)
 
 **Files:**
+
 - Modify: `src/lib/scoring/rankEventParticipants.ts:37-46, 60`
 - Modify (Aufrufer): `src/app/(app)/page.tsx:47`, `src/app/(app)/competitions/[id]/ranking/page.tsx:38`, `src/app/api/competitions/[id]/pdf/ranking/route.ts:27`, `src/app/api/public/c/[slug]/pdf/route.ts:152`
 - Test: `src/lib/scoring/rankEventParticipants.test.ts`
@@ -457,10 +476,11 @@ type EventConfig = {
 import { calculateScore, calculateCorrectedTeiler, effectiveTeilerFaktor } from "./calculateScore"
 
 // Zeile 60:
-    const faktor = effectiveTeilerFaktor(config.competitionDisciplineId, s.discipline.teilerFaktor)
+const faktor = effectiveTeilerFaktor(config.competitionDisciplineId, s.discipline.teilerFaktor)
 ```
 
 (c) Alle 4 Aufrufer um `competitionDisciplineId: competition.disciplineId` im Config-Objekt erweitern. In jeder Datei steht die `competition` (bzw. `data.competition`) zur Verfügung:
+
 - `src/app/(app)/page.tsx:47` — `rankEventParticipants(data.series, { … , competitionDisciplineId: data.competition.disciplineId })`
 - `src/app/(app)/competitions/[id]/ranking/page.tsx:38` (Config wird als `eventConfig` gebaut — Feld dort ergänzen, `competition.disciplineId`)
 - `src/app/api/competitions/[id]/pdf/ranking/route.ts:27` — `competitionDisciplineId: data.competition.disciplineId`
@@ -483,6 +503,7 @@ git commit -m "fix(scoring): rankEventParticipants applies teilerFaktor only for
 ### Task 7: Saison-Tabelle — `calculateSeasonStandings` (on-the-fly)
 
 **Files:**
+
 - Modify: `src/lib/scoring/calculateSeasonStandings.ts:36-39, 74`
 - Modify (Aufrufer): `src/app/(app)/page.tsx:64`, `src/app/(app)/competitions/[id]/standings/page.tsx:30`, `src/app/api/competitions/[id]/pdf/standings/route.ts:27`, `src/app/api/public/c/[slug]/pdf/route.ts:185`
 - Test: `src/lib/scoring/calculateSeasonStandings.test.ts`
@@ -543,14 +564,18 @@ export function calculateSeasonStandings(
 (b) Zeile 74 (`bestCorrectedTeiler`) anpassen:
 
 ```ts
-    const bestCorrectedTeiler = Math.min(
-      ...p.series.map((s) =>
-        calculateCorrectedTeiler(s.teiler, effectiveTeilerFaktor(competitionDisciplineId, s.discipline.teilerFaktor))
-      )
+const bestCorrectedTeiler = Math.min(
+  ...p.series.map((s) =>
+    calculateCorrectedTeiler(
+      s.teiler,
+      effectiveTeilerFaktor(competitionDisciplineId, s.discipline.teilerFaktor)
     )
+  )
+)
 ```
 
 (c) Alle 4 Aufrufer um das 3. Argument `competition.disciplineId` erweitern:
+
 - `src/app/(app)/page.tsx:64` — `calculateSeasonStandings(data.participants.map(…), minSeries, data.competition.disciplineId)`
 - `src/app/(app)/competitions/[id]/standings/page.tsx:30` — 3. Arg `competition.disciplineId`
 - `src/app/api/competitions/[id]/pdf/standings/route.ts:27` — 3. Arg `data.competition.disciplineId`
@@ -573,6 +598,7 @@ git commit -m "fix(scoring): calculateSeasonStandings applies teilerFaktor only 
 ### Task 8: Live-UI — „korr. Teiler"-Hint bei fester Disziplin unterdrücken
 
 **Files:**
+
 - Modify: `src/app/(app)/competitions/[id]/schedule/page.tsx:99`
 - Modify: `src/app/(app)/competitions/[id]/series/page.tsx:161`
 
@@ -613,6 +639,7 @@ git commit -m "fix(ui): hide corrected-teiler hint for fixed discipline"
 ### Task 9: Seed-Konsistenz prüfen + finaler `/check`
 
 **Files:**
+
 - Inspect: `prisma/seed.ts` (bzw. Seed-Quelle)
 
 - [ ] **Step 1: Seed prüfen** — Seed-Datei daraufhin lesen, ob Ringteiler-Werte für Liga/Event/Saison über die Action-/Calculate-Logik erzeugt werden (dann nach dem Fix automatisch korrekt) oder hart kodiert sind. Bei hart kodierten Werten für **feste** Disziplinen: Werte auf die faktorfreie Berechnung umstellen. Bei gemischten Disziplinen: unverändert lassen.
@@ -636,6 +663,7 @@ Expected: alle Gates grün.
 ## Self-Review (vom Plan-Autor durchgeführt)
 
 **Spec-Coverage:**
+
 - Helper-Funktion → Task 1 ✓
 - Persistierende Actions (results, series×3, playoffs) → Tasks 2, 3, 4, 5 ✓
 - On-the-fly (rankEventParticipants, calculateSeasonStandings) → Tasks 6, 7 ✓

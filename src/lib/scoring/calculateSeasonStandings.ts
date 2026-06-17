@@ -73,7 +73,10 @@ export function calculateSeasonStandings(
     // Bester Teiler — min korrigierter Teiler
     const bestCorrectedTeiler = Math.min(
       ...p.series.map((s) =>
-        calculateCorrectedTeiler(s.teiler, effectiveTeilerFaktor(competitionDisciplineId, s.discipline.teilerFaktor))
+        calculateCorrectedTeiler(
+          s.teiler,
+          effectiveTeilerFaktor(competitionDisciplineId, s.discipline.teilerFaktor)
+        )
       )
     )
 

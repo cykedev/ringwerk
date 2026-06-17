@@ -211,7 +211,11 @@ describe("saveMatchResult", () => {
       competition: {
         shotsPerSeries: 10,
         disciplineId: "d-lp",
-        discipline: { id: "d-lp", scoringType: "WHOLE", teilerFaktor: { toNumber: () => 0.3333333 } },
+        discipline: {
+          id: "d-lp",
+          scoringType: "WHOLE",
+          teilerFaktor: { toNumber: () => 0.3333333 },
+        },
       },
       series: [],
     })

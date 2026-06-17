@@ -159,7 +159,10 @@ export default async function SeriesPage({ params }: Props) {
                         competition.targetValueType
                       )}
                       shotsPerSeries={competition.shotsPerSeries}
-                      teilerFaktor={effectiveTeilerFaktor(competition.disciplineId, (cp.discipline ?? competition.discipline)?.teilerFaktor ?? 1)}
+                      teilerFaktor={effectiveTeilerFaktor(
+                        competition.disciplineId,
+                        (cp.discipline ?? competition.discipline)?.teilerFaktor ?? 1
+                      )}
                       existingSeries={series}
                     />
                     {series && <DeleteEventSeriesButton seriesId={series.id} competitionId={id} />}

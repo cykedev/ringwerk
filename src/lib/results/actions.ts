@@ -77,8 +77,14 @@ export async function saveMatchResult(
   const homeMaxRings = MAX_RINGS[homeDiscipline.scoringType]
   const awayMaxRings = MAX_RINGS[awayDiscipline.scoringType]
   const competitionDisciplineId = matchup.competition.disciplineId
-  const homeFaktor = effectiveTeilerFaktor(competitionDisciplineId, homeDiscipline.teilerFaktor.toNumber())
-  const awayFaktor = effectiveTeilerFaktor(competitionDisciplineId, awayDiscipline.teilerFaktor.toNumber())
+  const homeFaktor = effectiveTeilerFaktor(
+    competitionDisciplineId,
+    homeDiscipline.teilerFaktor.toNumber()
+  )
+  const awayFaktor = effectiveTeilerFaktor(
+    competitionDisciplineId,
+    awayDiscipline.teilerFaktor.toNumber()
+  )
   const sessionDate = matchup.dueDate ?? new Date()
   const shotCount = matchup.competition.shotsPerSeries
 

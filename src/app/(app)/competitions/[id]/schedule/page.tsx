@@ -97,7 +97,10 @@ export default async function CompetitionSchedulePage({ params }: Props) {
         scoringMode={competition.scoringMode}
         scoringType={scoringType}
         shotsPerSeries={competition.shotsPerSeries}
-        competitionTeilerFaktor={effectiveTeilerFaktor(competition.disciplineId, competition.discipline?.teilerFaktor ?? 1)}
+        competitionTeilerFaktor={effectiveTeilerFaktor(
+          competition.disciplineId,
+          competition.discipline?.teilerFaktor ?? 1
+        )}
       />
 
       {/* Tabelle */}
