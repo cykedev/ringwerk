@@ -1,6 +1,7 @@
 import type {
   CompetitionStatus,
   CompetitionType,
+  LeagueFormat,
   ScoringMode,
   ScoringType,
   TargetValueType,
@@ -63,6 +64,13 @@ export type CompetitionDetail = {
   finaleTiebreaker1: ScoringMode | null
   finaleTiebreaker2: ScoringMode | null
   finaleHasSuddenDeath: boolean | null
+  // Liga – BEST_OF_SINGLE group-phase config
+  leagueFormat: LeagueFormat
+  groupBestOf: number | null
+  groupPlayAllDuels: boolean
+  groupTiebreaker1: ScoringMode | null
+  groupTiebreaker2: ScoringMode | null
+  groupHasSuddenDeath: boolean
   // Liga – Deadlines
   hinrundeDeadline: Date | null
   rueckrundeDeadline: Date | null

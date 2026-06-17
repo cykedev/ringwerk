@@ -803,3 +803,183 @@ describe("updateCompetition — public password", () => {
     expect(result).toBeTruthy() // returns some error form
   })
 })
+
+// ─── BEST_OF_SINGLE — createCompetition ──────────────────────────────────────
+
+describe("createCompetition — BEST_OF_SINGLE", () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    disciplineFindUniqueMock.mockResolvedValue({ id: "d1" })
+    competitionCreateMock.mockResolvedValue({ id: "comp-bos" })
+    competitionFindFirstMock.mockResolvedValue(null)
+    auditLogCreateMock.mockResolvedValue({})
+  })
+
+  it("legt BEST_OF_SINGLE Liga an und persistiert Gruppenphase-Felder", async () => {
+    const fd = makeFormData({
+      name: "Best-of-3 Liga",
+      type: "LEAGUE",
+      scoringMode: "RINGS",
+      disciplineId: "d1",
+      leagueFormat: "BEST_OF_SINGLE",
+      groupBestOf: "3",
+      groupPlayAllDuels: "on",
+      groupHasSuddenDeath: "on",
+    })
+    const result = await createCompetition(null, fd)
+    expect(result).toMatchObject({ success: true })
+    expect(competitionCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          leagueFormat: "BEST_OF_SINGLE",
+          groupBestOf: 3,
+          groupPlayAllDuels: true,
+          groupHasSuddenDeath: true,
+          groupTiebreaker1: null,
+          groupTiebreaker2: null,
+        }),
+      })
+    )
+  })
+
+  it("lehnt geraden groupBestOf-Wert ab", async () => {
+    const fd = makeFormData({
+      name: "Fehlerhaft",
+      type: "LEAGUE",
+      scoringMode: "RINGS",
+      disciplineId: "d1",
+      leagueFormat: "BEST_OF_SINGLE",
+      groupBestOf: "4",
+    })
+    const result = await createCompetition(null, fd)
+    expect(result).toMatchObject({ error: { groupBestOf: expect.any(Array) } })
+    expect(competitionCreateMock).not.toHaveBeenCalled()
+  })
+
+  it("lehnt scoringMode DECIMAL_REST für BEST_OF_SINGLE ab", async () => {
+    const fd = makeFormData({
+      name: "Fehlerhaft",
+      type: "LEAGUE",
+      scoringMode: "DECIMAL_REST",
+      disciplineId: "d1",
+      leagueFormat: "BEST_OF_SINGLE",
+      groupBestOf: "3",
+    })
+    const result = await createCompetition(null, fd)
+    expect(result).toMatchObject({ error: { scoringMode: expect.any(Array) } })
+    expect(competitionCreateMock).not.toHaveBeenCalled()
+  })
+
+  it("lehnt TARGET_ABSOLUTE scoringMode für BEST_OF_SINGLE ab", async () => {
+    const fd = makeFormData({
+      name: "Fehlerhaft",
+      type: "LEAGUE",
+      scoringMode: "TARGET_ABSOLUTE",
+      disciplineId: "d1",
+      leagueFormat: "BEST_OF_SINGLE",
+      groupBestOf: "3",
+    })
+    const result = await createCompetition(null, fd)
+    expect(result).toMatchObject({ error: { scoringMode: expect.any(Array) } })
+    expect(competitionCreateMock).not.toHaveBeenCalled()
+  })
+
+  it("DOUBLE_ROUND_ROBIN-Erstellung bleibt unverändert", async () => {
+    const fd = makeFormData({
+      name: "Klassische Liga",
+      type: "LEAGUE",
+      scoringMode: "RINGTEILER",
+      disciplineId: "d1",
+      leagueFormat: "DOUBLE_ROUND_ROBIN",
+    })
+    const result = await createCompetition(null, fd)
+    expect(result).toMatchObject({ success: true })
+    expect(competitionCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          leagueFormat: "DOUBLE_ROUND_ROBIN",
+          scoringMode: "RINGTEILER",
+        }),
+      })
+    )
+  })
+})
+
+// ─── BEST_OF_SINGLE — updateCompetition ──────────────────────────────────────
+
+describe("updateCompetition — BEST_OF_SINGLE", () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    competitionFindUniqueMock.mockResolvedValue({
+      id: "c1",
+      name: "BOS Liga",
+      type: "LEAGUE",
+      scoringMode: "RINGS",
+      leagueFormat: "BEST_OF_SINGLE",
+      status: "ACTIVE",
+      isPublic: false,
+      publicSlug: null,
+      publicPasswordHash: null,
+    })
+    competitionFindFirstMock.mockResolvedValue(null)
+    matchupCountMock.mockResolvedValue(0)
+    competitionUpdateMock.mockResolvedValue({})
+    auditLogCreateMock.mockResolvedValue({})
+  })
+
+  it("aktualisiert BEST_OF_SINGLE-Felder, solange kein Spielplan existiert", async () => {
+    const fd = makeFormData({
+      name: "BOS Liga",
+      scoringMode: "RINGS",
+      leagueFormat: "BEST_OF_SINGLE",
+      groupBestOf: "5",
+      groupPlayAllDuels: "on",
+      groupHasSuddenDeath: "on",
+    })
+    const result = await updateCompetition("c1", null, fd)
+    expect(result).toMatchObject({ success: true })
+    expect(competitionUpdateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          leagueFormat: "BEST_OF_SINGLE",
+          groupBestOf: 5,
+          groupPlayAllDuels: true,
+        }),
+      })
+    )
+  })
+
+  it("sperrt leagueFormat-Änderung sobald ein Spielplan existiert", async () => {
+    // Schedule exists
+    matchupCountMock.mockResolvedValue(3)
+    const fd = makeFormData({
+      name: "BOS Liga",
+      scoringMode: "RINGS",
+      leagueFormat: "DOUBLE_ROUND_ROBIN",
+      groupBestOf: "3",
+    })
+    const result = await updateCompetition("c1", null, fd)
+    // Action succeeds but ignores the locked fields
+    expect(result).toMatchObject({ success: true })
+    const updateCall = competitionUpdateMock.mock.calls[0][0]
+    // leagueFormat must NOT appear in the update data once locked
+    expect(updateCall.data.leagueFormat).toBeUndefined()
+    expect(updateCall.data.groupBestOf).toBeUndefined()
+    expect(updateCall.data.groupPlayAllDuels).toBeUndefined()
+  })
+
+  it("sperrt groupBestOf-Änderung sobald ein Spielplan existiert", async () => {
+    matchupCountMock.mockResolvedValue(1)
+    const fd = makeFormData({
+      name: "BOS Liga",
+      scoringMode: "RINGS",
+      leagueFormat: "BEST_OF_SINGLE",
+      groupBestOf: "7",
+    })
+    await updateCompetition("c1", null, fd)
+    const updateCall = competitionUpdateMock.mock.calls[0][0]
+    expect(updateCall.data.groupBestOf).toBeUndefined()
+  })
+})

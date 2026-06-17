@@ -25,6 +25,7 @@ export async function updateCompetition(
         id: true,
         type: true,
         scoringMode: true,
+        leagueFormat: true,
         status: true,
         isPublic: true,
         publicSlug: true,
@@ -64,6 +65,12 @@ export async function updateCompetition(
     finaleTiebreaker1: formData.get("finaleTiebreaker1"),
     finaleTiebreaker2: formData.get("finaleTiebreaker2"),
     finaleHasSuddenDeath: formData.get("finaleHasSuddenDeath"),
+    leagueFormat: formData.get("leagueFormat"),
+    groupBestOf: formData.get("groupBestOf"),
+    groupPlayAllDuels: formData.get("groupPlayAllDuels"),
+    groupTiebreaker1: formData.get("groupTiebreaker1"),
+    groupTiebreaker2: formData.get("groupTiebreaker2"),
+    groupHasSuddenDeath: formData.get("groupHasSuddenDeath"),
   })
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
 
@@ -130,6 +137,29 @@ export async function updateCompetition(
         type === "LEAGUE" && !rulesetLocked ? (parsed.data.finaleTiebreaker2 ?? null) : undefined,
       finaleHasSuddenDeath:
         type === "LEAGUE" && !rulesetLocked ? parsed.data.finaleHasSuddenDeath : undefined,
+      // BEST_OF_SINGLE group-phase config — locked once a schedule exists
+      // groupPlayAllDuels DB default is false; explicitly persist the form value
+      leagueFormat: type === "LEAGUE" && !rulesetLocked ? parsed.data.leagueFormat : undefined,
+      groupBestOf:
+        type === "LEAGUE" && !rulesetLocked && parsed.data.leagueFormat === "BEST_OF_SINGLE"
+          ? (parsed.data.groupBestOf ?? 3)
+          : undefined,
+      groupPlayAllDuels:
+        type === "LEAGUE" && !rulesetLocked && parsed.data.leagueFormat === "BEST_OF_SINGLE"
+          ? parsed.data.groupPlayAllDuels
+          : undefined,
+      groupTiebreaker1:
+        type === "LEAGUE" && !rulesetLocked && parsed.data.leagueFormat === "BEST_OF_SINGLE"
+          ? (parsed.data.groupTiebreaker1 ?? null)
+          : undefined,
+      groupTiebreaker2:
+        type === "LEAGUE" && !rulesetLocked && parsed.data.leagueFormat === "BEST_OF_SINGLE"
+          ? (parsed.data.groupTiebreaker2 ?? null)
+          : undefined,
+      groupHasSuddenDeath:
+        type === "LEAGUE" && !rulesetLocked && parsed.data.leagueFormat === "BEST_OF_SINGLE"
+          ? parsed.data.groupHasSuddenDeath
+          : undefined,
     },
   })
 

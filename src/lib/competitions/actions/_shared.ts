@@ -1,10 +1,14 @@
 import { revalidatePath, revalidateTag } from "next/cache"
 import { z } from "zod"
-import { ScoringMode, TeamScoring, TargetValueType } from "@/generated/prisma/client"
+import { LeagueFormat, ScoringMode, TeamScoring, TargetValueType } from "@/generated/prisma/client"
 import { db } from "@/lib/db"
 import { SLUG_REGEX } from "../publicSlug"
 
 const PLAYOFF_SCORING_MODES = ["RINGTEILER", "RINGS", "RINGS_DECIMAL", "TEILER"] as const
+
+// BEST_OF_SINGLE only supports modes where a single duel yields a clear numeric result.
+// DECIMAL_REST and TARGET_* modes are not defined for head-to-head duels.
+const BEST_OF_SINGLE_SCORING_MODES = ["RINGS", "RINGS_DECIMAL", "TEILER", "RINGTEILER"] as const
 
 export function parseDate(value: string | null | undefined): Date | null {
   if (!value || value.trim() === "") return null
@@ -156,6 +160,34 @@ export const BaseSchema = z
       .nullable()
       .optional()
       .transform((v) => v === "true" || v === "on"),
+    // Liga – BEST_OF_SINGLE group-phase config
+    leagueFormat: z.preprocess(
+      (v) => (!v || v === "" ? "DOUBLE_ROUND_ROBIN" : v),
+      z.nativeEnum(LeagueFormat)
+    ),
+    groupBestOf: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => (v && v.trim() !== "" ? parseInt(v, 10) : null)),
+    groupPlayAllDuels: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => v === "true" || v === "on"),
+    groupTiebreaker1: z.preprocess(
+      (v) => (v === "none" || v === "" || !v ? null : v),
+      z.enum(BEST_OF_SINGLE_SCORING_MODES).nullable()
+    ),
+    groupTiebreaker2: z.preprocess(
+      (v) => (v === "none" || v === "" || !v ? null : v),
+      z.enum(BEST_OF_SINGLE_SCORING_MODES).nullable()
+    ),
+    groupHasSuddenDeath: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => v === "true" || v === "on"),
   })
   .superRefine((data, ctx) => {
     if (data.finaleTiebreaker2 && !data.finaleTiebreaker1) {
@@ -165,6 +197,31 @@ export const BaseSchema = z
         path: ["finaleTiebreaker2"],
       })
     }
+
+    // BEST_OF_SINGLE-specific validation
+    if (data.leagueFormat === "BEST_OF_SINGLE") {
+      // groupBestOf must be an odd integer ≥ 1 (default 3)
+      const bestOf = data.groupBestOf ?? 3
+      if (bestOf < 1 || bestOf % 2 === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Best-of-Zahl muss eine ungerade ganze Zahl ≥ 1 sein (z.B. 1, 3, 5, 7)",
+          path: ["groupBestOf"],
+        })
+      }
+
+      // scoringMode restricted to the four head-to-head modes
+      const allowedModes: readonly string[] = BEST_OF_SINGLE_SCORING_MODES
+      if (!allowedModes.includes(data.scoringMode)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Im Best-of-Modus ist nur Ringteiler, Ringe, Zehntelringe oder Teiler als Wertungsmodus erlaubt",
+          path: ["scoringMode"],
+        })
+      }
+    }
+
     if (data.isPublic) {
       if (!data.publicSlug) {
         ctx.addIssue({

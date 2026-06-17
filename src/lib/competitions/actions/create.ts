@@ -45,6 +45,12 @@ export async function createCompetition(
     finaleTiebreaker1: formData.get("finaleTiebreaker1"),
     finaleTiebreaker2: formData.get("finaleTiebreaker2"),
     finaleHasSuddenDeath: formData.get("finaleHasSuddenDeath"),
+    leagueFormat: formData.get("leagueFormat"),
+    groupBestOf: formData.get("groupBestOf"),
+    groupPlayAllDuels: formData.get("groupPlayAllDuels"),
+    groupTiebreaker1: formData.get("groupTiebreaker1"),
+    groupTiebreaker2: formData.get("groupTiebreaker2"),
+    groupHasSuddenDeath: formData.get("groupHasSuddenDeath"),
     isPublic: formData.get("isPublic"),
     publicSlug: formData.get("publicSlug"),
     publicPassword: formData.get("publicPassword"),
@@ -103,6 +109,29 @@ export async function createCompetition(
       finaleTiebreaker1: type === "LEAGUE" ? (parsed.data.finaleTiebreaker1 ?? null) : null,
       finaleTiebreaker2: type === "LEAGUE" ? (parsed.data.finaleTiebreaker2 ?? null) : null,
       finaleHasSuddenDeath: type === "LEAGUE" ? parsed.data.finaleHasSuddenDeath : null,
+      // BEST_OF_SINGLE group-phase config — only meaningful for LEAGUE
+      // groupPlayAllDuels DB default is false; explicitly set true for BEST_OF_SINGLE
+      leagueFormat: type === "LEAGUE" ? parsed.data.leagueFormat : undefined,
+      groupBestOf:
+        type === "LEAGUE" && parsed.data.leagueFormat === "BEST_OF_SINGLE"
+          ? (parsed.data.groupBestOf ?? 3)
+          : undefined,
+      groupPlayAllDuels:
+        type === "LEAGUE" && parsed.data.leagueFormat === "BEST_OF_SINGLE"
+          ? parsed.data.groupPlayAllDuels
+          : undefined,
+      groupTiebreaker1:
+        type === "LEAGUE" && parsed.data.leagueFormat === "BEST_OF_SINGLE"
+          ? (parsed.data.groupTiebreaker1 ?? null)
+          : undefined,
+      groupTiebreaker2:
+        type === "LEAGUE" && parsed.data.leagueFormat === "BEST_OF_SINGLE"
+          ? (parsed.data.groupTiebreaker2 ?? null)
+          : undefined,
+      groupHasSuddenDeath:
+        type === "LEAGUE" && parsed.data.leagueFormat === "BEST_OF_SINGLE"
+          ? parsed.data.groupHasSuddenDeath
+          : undefined,
       isPublic: parsed.data.isPublic ?? false,
       publicSlug: parsed.data.publicSlug,
       publicPasswordHash,
