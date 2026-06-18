@@ -132,7 +132,7 @@ src/
       competitions/           ← Wettbewerbs-spezifische Komponenten, type badges
       competitionParticipants/ ← Einschreiben + Rückzug, isGuest/Disziplin-Support
       matchups/               ← Spielplan-Generierung + Anzeige
-        BestOfMatchCard.tsx   ← Duel-für-Duel-Erfassung, Stechschuss-UI, Match-Fortschritt (BEST_OF_SINGLE)
+        BestOfEntryDialog.tsx ← Duel-für-Duel-Erfassung (Dialog), Stechschuss-UI, Match-Fortschritt (BEST_OF_SINGLE)
       results/                ← Ergebniserfassung (Dialog)
       standings/              ← Tabellenberechnung + Anzeige
         BestOfStandingsTable.tsx ← Tabelle für BEST_OF_SINGLE (Siege, Satzverhältnis, Satzdiff., bestes Erg.)

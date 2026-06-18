@@ -259,7 +259,7 @@ BEST_OF_SINGLE ist ein alternatives Gruppenphase-Format für LEAGUE-Wettbewerbe.
 
 - Pro Begegnung: Duelle werden einzeln eingetragen (Duell 1, 2, 3 … N)
 - Jedes Duell hat je eine Serie pro Schütze mit `duelNumber` = 1..N, `isTiebreak = false`
-- UI-Komponente: `BestOfMatchCard.tsx` — zeigt alle Duelle, aktuellen Spielstand, Stechschuss-Prompt
+- UI-Komponente: `BestOfEntryDialog.tsx` — Dialog zur Duell-Erfassung: zeigt alle Duelle, aktuellen Spielstand, Stechschuss-Prompt
 - Bei Gleichstand nach N Duellen: Stechschuss-Eingabe — einzelner Dezimalwert (in `rings`), `isTiebreak = true`, `duelNumber` = N+1 aufwärts
 - Höherer Schusswert beim Stechschuss gewinnt, unabhängig vom scoringMode
 - Korrekturen: Löschen des letzten Duells via `deleteLatestBestOfDuel`; Wiedererfassung überschreibt via Upsert
