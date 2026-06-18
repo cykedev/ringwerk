@@ -338,28 +338,33 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
       {/* ── Liga-Felder ─────────────────────────────────────────── */}
       {(type === "LEAGUE" || (isEdit && competition?.type === "LEAGUE")) && (
         <>
-          <div className="space-y-2">
-            <Label htmlFor="hinrundeDeadline">Hinrunde-Stichtag (optional)</Label>
-            <Input
-              id="hinrundeDeadline"
-              name="hinrundeDeadline"
-              type="date"
-              value={hinrundeDeadline}
-              onChange={(e) => setHinrundeDeadline(e.target.value)}
-              disabled={isPending}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="rueckrundeDeadline">Rückrunde-Stichtag (optional)</Label>
-            <Input
-              id="rueckrundeDeadline"
-              name="rueckrundeDeadline"
-              type="date"
-              value={rueckrundeDeadline}
-              onChange={(e) => setRueckrundeDeadline(e.target.value)}
-              disabled={isPending}
-            />
-          </div>
+          {/* Stichtage: nur für Doppelrunde (Hin-/Rückrunde) sinnvoll, nicht für BEST_OF_SINGLE */}
+          {!isBestOfSingle && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="hinrundeDeadline">Hinrunde-Stichtag (optional)</Label>
+                <Input
+                  id="hinrundeDeadline"
+                  name="hinrundeDeadline"
+                  type="date"
+                  value={hinrundeDeadline}
+                  onChange={(e) => setHinrundeDeadline(e.target.value)}
+                  disabled={isPending}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="rueckrundeDeadline">Rückrunde-Stichtag (optional)</Label>
+                <Input
+                  id="rueckrundeDeadline"
+                  name="rueckrundeDeadline"
+                  type="date"
+                  value={rueckrundeDeadline}
+                  onChange={(e) => setRueckrundeDeadline(e.target.value)}
+                  disabled={isPending}
+                />
+              </div>
+            </>
+          )}
 
           {/* ── Regelset ──────────────────────────────────────────── */}
           <div className="rounded-lg border bg-card p-4">
@@ -527,22 +532,21 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
                   </details>
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="playoffBestOf">Best-of (VF/HF)</Label>
-                  <Input
-                    id="playoffBestOf"
-                    name="playoffBestOf"
-                    type="number"
-                    min={1}
-                    max={9}
-                    step={2}
-                    value={playoffBestOf}
-                    onChange={(e) => setPlayoffBestOf(e.target.value)}
-                    placeholder="5"
-                  />
-                  <p className="text-xs text-muted-foreground">z.B. 5 = Best-of-5 (3 Siege)</p>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="playoffBestOf">Finale/Halbfinale – Best-of</Label>
+                <Select name="playoffBestOf" value={playoffBestOf} onValueChange={setPlayoffBestOf}>
+                  <SelectTrigger id="playoffBestOf">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3">Best-of-3 (2 Siege)</SelectItem>
+                    <SelectItem value="5">Best-of-5 (3 Siege)</SelectItem>
+                    <SelectItem value="7">Best-of-7 (4 Siege)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {/* Schuss/Serie: nur für klassische Liga (nicht BEST_OF_SINGLE, dort immer 10) */}
+              {!isBestOfSingle && (
                 <div className="space-y-2">
                   <Label htmlFor="shotsPerSeriesLeague">Schuss/Serie</Label>
                   <Input
@@ -555,7 +559,9 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
                     onChange={(e) => setShotsPerSeries(e.target.value)}
                   />
                 </div>
-              </div>
+              )}
+              {/* Liga BEST_OF_SINGLE always uses 10 shots per series — hidden field to persist default */}
+              {isBestOfSingle && <input type="hidden" name="shotsPerSeries" value="10" />}
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-2">
                   <input
@@ -658,7 +664,7 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
                   }
                 />
                 <Label htmlFor="finaleHasSuddenDeath" className="cursor-pointer">
-                  Sudden Death bei Finale-Gleichstand
+                  Finale: Gleichstand per Stechschuss
                 </Label>
               </div>
               <input
