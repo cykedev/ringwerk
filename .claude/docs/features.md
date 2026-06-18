@@ -117,7 +117,7 @@ Konfigurierbare Regelsets pro Liga:
 | finaleTiebreaker2       | —          | Zweites Tiebreaker-Kriterium bei weiterem Gleichstand (optional)    |
 | finaleHasSuddenDeath    | true       | Sudden Death bei verbleibendem Gleichstand nach allen Kriterien     |
 
-Regelset ist **nach Spielplan-Generierung gesperrt** — Änderungen nur vor dem ersten Spieltag.
+Das Regelset wird **phasenweise gesperrt**: Gruppenphase/Format (Format, Wertungsmodus, Best-of, Schuss/Serie) sind **nach Spielplan-Generierung gesperrt**; die **Playoff-/Finale-Einstellungen** (Best-of, Viertel-/Achtelfinale, Finale-Kriterien) bleiben editierbar, **bis die Playoffs gestartet sind** (`playoffMatch.count > 0`). So lässt sich z. B. eine falsch gewählte Bracket-Größe noch korrigieren, bevor die K.-o.-Phase läuft.
 
 ### Spielplan-Generierung
 

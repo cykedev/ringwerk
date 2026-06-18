@@ -536,7 +536,7 @@ export async function createLeague(formData: FormData): Promise<ActionResult>
 
 ## Aus Lernlog übernommen
 
-<!-- Zuletzt konsolidiert: 2026-06-17 -->
+<!-- Zuletzt konsolidiert: 2026-06-18 -->
 
 ### Prisma-Queries (ergänzt)
 
@@ -552,6 +552,7 @@ export async function createLeague(formData: FormData): Promise<ActionResult>
 - **`npx prisma generate` nach jeder Migration**: `prisma migrate dev` führt `prisma generate` NICHT automatisch aus. Vor Typecheck oder Build immer manuell aufrufen.
 - **Partielle Unique-Indizes für nullable FK-Felder**: Wenn ein nullable FK die Eindeutigkeitsbedingung kontrolliert, partielle Indizes statt globaler `@@unique`-Constraints verwenden (`WHERE col IS NULL` vs. `WHERE col IS NOT NULL`). Globale Unique-Indexes behandeln NULLs als distinct und erlauben dadurch Duplikate.
 - **Partial Unique Indexes als separate Migration**: Prisma kann Partial Unique Indexes (mit `WHERE`-Bedingung) nicht im Schema ausdrücken. Nach `prisma migrate dev` eine zweite Migration mit Future-Timestamp anlegen und das `CREATE UNIQUE INDEX ... WHERE ...` SQL manuell hineinschreiben — nicht versuchen, es im Schema zu modellieren.
+- **NULLs backfillen beim Erweitern eines Unique-Index um eine nullable Spalte**: SQL behandelt NULLs als distinct — das Erweitern eines Unique-Index um eine neue nullable Spalte verliert die Eindeutigkeit für bestehende Zeilen still. Bestehende NULLs auf einen Nicht-NULL-Sentinel backfillen UND den Schreiber den Sentinel immer setzen lassen.
 
 ### Dependency-Management
 
@@ -586,6 +587,7 @@ export async function createLeague(formData: FormData): Promise<ActionResult>
 - **Zod: `.transform()` statt `.pipe()` für optionale Zahlen**: `.pipe()` nach `.transform()` kann Typ-Kollisionen verursachen.
 - **Zod-Verarbeitungsreihenfolge**: `z.preprocess()` (Sentinel → null) → `.enum()` → `.nullable()` → `.transform()`. `preprocess` läuft vor Validierung, `transform` danach.
 - **shadcn Select Sentinel-Wert**: `<SelectItem value="none">` + `.preprocess((v) => (v === "none" || !v ? null : v), z.enum([...]).nullable())`. Nie `value=""` — verursacht Runtime-Error.
+- **Disabled Form-Controls submitten nicht**: Eine disabled (Radix-)Select sendet keinen Wert, ein Schema-Pflichtfeld scheitert dann an der Validierung. Muss ein Pflichtfeld sperrbar sein: `name` von der disabled Select entfernen und ein separates `<input type="hidden" name=… value={state} />` spiegeln (die Action ignoriert den Wert bei Sperre ohnehin).
 
 ### TypeScript & React
 
@@ -597,14 +599,18 @@ export async function createLeague(formData: FormData): Promise<ActionResult>
 - **Komponenten nie inside render definieren**: ESLint `react-hooks/static-components`. Komponente ausserhalb verschieben, State als Props durchreichen.
 - **HTML date input: ISO-Format für `defaultValue`**: `date.toISOString().slice(0, 10)`. `formatDateOnly()` ist für Display, nie für Form-`defaultValue`.
 - **Prisma `@default` gilt nur für neue Datensätze**: Bei bestehenden Zeilen keine Defaults rückwirkend gesetzt. Migrations-Strategie vorher klären: nullable + Backfill-Query vs. non-nullable mit Migration-`data`-Block.
+- **Client-sichere Pure-Helper nie mit DB-Funktionen in einer Datei**: Importiert eine Client Component einen Pure-Helper aus einer Datei, die auch DB-Code (`pg`/Prisma) exportiert, zieht der Prod-Bundle `dns`/`fs`/`net`/`tls` und der Build bricht. Splitten in `<feature>.ts` (pure) + `<feature>Queries.ts` (DB). Nur `next build` fängt das, nicht `tsc`/Lint.
 
 ### Next.js & Caching
 
 - **`revalidateTag` braucht zweites Argument**: In Next.js 16 ist die einstellige Form `revalidateTag(tag)` deprecated und erzeugt Runtime-Warnungen. Immer `revalidateTag(tag, "max")` schreiben.
+- **Nur JSON-serialisierbare Werte aus `unstable_cache`**: `unstable_cache` serialisiert via JSON — ein Buffer round-trippt als `{type:"Buffer",data:[…]}` und ist beim nächsten Read korrupt. Binärdaten als Base64 cachen und beim Lesen decoden.
+- **Cache-Tag in JEDER schreibenden Action invalidieren**: Bei tag-basiertem Caching den Tag in allen Actions revalidieren, die die zugrunde liegenden Daten schreiben — nicht nur dort, wo der Tag „logisch zuhause" ist — sonst werden öffentliche/abgeleitete Daten stale. Ein zentraler Invalidierungs-Helper hält die Streuung lesbar.
 
 ### Server Actions
 
 - **Alle benötigten Felder in einem select konsolidieren**: Wenn eine Server-Action mit einem DB-Fetch beginnt, alle später benötigten Felder in diesem einen `select` zusammenfassen. Niemals einen zweiten Fetch nach dem ersten try/catch nachschieben — das umgeht die Fehlerbehandlung und kostet einen unnötigen Round-Trip.
+- **Eine Refresh-Quelle pro Route nach einer Server-Action**: Für „Server-Action → UI-Update" entweder `revalidatePath` ODER `router.refresh()` nutzen — nie beides auf derselben Route (sie konkurrieren und doppeln das Re-Render → Button hängt, erst ein zweiter Trigger flusht). `router.refresh()` AUSSERHALB einer Transition aufrufen (schlichtes `useState`-Lade-Flag statt `useTransition`), damit der auslösende Button nicht bis zum Ende des Refreshs disabled bleibt.
 
 ### Tooling
 
