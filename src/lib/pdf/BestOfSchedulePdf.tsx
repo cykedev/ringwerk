@@ -151,16 +151,14 @@ function pairingLabel(matchup: MatchupListItem): string {
 // ─── Spaltenbreiten ───────────────────────────────────────────────────────────
 
 // Standings table widths (A4 portrait, 40pt padding each side → 515pt usable)
-// Pl. · Name · Begegn. · Siege · Niederl. · Satzverhältnis · Satzdiff. · bestes Erg.
+// Pl. · Name · Begegn. · Satzverhältnis · Satzdiff. · bestes Erg.
 const WS = {
-  rank: 28,
-  name: 140,
-  played: 36,
-  wins: 32,
-  losses: 40,
-  ratio: 52,
-  diff: 40,
-  best: 60,
+  rank: 30,
+  name: 185,
+  played: 60,
+  ratio: 95,
+  diff: 60,
+  best: 85,
 }
 
 // Schedule table widths
@@ -210,8 +208,6 @@ function BestOfStandingsSection({
           <Text style={[styles.tableHeaderCell, { width: WS.rank }]}>Pl.</Text>
           <Text style={[styles.tableHeaderCellLeft, { width: WS.name }]}>Name</Text>
           <Text style={[styles.tableHeaderCell, { width: WS.played }]}>Begegn.</Text>
-          <Text style={[styles.tableHeaderCell, { width: WS.wins }]}>Siege</Text>
-          <Text style={[styles.tableHeaderCell, { width: WS.losses }]}>Niederl.</Text>
           <Text style={[styles.tableHeaderCell, { width: WS.ratio }]}>Satzverhältnis</Text>
           <Text style={[styles.tableHeaderCell, { width: WS.diff }]}>Satzdiff.</Text>
           <Text style={[styles.tableHeaderCell, { width: WS.best }]}>
@@ -252,8 +248,6 @@ function BestOfStandingsSection({
                 {name}
               </Text>
               <Text style={[styles.tableCell, { width: WS.played }]}>{row.played}</Text>
-              <Text style={[styles.tableCell, { width: WS.wins }]}>{row.wins}</Text>
-              <Text style={[styles.tableCell, { width: WS.losses }]}>{row.losses}</Text>
               <Text style={[styles.tableCell, { width: WS.ratio }]}>
                 {row.duelsWon}:{row.duelsLost}
               </Text>
