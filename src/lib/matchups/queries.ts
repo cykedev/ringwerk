@@ -59,6 +59,8 @@ export async function getMatchupsForCompetition(competitionId: string): Promise<
           rings: true,
           teiler: true,
           ringteiler: true,
+          duelNumber: true,
+          isTiebreak: true,
         },
       },
     },
@@ -79,6 +81,8 @@ export async function getMatchupsForCompetition(competitionId: string): Promise<
       rings: r.rings.toNumber(),
       teiler: r.teiler.toNumber(),
       ringteiler: r.ringteiler.toNumber(),
+      duelNumber: r.duelNumber,
+      isTiebreak: r.isTiebreak,
     })),
   }))
 }

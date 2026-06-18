@@ -101,6 +101,22 @@ export default async function CompetitionSchedulePage({ params }: Props) {
           competition.disciplineId,
           competition.discipline?.teilerFaktor ?? 1
         )}
+        leagueFormat={competition.leagueFormat}
+        bestOfConfig={
+          competition.leagueFormat === "BEST_OF_SINGLE"
+            ? {
+                disciplineId: competition.disciplineId,
+                groupBestOf: competition.groupBestOf ?? 3,
+                groupPlayAllDuels: competition.groupPlayAllDuels,
+                groupTiebreaker1: competition.groupTiebreaker1,
+                groupTiebreaker2: competition.groupTiebreaker2,
+                competitionTeilerFaktor: effectiveTeilerFaktor(
+                  competition.disciplineId,
+                  competition.discipline?.teilerFaktor ?? 1
+                ),
+              }
+            : undefined
+        }
       />
 
       {/* Tabelle */}

@@ -1,17 +1,32 @@
 import { Clock } from "lucide-react"
 import { formatDateOnly, getDisplayTimeZone } from "@/lib/dateTime"
 import { determineOutcome } from "@/lib/results/calculateResult"
-import type { ScoringMode, ScoringType } from "@/generated/prisma/client"
+import type { LeagueFormat, ScoringMode, ScoringType } from "@/generated/prisma/client"
 import type { MatchupListItem, MatchupParticipant, MatchResultSummary } from "@/lib/matchups/types"
 import { ResultEntryDialog } from "@/components/app/results/ResultEntryDialog"
+import { BestOfMatchCard } from "@/components/app/matchups/BestOfMatchCard"
 import { formatDecimal1, formatRings, getEffectiveScoringType } from "@/lib/series/scoring-format"
+
+// ─── Shared best-of config for BEST_OF_SINGLE layout ──────────────────────────
+
+interface BestOfConfig {
+  disciplineId: string | null
+  groupBestOf: number
+  groupPlayAllDuels: boolean
+  groupTiebreaker1: ScoringMode | null
+  groupTiebreaker2: ScoringMode | null
+  /** Effective teilerFaktor for live corrected-teiler hint. */
+  competitionTeilerFaktor: number
+}
+
+// ─── Props ─────────────────────────────────────────────────────────────────────
 
 interface Props {
   matchups: MatchupListItem[]
   hinrundeDeadline: Date | null
   rueckrundeDeadline: Date | null
   competitionId: string
-  /** Nur ADMIN darf Ergebnisse eintragen */
+  /** Nur ADMIN/MANAGER darf Ergebnisse eintragen */
   canManage: boolean
   /** Keine Erfassung/Korrektur mehr möglich wenn Playoffs laufen */
   playoffsStarted?: boolean
@@ -20,7 +35,13 @@ interface Props {
   scoringType?: ScoringType
   shotsPerSeries: number
   competitionTeilerFaktor?: number
+  /** DOUBLE_ROUND_ROBIN (default) or BEST_OF_SINGLE — controls which entry UI is rendered. */
+  leagueFormat?: LeagueFormat
+  /** Required when leagueFormat is BEST_OF_SINGLE. */
+  bestOfConfig?: BestOfConfig
 }
+
+// ─── Classic table layout (DOUBLE_ROUND_ROBIN) ────────────────────────────────
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: "Offen",
@@ -70,7 +91,36 @@ function ParticipantResult({
   )
 }
 
-function LegTable({
+function StatusBadge({ status }: { status: string }) {
+  if (status === "COMPLETED") {
+    return (
+      <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+        ✓
+      </span>
+    )
+  }
+  if (status === "BYE" || status === "WALKOVER") {
+    return (
+      <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+        {STATUS_LABEL[status]}
+      </span>
+    )
+  }
+  if (status === "PENDING") {
+    return (
+      <span className="inline-flex items-center justify-center">
+        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium text-muted-foreground">
+      {STATUS_LABEL[status] ?? status}
+    </span>
+  )
+}
+
+function ClassicLegTable({
   title,
   matchups,
   deadline,
@@ -146,8 +196,14 @@ function LegTable({
               const awayTeilerFaktor = m.awayParticipant?.teilerFaktor ?? competitionTeilerFaktor
 
               if (isCompleted && m.awayParticipant) {
-                homeResult = m.results.find((r) => r.participantId === m.homeParticipant.id)
-                awayResult = m.results.find((r) => r.participantId === m.awayParticipant!.id)
+                // For classic matchups: aggregate by summing all regular (non-tiebreak) series
+                // per participant — there is only one per side in DOUBLE_ROUND_ROBIN.
+                homeResult = m.results.find(
+                  (r) => r.participantId === m.homeParticipant.id && !r.isTiebreak
+                )
+                awayResult = m.results.find(
+                  (r) => r.participantId === m.awayParticipant!.id && !r.isTiebreak
+                )
 
                 if (homeResult && awayResult) {
                   const raw = determineOutcome(homeResult, awayResult, scoringMode)
@@ -226,34 +282,94 @@ function LegTable({
   )
 }
 
-function StatusBadge({ status }: { status: string }) {
-  if (status === "COMPLETED") {
-    return (
-      <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-        ✓
-      </span>
-    )
-  }
-  if (status === "BYE" || status === "WALKOVER") {
-    return (
-      <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-        {STATUS_LABEL[status]}
-      </span>
-    )
-  }
-  if (status === "PENDING") {
-    return (
-      <span className="inline-flex items-center justify-center">
-        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-      </span>
-    )
-  }
+// ─── Best-of card layout (BEST_OF_SINGLE) ────────────────────────────────────
+
+function BestOfLegSection({
+  title,
+  matchups,
+  deadline,
+  canManage,
+  scoringMode,
+  shotsPerSeries,
+  bestOfConfig,
+}: {
+  title: string
+  matchups: MatchupListItem[]
+  deadline: Date | null
+  canManage: boolean
+  scoringMode: ScoringMode
+  shotsPerSeries: number
+  bestOfConfig: BestOfConfig
+}) {
+  const tz = getDisplayTimeZone()
+
   return (
-    <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium text-muted-foreground">
-      {STATUS_LABEL[status] ?? status}
-    </span>
+    <div className="space-y-3">
+      <div className="flex items-baseline gap-2">
+        <h2 className="text-lg font-semibold">{title}</h2>
+        {deadline && (
+          <span className="text-sm text-muted-foreground">
+            · bis {formatDateOnly(deadline, tz)}
+          </span>
+        )}
+      </div>
+
+      <div className="space-y-3">
+        {matchups.map((m) => {
+          if (!m.awayParticipant || m.status === "BYE") {
+            // BYE rows — show a minimal card
+            return (
+              <div key={m.id} className="rounded-lg border bg-card px-4 py-3 opacity-60">
+                <span className="text-sm text-muted-foreground">
+                  {participantName(m.homeParticipant)} — Freilos
+                </span>
+              </div>
+            )
+          }
+
+          const isVoid = m.homeParticipant.withdrawn || m.awayParticipant.withdrawn
+          if (isVoid) {
+            return (
+              <div key={m.id} className="rounded-lg border bg-card px-4 py-3 opacity-50">
+                <span className="text-sm line-through text-muted-foreground">
+                  {participantName(m.homeParticipant)} vs. {participantName(m.awayParticipant)}
+                </span>
+              </div>
+            )
+          }
+
+          const scoringType = getEffectiveScoringType(
+            scoringMode,
+            m.homeParticipant.scoringType ? { scoringType: m.homeParticipant.scoringType } : null
+          )
+
+          return (
+            <BestOfMatchCard
+              key={m.id}
+              matchupId={m.id}
+              status={m.status}
+              homeParticipant={m.homeParticipant}
+              awayParticipant={m.awayParticipant}
+              series={m.results}
+              canManage={canManage}
+              scoringMode={scoringMode}
+              disciplineId={bestOfConfig.disciplineId}
+              groupBestOf={bestOfConfig.groupBestOf}
+              groupPlayAllDuels={bestOfConfig.groupPlayAllDuels}
+              groupTiebreaker1={bestOfConfig.groupTiebreaker1}
+              groupTiebreaker2={bestOfConfig.groupTiebreaker2}
+              shotsPerSeries={shotsPerSeries}
+              scoringType={scoringType}
+              teilerFaktor={bestOfConfig.competitionTeilerFaktor}
+            />
+          )
+        })}
+      </div>
+    </div>
   )
 }
+
+// ─── ScheduleView ─────────────────────────────────────────────────────────────
 
 export function ScheduleView({
   matchups,
@@ -264,6 +380,8 @@ export function ScheduleView({
   scoringMode = "RINGTEILER",
   shotsPerSeries,
   competitionTeilerFaktor = 1,
+  leagueFormat = "DOUBLE_ROUND_ROBIN",
+  bestOfConfig,
 }: Props) {
   if (matchups.length === 0) {
     return (
@@ -281,10 +399,40 @@ export function ScheduleView({
     .filter((m) => m.round === "SECOND_LEG" && m.status !== "BYE")
     .sort((a, b) => a.roundIndex - b.roundIndex)
 
+  // BEST_OF_SINGLE uses card layout; DOUBLE_ROUND_ROBIN uses the classic table.
+  if (leagueFormat === "BEST_OF_SINGLE" && bestOfConfig) {
+    return (
+      <div className="space-y-8">
+        {firstLeg.length > 0 && (
+          <BestOfLegSection
+            title="Hinrunde"
+            matchups={firstLeg}
+            deadline={hinrundeDeadline}
+            canManage={canManage && !playoffsStarted}
+            scoringMode={scoringMode}
+            shotsPerSeries={shotsPerSeries}
+            bestOfConfig={bestOfConfig}
+          />
+        )}
+        {secondLeg.length > 0 && (
+          <BestOfLegSection
+            title="Rückrunde"
+            matchups={secondLeg}
+            deadline={rueckrundeDeadline}
+            canManage={canManage && !playoffsStarted}
+            scoringMode={scoringMode}
+            shotsPerSeries={shotsPerSeries}
+            bestOfConfig={bestOfConfig}
+          />
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8">
       {firstLeg.length > 0 && (
-        <LegTable
+        <ClassicLegTable
           title="Hinrunde"
           matchups={firstLeg}
           deadline={hinrundeDeadline}
@@ -295,7 +443,7 @@ export function ScheduleView({
         />
       )}
       {secondLeg.length > 0 && (
-        <LegTable
+        <ClassicLegTable
           title="Rückrunde"
           matchups={secondLeg}
           deadline={rueckrundeDeadline}

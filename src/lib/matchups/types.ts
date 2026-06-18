@@ -18,6 +18,10 @@ export interface MatchResultSummary {
   rings: number
   teiler: number
   ringteiler: number
+  /** Present only for BEST_OF_SINGLE matchups — identifies which duel this result belongs to. */
+  duelNumber: number | null
+  /** True for Stechschuss (tiebreak) series. */
+  isTiebreak: boolean
 }
 
 export interface MatchupListItem {
