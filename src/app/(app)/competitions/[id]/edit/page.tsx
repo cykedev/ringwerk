@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation"
 import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import { getDisciplines } from "@/lib/disciplines/queries"
 import { getCompetitionById } from "@/lib/competitions/queries"
+import { hasPlayoffsStarted } from "@/lib/playoffs/queries"
 import { updateCompetition } from "@/lib/competitions/actions"
 import { CompetitionForm } from "@/components/app/competitions/CompetitionForm"
 import { ForceDeleteCompetitionSection } from "@/components/app/competitions/ForceDeleteCompetitionSection"
@@ -14,10 +15,11 @@ interface Props {
 export default async function EditCompetitionPage({ params }: Props) {
   const { id } = await params
 
-  const [session, competition, disciplines] = await Promise.all([
+  const [session, competition, disciplines, playoffsStarted] = await Promise.all([
     getAuthSession(),
     getCompetitionById(id),
     getDisciplines(),
+    hasPlayoffsStarted(id),
   ])
 
   if (!session || !canManage(session.user.role)) redirect("/")
@@ -38,6 +40,7 @@ export default async function EditCompetitionPage({ params }: Props) {
         disciplines={disciplines}
         action={action}
         hasMatchups={hasMatchups}
+        playoffsStarted={playoffsStarted}
       />
       <div className="mt-12">
         <ForceDeleteCompetitionSection competitionId={id} competitionName={competition.name} />

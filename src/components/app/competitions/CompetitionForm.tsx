@@ -25,7 +25,10 @@ interface Props {
   disciplines: SerializableDiscipline[]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   action: (prevState: ActionResult<any> | null, formData: FormData) => Promise<ActionResult<any>>
+  /** Gruppenphase/Format sperren, sobald Paarungen existieren. */
   hasMatchups?: boolean
+  /** Playoff-/Finale-Einstellungen sperren, sobald die Playoffs gestartet sind. */
+  playoffsStarted?: boolean
 }
 
 // DECIMAL_REST benötigt Einzelschüsse — nur für Liga verfügbar
@@ -58,7 +61,13 @@ function toDateInputValue(date: Date | null | undefined): string {
   return new Date(date).toISOString().slice(0, 10)
 }
 
-export function CompetitionForm({ competition, disciplines, action, hasMatchups = false }: Props) {
+export function CompetitionForm({
+  competition,
+  disciplines,
+  action,
+  hasMatchups = false,
+  playoffsStarted = false,
+}: Props) {
   const router = useRouter()
   const [state, formAction, isPending] = useActionState(action, null)
   const isEdit = !!competition
@@ -367,17 +376,17 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
           )}
 
           {/* ── Regelset ──────────────────────────────────────────── */}
-          <div className="rounded-lg border bg-card p-4">
-            <div className="mb-3 flex items-center gap-2">
-              <p className="text-sm font-medium">Regelset</p>
+          <div className="space-y-4 rounded-lg border bg-card p-4">
+            <p className="text-sm font-medium">Regelset</p>
+
+            {/* Gruppenphase & Format — gesperrt, sobald Paarungen existieren */}
+            <fieldset disabled={hasMatchups || isPending} className="space-y-4">
               {hasMatchups && (
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Lock className="h-3 w-3" />
-                  Gesperrt — Paarungen existieren bereits
+                  Gruppenphase &amp; Format gesperrt — Paarungen existieren bereits
                 </span>
               )}
-            </div>
-            <fieldset disabled={hasMatchups || isPending} className="space-y-4">
               {/* Liga-Format */}
               <div className="space-y-2">
                 <Label htmlFor="leagueFormat">Format</Label>
@@ -532,20 +541,7 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
                   </details>
                 </div>
               )}
-              <div className="space-y-2">
-                <Label htmlFor="playoffBestOf">Finale/Halbfinale – Best-of</Label>
-                <Select name="playoffBestOf" value={playoffBestOf} onValueChange={setPlayoffBestOf}>
-                  <SelectTrigger id="playoffBestOf">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="3">Best-of-3 (2 Siege)</SelectItem>
-                    <SelectItem value="5">Best-of-5 (3 Siege)</SelectItem>
-                    <SelectItem value="7">Best-of-7 (4 Siege)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {/* Schuss/Serie: nur für klassische Liga (nicht BEST_OF_SINGLE, dort immer 10) */}
+              {/* Schuss/Serie (Gruppenphase): nur klassische Liga (BEST_OF_SINGLE immer 10) */}
               {!isBestOfSingle && (
                 <div className="space-y-2">
                   <Label htmlFor="shotsPerSeriesLeague">Schuss/Serie</Label>
@@ -560,8 +556,30 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
                   />
                 </div>
               )}
-              {/* Liga BEST_OF_SINGLE always uses 10 shots per series — hidden field to persist default */}
               {isBestOfSingle && <input type="hidden" name="shotsPerSeries" value="10" />}
+            </fieldset>
+
+            {/* Playoffs & Finale — editierbar, bis die Playoffs gestartet sind */}
+            <fieldset disabled={playoffsStarted || isPending} className="space-y-4 border-t pt-4">
+              {playoffsStarted && (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Lock className="h-3 w-3" />
+                  Playoffs gesperrt — bereits gestartet
+                </span>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="playoffBestOf">Finale/Halbfinale – Best-of</Label>
+                <Select name="playoffBestOf" value={playoffBestOf} onValueChange={setPlayoffBestOf}>
+                  <SelectTrigger id="playoffBestOf">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3">Best-of-3 (2 Siege)</SelectItem>
+                    <SelectItem value="5">Best-of-5 (3 Siege)</SelectItem>
+                    <SelectItem value="7">Best-of-7 (4 Siege)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-2">
                   <input

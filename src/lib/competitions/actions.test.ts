@@ -248,6 +248,79 @@ describe("updateCompetition", () => {
   })
 })
 
+// ─── updateCompetition — Playoff-Konfiguration ───────────────────────────────
+
+describe("updateCompetition — Playoff-Konfiguration editierbar bis Playoff-Start", () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    getAuthSessionMock.mockResolvedValue(adminSession)
+    competitionUpdateMock.mockResolvedValue({})
+    competitionFindUniqueMock.mockResolvedValue({
+      id: "c1",
+      name: "Liga P",
+      type: "LEAGUE",
+      scoringMode: "RINGTEILER",
+      leagueFormat: "DOUBLE_ROUND_ROBIN",
+      status: "ACTIVE",
+      isPublic: false,
+      publicSlug: null,
+      publicPasswordHash: null,
+    })
+    competitionFindFirstMock.mockResolvedValue(null)
+    auditLogCreateMock.mockResolvedValue({})
+  })
+
+  it("erlaubt Playoff-Änderungen, solange Paarungen existieren, aber Playoffs nicht gestartet sind", async () => {
+    matchupCountMock.mockResolvedValue(6) // Gruppenphase läuft
+    playoffMatchCountMock.mockResolvedValue(0) // Playoffs noch nicht gestartet
+    const fd = makeFormData({
+      name: "Liga P",
+      scoringMode: "RINGTEILER",
+      playoffBestOf: "5",
+      playoffHasViertelfinale: "true",
+    })
+    const result = await updateCompetition("c1", null, fd)
+    expect(result).toMatchObject({ success: true })
+    const data = competitionUpdateMock.mock.calls[0][0].data
+    expect(data.playoffBestOf).toBe(5)
+    expect(data.playoffHasViertelfinale).toBe(true)
+  })
+
+  it("sperrt Playoff-Änderungen, sobald die Playoffs gestartet sind", async () => {
+    matchupCountMock.mockResolvedValue(6)
+    playoffMatchCountMock.mockResolvedValue(1) // Playoffs gestartet
+    const fd = makeFormData({
+      name: "Liga P",
+      scoringMode: "RINGTEILER",
+      playoffBestOf: "5",
+      playoffHasViertelfinale: "true",
+    })
+    const result = await updateCompetition("c1", null, fd)
+    expect(result).toMatchObject({ success: true })
+    const data = competitionUpdateMock.mock.calls[0][0].data
+    expect(data.playoffBestOf).toBeUndefined()
+    expect(data.playoffHasViertelfinale).toBeUndefined()
+  })
+
+  it("sperrt die Gruppenphase weiter bei Paarungen, lässt die Playoff-Felder aber zu", async () => {
+    matchupCountMock.mockResolvedValue(6)
+    playoffMatchCountMock.mockResolvedValue(0)
+    const fd = makeFormData({
+      name: "Liga P",
+      scoringMode: "RINGS",
+      shotsPerSeries: "40",
+      playoffHasViertelfinale: "true",
+    })
+    await updateCompetition("c1", null, fd)
+    const data = competitionUpdateMock.mock.calls[0][0].data
+    // Gruppenphase/Format bleibt gesperrt …
+    expect(data.scoringMode).toBeUndefined()
+    expect(data.shotsPerSeries).toBeUndefined()
+    // … die Playoff-Felder sind aber editierbar.
+    expect(data.playoffHasViertelfinale).toBe(true)
+  })
+})
+
 // ─── setCompetitionStatus ─────────────────────────────────────────────────────
 
 describe("setCompetitionStatus", () => {

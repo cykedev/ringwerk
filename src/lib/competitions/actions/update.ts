@@ -18,7 +18,7 @@ export async function updateCompetition(
   if (!session) return { error: "Nicht angemeldet" }
   if (!canManage(session.user.role)) return { error: "Keine Berechtigung" }
 
-  const [competition, matchupCount] = await Promise.all([
+  const [competition, matchupCount, playoffCount] = await Promise.all([
     db.competition.findUnique({
       where: { id },
       select: {
@@ -33,10 +33,15 @@ export async function updateCompetition(
       },
     }),
     db.matchup.count({ where: { competitionId: id } }),
+    db.playoffMatch.count({ where: { competitionId: id } }),
   ])
   if (!competition) return { error: "Wettbewerb nicht gefunden." }
 
+  // Group phase / format is locked once a schedule (matchups) exists.
   const rulesetLocked = matchupCount > 0
+  // Playoff & finale config only takes effect when the playoffs start — keep it
+  // editable until then, even after the group-phase schedule exists.
+  const playoffsStarted = playoffCount > 0
 
   const parsed = BaseSchema.safeParse({
     name: formData.get("name"),
@@ -125,18 +130,18 @@ export async function updateCompetition(
       seasonStart: type === "SEASON" ? parseDate(parsed.data.seasonStart) : undefined,
       seasonEnd: type === "SEASON" ? parseDate(parsed.data.seasonEnd) : undefined,
       playoffBestOf:
-        type === "LEAGUE" && !rulesetLocked ? (parsed.data.playoffBestOf ?? null) : undefined,
+        type === "LEAGUE" && !playoffsStarted ? (parsed.data.playoffBestOf ?? null) : undefined,
       playoffHasViertelfinale:
-        type === "LEAGUE" && !rulesetLocked ? parsed.data.playoffHasViertelfinale : undefined,
+        type === "LEAGUE" && !playoffsStarted ? parsed.data.playoffHasViertelfinale : undefined,
       playoffHasAchtelfinale:
-        type === "LEAGUE" && !rulesetLocked ? parsed.data.playoffHasAchtelfinale : undefined,
-      finalePrimary: type === "LEAGUE" && !rulesetLocked ? parsed.data.finalePrimary : undefined,
+        type === "LEAGUE" && !playoffsStarted ? parsed.data.playoffHasAchtelfinale : undefined,
+      finalePrimary: type === "LEAGUE" && !playoffsStarted ? parsed.data.finalePrimary : undefined,
       finaleTiebreaker1:
-        type === "LEAGUE" && !rulesetLocked ? (parsed.data.finaleTiebreaker1 ?? null) : undefined,
+        type === "LEAGUE" && !playoffsStarted ? (parsed.data.finaleTiebreaker1 ?? null) : undefined,
       finaleTiebreaker2:
-        type === "LEAGUE" && !rulesetLocked ? (parsed.data.finaleTiebreaker2 ?? null) : undefined,
+        type === "LEAGUE" && !playoffsStarted ? (parsed.data.finaleTiebreaker2 ?? null) : undefined,
       finaleHasSuddenDeath:
-        type === "LEAGUE" && !rulesetLocked ? parsed.data.finaleHasSuddenDeath : undefined,
+        type === "LEAGUE" && !playoffsStarted ? parsed.data.finaleHasSuddenDeath : undefined,
       // BEST_OF_SINGLE group-phase config — locked once a schedule exists
       // groupPlayAllDuels DB default is false; explicitly persist the form value
       leagueFormat: type === "LEAGUE" && !rulesetLocked ? parsed.data.leagueFormat : undefined,
