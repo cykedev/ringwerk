@@ -4,8 +4,12 @@ import { createElement, type ReactElement } from "react"
 import { getAuthSession } from "@/lib/auth-helpers"
 import { getCompetitionById } from "@/lib/competitions/queries"
 import { getMatchupsForCompetition } from "@/lib/matchups/queries"
-import { getStandingsForCompetition } from "@/lib/standings/queries"
+import {
+  getStandingsForCompetition,
+  getBestOfStandingsForCompetition,
+} from "@/lib/standings/queries"
 import { SchedulePdf } from "@/lib/pdf/SchedulePdf"
+import { BestOfSchedulePdf } from "@/lib/pdf/BestOfSchedulePdf"
 import { getEffectiveScoringType } from "@/lib/series/scoring-format"
 
 export async function GET(
@@ -19,26 +23,50 @@ export async function GET(
 
   const { id } = await params
 
-  const [competition, standings, matchups] = await Promise.all([
-    getCompetitionById(id),
-    getStandingsForCompetition(id),
-    getMatchupsForCompetition(id),
-  ])
-
+  const competition = await getCompetitionById(id)
   if (!competition) {
     return new NextResponse("Wettbewerb nicht gefunden", { status: 404 })
   }
 
-  const element = createElement(SchedulePdf, {
-    leagueName: competition.name,
-    disciplineName: competition.discipline?.name ?? "Gemischt",
-    scoringType: getEffectiveScoringType(competition.scoringMode, competition.discipline),
-    standings,
-    matchups,
-    firstLegDeadline: competition.hinrundeDeadline,
-    secondLegDeadline: competition.rueckrundeDeadline,
-    generatedAt: new Date(),
-  }) as ReactElement<DocumentProps>
+  const isBestOf = competition.leagueFormat === "BEST_OF_SINGLE"
+
+  const [standingsClassic, standingsBestOf, matchups] = await Promise.all([
+    isBestOf ? Promise.resolve([]) : getStandingsForCompetition(id),
+    isBestOf ? getBestOfStandingsForCompetition(id) : Promise.resolve([]),
+    getMatchupsForCompetition(id),
+  ])
+
+  const scoringType = getEffectiveScoringType(competition.scoringMode, competition.discipline)
+  const disciplineName = competition.discipline?.name ?? "Gemischt"
+
+  let element: ReactElement<DocumentProps>
+  if (isBestOf) {
+    element = createElement(BestOfSchedulePdf, {
+      leagueName: competition.name,
+      disciplineName,
+      scoringType,
+      scoringMode: competition.scoringMode,
+      disciplineId: competition.disciplineId,
+      groupBestOf: competition.groupBestOf ?? 3,
+      groupPlayAllDuels: competition.groupPlayAllDuels,
+      groupTiebreaker1: competition.groupTiebreaker1,
+      groupTiebreaker2: competition.groupTiebreaker2,
+      standings: standingsBestOf,
+      matchups,
+      generatedAt: new Date(),
+    }) as ReactElement<DocumentProps>
+  } else {
+    element = createElement(SchedulePdf, {
+      leagueName: competition.name,
+      disciplineName,
+      scoringType,
+      standings: standingsClassic,
+      matchups,
+      firstLegDeadline: competition.hinrundeDeadline,
+      secondLegDeadline: competition.rueckrundeDeadline,
+      generatedAt: new Date(),
+    }) as ReactElement<DocumentProps>
+  }
 
   const buffer = await renderToBuffer(element)
 

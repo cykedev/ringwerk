@@ -12,13 +12,17 @@ import {
   getSeasonWithSeries,
 } from "@/lib/competitions/queries"
 import { getMatchupsForCompetition } from "@/lib/matchups/queries"
-import { getStandingsForCompetition } from "@/lib/standings/queries"
+import {
+  getStandingsForCompetition,
+  getBestOfStandingsForCompetition,
+} from "@/lib/standings/queries"
 import { rankEventParticipants, rankEventTeams } from "@/lib/scoring/rankEventParticipants"
 import { calculateSeasonStandings } from "@/lib/scoring/calculateSeasonStandings"
 import { getEffectiveScoringType } from "@/lib/series/scoring-format"
 import { EventRankingPdf } from "@/lib/pdf/EventRankingPdf"
 import { SeasonStandingsPdf } from "@/lib/pdf/SeasonStandingsPdf"
 import { SchedulePdf } from "@/lib/pdf/SchedulePdf"
+import { BestOfSchedulePdf } from "@/lib/pdf/BestOfSchedulePdf"
 import { PlayoffsPdf } from "@/lib/pdf/PlayoffsPdf"
 
 // The auth check must run on every request, so we cannot use route-level revalidate.
@@ -208,18 +212,41 @@ async function buildSeasonStandingsElement(
 }
 
 async function buildScheduleElement(competitionId: string): Promise<ReactElement<DocumentProps>> {
-  const [competition, standings, matchups] = await Promise.all([
-    getCompetitionById(competitionId),
-    getStandingsForCompetition(competitionId),
+  const competition = await getCompetitionById(competitionId)
+  if (!competition) throw new Error("Competition not found while rendering public PDF")
+
+  const isBestOf = competition.leagueFormat === "BEST_OF_SINGLE"
+  const scoringType = getEffectiveScoringType(competition.scoringMode, competition.discipline)
+  const disciplineName = competition.discipline?.name ?? "Gemischt"
+
+  const [standingsClassic, standingsBestOf, matchups] = await Promise.all([
+    isBestOf ? Promise.resolve([]) : getStandingsForCompetition(competitionId),
+    isBestOf ? getBestOfStandingsForCompetition(competitionId) : Promise.resolve([]),
     getMatchupsForCompetition(competitionId),
   ])
-  if (!competition) throw new Error("Competition not found while rendering public PDF")
+
+  if (isBestOf) {
+    return createElement(BestOfSchedulePdf, {
+      leagueName: competition.name,
+      disciplineName,
+      scoringType,
+      scoringMode: competition.scoringMode,
+      disciplineId: competition.disciplineId,
+      groupBestOf: competition.groupBestOf ?? 3,
+      groupPlayAllDuels: competition.groupPlayAllDuels,
+      groupTiebreaker1: competition.groupTiebreaker1,
+      groupTiebreaker2: competition.groupTiebreaker2,
+      standings: standingsBestOf,
+      matchups,
+      generatedAt: new Date(),
+    }) as ReactElement<DocumentProps>
+  }
 
   return createElement(SchedulePdf, {
     leagueName: competition.name,
-    disciplineName: competition.discipline?.name ?? "Gemischt",
-    scoringType: getEffectiveScoringType(competition.scoringMode, competition.discipline),
-    standings,
+    disciplineName,
+    scoringType,
+    standings: standingsClassic,
     matchups,
     firstLegDeadline: competition.hinrundeDeadline,
     secondLegDeadline: competition.rueckrundeDeadline,
