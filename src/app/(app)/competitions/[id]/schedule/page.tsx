@@ -5,12 +5,16 @@ import { getAuthSession } from "@/lib/auth-helpers"
 import { getCompetitionById } from "@/lib/competitions/queries"
 import { getMatchupsForCompetition, getScheduleStatus } from "@/lib/matchups/queries"
 import { hasPlayoffsStarted } from "@/lib/playoffs/queries"
-import { getStandingsForCompetition } from "@/lib/standings/queries"
+import {
+  getBestOfStandingsForCompetition,
+  getStandingsForCompetition,
+} from "@/lib/standings/queries"
 import { getEffectiveScoringType } from "@/lib/series/scoring-format"
 import { effectiveTeilerFaktor } from "@/lib/scoring/calculateScore"
 import { GenerateScheduleButton } from "@/components/app/matchups/GenerateScheduleButton"
 import { ScheduleView } from "@/components/app/matchups/ScheduleView"
 import { StandingsTable } from "@/components/app/standings/StandingsTable"
+import { BestOfStandingsTable } from "@/components/app/standings/BestOfStandingsTable"
 import { PdfDownloadButton } from "@/components/app/shared/PdfDownloadButton"
 import { Button } from "@/components/ui/button"
 
@@ -21,19 +25,24 @@ interface Props {
 export default async function CompetitionSchedulePage({ params }: Props) {
   const { id } = await params
 
-  const [session, competition, matchups, scheduleStatus, playoffsStarted, standings] =
-    await Promise.all([
-      getAuthSession(),
-      getCompetitionById(id),
-      getMatchupsForCompetition(id),
-      getScheduleStatus(id),
-      hasPlayoffsStarted(id),
-      getStandingsForCompetition(id),
-    ])
+  const [session, competition, matchups, scheduleStatus, playoffsStarted] = await Promise.all([
+    getAuthSession(),
+    getCompetitionById(id),
+    getMatchupsForCompetition(id),
+    getScheduleStatus(id),
+    hasPlayoffsStarted(id),
+  ])
 
   if (!session) redirect("/login")
   if (!competition) notFound()
   if (competition.type !== "LEAGUE") redirect(`/competitions/${id}/ranking`)
+
+  // Load standings after competition type is confirmed — choose query by format
+  const isBestOf = competition.leagueFormat === "BEST_OF_SINGLE"
+  const [classicStandings, bestOfStandings] = await Promise.all([
+    isBestOf ? Promise.resolve([]) : getStandingsForCompetition(id),
+    isBestOf ? getBestOfStandingsForCompetition(id) : Promise.resolve([]),
+  ])
 
   const canManage = session.user.role === "ADMIN" || session.user.role === "MANAGER"
   const scoringType = getEffectiveScoringType(competition.scoringMode, competition.discipline)
@@ -120,12 +129,19 @@ export default async function CompetitionSchedulePage({ params }: Props) {
       />
 
       {/* Tabelle */}
-      {standings.length > 0 && (
-        <div className="space-y-3 pt-2">
-          <h2 className="text-base font-semibold">Tabelle</h2>
-          <StandingsTable rows={standings} />
-        </div>
-      )}
+      {isBestOf
+        ? bestOfStandings.length > 0 && (
+            <div className="space-y-3 pt-2">
+              <h2 className="text-base font-semibold">Tabelle</h2>
+              <BestOfStandingsTable rows={bestOfStandings} scoringMode={competition.scoringMode} />
+            </div>
+          )
+        : classicStandings.length > 0 && (
+            <div className="space-y-3 pt-2">
+              <h2 className="text-base font-semibold">Tabelle</h2>
+              <StandingsTable rows={classicStandings} />
+            </div>
+          )}
     </div>
   )
 }
