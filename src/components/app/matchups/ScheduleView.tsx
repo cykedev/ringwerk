@@ -4,8 +4,11 @@ import { determineOutcome } from "@/lib/results/calculateResult"
 import type { LeagueFormat, ScoringMode, ScoringType } from "@/generated/prisma/client"
 import type { MatchupListItem, MatchupParticipant, MatchResultSummary } from "@/lib/matchups/types"
 import { ResultEntryDialog } from "@/components/app/results/ResultEntryDialog"
-import { BestOfMatchCard } from "@/components/app/matchups/BestOfMatchCard"
+import { BestOfEntryDialog } from "@/components/app/matchups/BestOfEntryDialog"
 import { formatDecimal1, formatRings, getEffectiveScoringType } from "@/lib/series/scoring-format"
+import { duelOutcome, resolveBestOf, stechschussOutcome } from "@/lib/scoring/bestOf"
+import { effectiveTeilerFaktor } from "@/lib/scoring/calculateScore"
+import type { DuelSeries } from "@/lib/scoring/bestOf"
 
 // ─── Shared best-of config for BEST_OF_SINGLE layout ──────────────────────────
 
@@ -282,12 +285,102 @@ function ClassicLegTable({
   )
 }
 
-// ─── Best-of card layout (BEST_OF_SINGLE) ────────────────────────────────────
+// ─── Best-of compact table layout (BEST_OF_SINGLE) ───────────────────────────
 
-function BestOfLegSection({
+/**
+ * Derives the compact display label for a best-of matchup's current state.
+ *
+ * - complete + decided by Stechschuss → "1:1 n. St."
+ * - complete → "2:1" (Satz-Ergebnis)
+ * - in_progress with some duels → "1:0 (2 offen)"
+ * - not started → "offen"
+ * - needs_tiebreak → "Stechschuss"
+ */
+function deriveBestOfLabel(
+  homeId: string,
+  awayId: string,
+  series: MatchResultSummary[],
+  disciplineId: string | null,
+  scoringMode: ScoringMode,
+  tiebreaker1: ScoringMode | null,
+  tiebreaker2: ScoringMode | null,
+  bestOf: number,
+  playAll: boolean
+): { label: string; isComplete: boolean } {
+  const regularByDuel = new Map<number, { home?: DuelSeries; away?: DuelSeries }>()
+  const tiebreakByDuel = new Map<number, { homeRings?: number; awayRings?: number }>()
+
+  for (const s of series) {
+    if (s.duelNumber === null) continue
+    if (s.isTiebreak) {
+      const existing = tiebreakByDuel.get(s.duelNumber) ?? {}
+      if (s.participantId === homeId) {
+        tiebreakByDuel.set(s.duelNumber, { ...existing, homeRings: s.rings })
+      } else if (s.participantId === awayId) {
+        tiebreakByDuel.set(s.duelNumber, { ...existing, awayRings: s.rings })
+      }
+    } else {
+      const factor = effectiveTeilerFaktor(disciplineId, 1)
+      const entry: DuelSeries = {
+        rings: s.rings,
+        correctedTeiler: s.teiler * factor,
+        ringteiler: s.ringteiler,
+      }
+      const existing = regularByDuel.get(s.duelNumber) ?? {}
+      if (s.participantId === homeId) {
+        regularByDuel.set(s.duelNumber, { ...existing, home: entry })
+      } else if (s.participantId === awayId) {
+        regularByDuel.set(s.duelNumber, { ...existing, away: entry })
+      }
+    }
+  }
+
+  const completePairs = Array.from(regularByDuel.entries())
+    .filter(([, pair]) => pair.home && pair.away)
+    .sort(([a], [b]) => a - b)
+
+  const regularOutcomes = completePairs.map(([, pair]) =>
+    duelOutcome(pair.home!, pair.away!, scoringMode, tiebreaker1, tiebreaker2)
+  )
+
+  const tiebreakOutcomes = Array.from(tiebreakByDuel.entries())
+    .filter(([, pair]) => pair.homeRings !== undefined && pair.awayRings !== undefined)
+    .sort(([a], [b]) => a - b)
+    .map(([, pair]) => stechschussOutcome(pair.homeRings!, pair.awayRings!))
+
+  const status = resolveBestOf(regularOutcomes, tiebreakOutcomes, { bestOf, playAll })
+
+  const homeWins = regularOutcomes.filter((o) => o === "A").length
+  const awayWins = regularOutcomes.filter((o) => o === "B").length
+
+  if (status.kind === "complete") {
+    const hasStechschuss = tiebreakOutcomes.length > 0
+    const scoreLabel = `${homeWins}:${awayWins}`
+    return {
+      label: hasStechschuss ? `${scoreLabel} n. St.` : scoreLabel,
+      isComplete: true,
+    }
+  }
+
+  if (status.kind === "needs_tiebreak") {
+    return { label: "Stechschuss", isComplete: false }
+  }
+
+  // in_progress
+  const completedCount = completePairs.length
+  const remaining = bestOf - completedCount
+  if (completedCount === 0) {
+    return { label: "offen", isComplete: false }
+  }
+  return {
+    label: `${homeWins}:${awayWins} (${remaining} ${remaining === 1 ? "Duell" : "Duelle"} offen)`,
+    isComplete: false,
+  }
+}
+
+function BestOfRoundTable({
   title,
   matchups,
-  deadline,
   canManage,
   scoringMode,
   shotsPerSeries,
@@ -295,75 +388,140 @@ function BestOfLegSection({
 }: {
   title: string
   matchups: MatchupListItem[]
-  deadline: Date | null
   canManage: boolean
   scoringMode: ScoringMode
   shotsPerSeries: number
   bestOfConfig: BestOfConfig
 }) {
-  const tz = getDisplayTimeZone()
-
   return (
-    <div className="space-y-3">
-      <div className="flex items-baseline gap-2">
-        <h2 className="text-lg font-semibold">{title}</h2>
-        {deadline && (
-          <span className="text-sm text-muted-foreground">
-            · bis {formatDateOnly(deadline, tz)}
-          </span>
-        )}
-      </div>
+    <div className="space-y-2">
+      <h2 className="text-lg font-semibold">{title}</h2>
 
-      <div className="space-y-3">
-        {matchups.map((m) => {
-          if (!m.awayParticipant || m.status === "BYE") {
-            // BYE rows — show a minimal card
-            return (
-              <div key={m.id} className="rounded-lg border bg-card px-4 py-3 opacity-60">
-                <span className="text-sm text-muted-foreground">
-                  {participantName(m.homeParticipant)} — Freilos
-                </span>
-              </div>
-            )
-          }
+      <div className="overflow-hidden rounded-lg border bg-card">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b bg-muted/40">
+              <th className="px-2 py-2 text-left font-medium text-muted-foreground sm:px-4">
+                Teilnehmer A
+              </th>
+              <th className="px-2 py-2 text-left font-medium text-muted-foreground sm:px-4">
+                Teilnehmer B
+              </th>
+              <th className="w-28 px-2 py-2 text-center font-medium text-muted-foreground sm:px-4">
+                Stand
+              </th>
+              {canManage && <th className="w-[50px] px-2 py-2 sm:w-[60px] sm:px-4" />}
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {matchups.map((m) => {
+              const isBye = m.status === "BYE" || !m.awayParticipant
+              const isVoid = m.homeParticipant.withdrawn || m.awayParticipant?.withdrawn === true
 
-          const isVoid = m.homeParticipant.withdrawn || m.awayParticipant.withdrawn
-          if (isVoid) {
-            return (
-              <div key={m.id} className="rounded-lg border bg-card px-4 py-3 opacity-50">
-                <span className="text-sm line-through text-muted-foreground">
-                  {participantName(m.homeParticipant)} vs. {participantName(m.awayParticipant)}
-                </span>
-              </div>
-            )
-          }
+              if (isBye) {
+                return (
+                  <tr key={m.id} className="opacity-60">
+                    <td className="px-2 py-3 sm:px-4">
+                      <span className="font-medium">{participantName(m.homeParticipant)}</span>
+                    </td>
+                    <td className="px-2 py-3 text-muted-foreground sm:px-4">—</td>
+                    <td className="px-2 py-3 text-center sm:px-4">
+                      <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                        Freilos
+                      </span>
+                    </td>
+                    {canManage && <td className="px-2 py-3 sm:px-4" />}
+                  </tr>
+                )
+              }
 
-          const scoringType = getEffectiveScoringType(
-            scoringMode,
-            m.homeParticipant.scoringType ? { scoringType: m.homeParticipant.scoringType } : null
-          )
+              if (isVoid) {
+                return (
+                  <tr key={m.id} className="opacity-50">
+                    <td className="px-2 py-3 sm:px-4">
+                      <span className="line-through text-muted-foreground">
+                        {participantName(m.homeParticipant)}
+                      </span>
+                    </td>
+                    <td className="px-2 py-3 sm:px-4">
+                      <span className="line-through text-muted-foreground">
+                        {participantName(m.awayParticipant!)}
+                      </span>
+                    </td>
+                    <td className="px-2 py-3 text-center text-muted-foreground sm:px-4">—</td>
+                    {canManage && <td className="px-2 py-3 sm:px-4" />}
+                  </tr>
+                )
+              }
 
-          return (
-            <BestOfMatchCard
-              key={m.id}
-              matchupId={m.id}
-              status={m.status}
-              homeParticipant={m.homeParticipant}
-              awayParticipant={m.awayParticipant}
-              series={m.results}
-              canManage={canManage}
-              scoringMode={scoringMode}
-              disciplineId={bestOfConfig.disciplineId}
-              groupBestOf={bestOfConfig.groupBestOf}
-              groupPlayAllDuels={bestOfConfig.groupPlayAllDuels}
-              groupTiebreaker1={bestOfConfig.groupTiebreaker1}
-              groupTiebreaker2={bestOfConfig.groupTiebreaker2}
-              shotsPerSeries={shotsPerSeries}
-              scoringType={scoringType}
-              teilerFaktor={bestOfConfig.competitionTeilerFaktor}
-            />
-          )
-        })}
+              const scoringType = getEffectiveScoringType(
+                scoringMode,
+                m.homeParticipant.scoringType
+                  ? { scoringType: m.homeParticipant.scoringType }
+                  : null
+              )
+
+              const { label, isComplete } = deriveBestOfLabel(
+                m.homeParticipant.id,
+                m.awayParticipant!.id,
+                m.results,
+                bestOfConfig.disciplineId,
+                scoringMode,
+                bestOfConfig.groupTiebreaker1,
+                bestOfConfig.groupTiebreaker2,
+                bestOfConfig.groupBestOf,
+                bestOfConfig.groupPlayAllDuels
+              )
+
+              const hasResults = m.results.length > 0
+
+              return (
+                <tr key={m.id} className="transition-colors hover:bg-muted/20">
+                  <td className="px-2 py-3 sm:px-4">
+                    <span className="font-medium">{participantName(m.homeParticipant)}</span>
+                  </td>
+                  <td className="px-2 py-3 sm:px-4">
+                    <span className="font-medium">{participantName(m.awayParticipant!)}</span>
+                  </td>
+                  <td className="px-2 py-3 text-center sm:px-4">
+                    {isComplete ? (
+                      <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                        {label}
+                      </span>
+                    ) : hasResults ? (
+                      <span className="text-xs text-muted-foreground">{label}</span>
+                    ) : (
+                      <span className="inline-flex items-center justify-center">
+                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                      </span>
+                    )}
+                  </td>
+                  {canManage && (
+                    <td className="px-2 py-3 text-right sm:px-4">
+                      <BestOfEntryDialog
+                        matchupId={m.id}
+                        homeParticipant={m.homeParticipant}
+                        awayParticipant={m.awayParticipant!}
+                        series={m.results}
+                        canManage={canManage}
+                        hasResults={hasResults}
+                        scoringMode={scoringMode}
+                        disciplineId={bestOfConfig.disciplineId}
+                        groupBestOf={bestOfConfig.groupBestOf}
+                        groupPlayAllDuels={bestOfConfig.groupPlayAllDuels}
+                        groupTiebreaker1={bestOfConfig.groupTiebreaker1}
+                        groupTiebreaker2={bestOfConfig.groupTiebreaker2}
+                        shotsPerSeries={shotsPerSeries}
+                        scoringType={scoringType}
+                        teilerFaktor={bestOfConfig.competitionTeilerFaktor}
+                      />
+                    </td>
+                  )}
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   )
@@ -392,39 +550,38 @@ export function ScheduleView({
   }
 
   const firstLeg = matchups
-    .filter((m) => m.round === "FIRST_LEG" && m.status !== "BYE")
+    .filter((m) => m.round === "FIRST_LEG")
     .sort((a, b) => a.roundIndex - b.roundIndex)
 
   const secondLeg = matchups
-    .filter((m) => m.round === "SECOND_LEG" && m.status !== "BYE")
+    .filter((m) => m.round === "SECOND_LEG")
     .sort((a, b) => a.roundIndex - b.roundIndex)
 
-  // BEST_OF_SINGLE uses card layout; DOUBLE_ROUND_ROBIN uses the classic table.
+  // BEST_OF_SINGLE: compact rows grouped by roundIndex with "Spieltag N" labels — no Hin-/Rückrunde.
   if (leagueFormat === "BEST_OF_SINGLE" && bestOfConfig) {
+    // Group all matchups by roundIndex, preserving sort order.
+    const allSorted = [...matchups].sort((a, b) => a.roundIndex - b.roundIndex)
+    const byRound = new Map<number, MatchupListItem[]>()
+    for (const m of allSorted) {
+      const existing = byRound.get(m.roundIndex) ?? []
+      existing.push(m)
+      byRound.set(m.roundIndex, existing)
+    }
+    const roundEntries = Array.from(byRound.entries()).sort(([a], [b]) => a - b)
+
     return (
       <div className="space-y-8">
-        {firstLeg.length > 0 && (
-          <BestOfLegSection
-            title="Hinrunde"
-            matchups={firstLeg}
-            deadline={hinrundeDeadline}
+        {roundEntries.map(([roundIndex, roundMatchups]) => (
+          <BestOfRoundTable
+            key={roundIndex}
+            title={`Spieltag ${roundIndex}`}
+            matchups={roundMatchups}
             canManage={canManage && !playoffsStarted}
             scoringMode={scoringMode}
             shotsPerSeries={shotsPerSeries}
             bestOfConfig={bestOfConfig}
           />
-        )}
-        {secondLeg.length > 0 && (
-          <BestOfLegSection
-            title="Rückrunde"
-            matchups={secondLeg}
-            deadline={rueckrundeDeadline}
-            canManage={canManage && !playoffsStarted}
-            scoringMode={scoringMode}
-            shotsPerSeries={shotsPerSeries}
-            bestOfConfig={bestOfConfig}
-          />
-        )}
+        ))}
       </div>
     )
   }
