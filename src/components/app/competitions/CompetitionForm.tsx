@@ -220,7 +220,6 @@ export function CompetitionForm({
       <div className="space-y-2">
         <Label htmlFor="scoringMode">Wertungsmodus</Label>
         <Select
-          name="scoringMode"
           value={scoringMode}
           onValueChange={setScoringMode}
           disabled={
@@ -244,6 +243,10 @@ export function CompetitionForm({
             ))}
           </SelectContent>
         </Select>
+        {/* Always submit scoringMode: a disabled (locked) Radix Select does not
+            submit its value, but the schema requires it. The action still ignores
+            it when the ruleset is locked. */}
+        <input type="hidden" name="scoringMode" value={scoringMode} />
         {isBestOfSingle && (
           <p className="text-xs text-muted-foreground">
             Im Best-of-Modus nur Ringteiler, Ringe, Zehntelringe oder Teiler erlaubt.
