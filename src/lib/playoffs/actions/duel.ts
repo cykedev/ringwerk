@@ -1,6 +1,5 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
@@ -344,7 +343,8 @@ export async function savePlayoffDuelResult(
     await cascadeDeleteEmptyNextRound(match)
   }
 
-  revalidatePath(`/competitions/${match.competitionId}/playoffs`)
+  // The playoffs route is refreshed client-side via router.refresh(); only the
+  // public slug is revalidated here (a separate route, no refresh conflict).
   await revalidatePublicSlugForCompetition(match.competitionId)
   return { success: true }
 }
@@ -515,7 +515,8 @@ export async function deleteLastPlayoffDuel(duelId: string): Promise<ActionResul
     },
   })
 
-  revalidatePath(`/competitions/${match.competitionId}/playoffs`)
+  // The playoffs route is refreshed client-side via router.refresh(); only the
+  // public slug is revalidated here (a separate route, no refresh conflict).
   await revalidatePublicSlugForCompetition(match.competitionId)
   return { success: true }
 }

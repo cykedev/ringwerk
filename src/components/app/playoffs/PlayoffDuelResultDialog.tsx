@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Pencil, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -55,7 +55,7 @@ export function PlayoffDuelResultDialog({
     !isFinalMatch || finaleNeedsTeiler(finalePrimary, finaleTiebreaker1, finaleTiebreaker2)
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [isPending, startTransition] = useTransition()
+  const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const [fieldA, setFieldA] = useState<ResultFields>({
@@ -82,7 +82,7 @@ export function PlayoffDuelResultDialog({
     setOpen(isOpen)
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     const totalRingsA = parseFloat(fieldA.totalRings.replace(",", "."))
     const totalRingsB = parseFloat(fieldB.totalRings.replace(",", "."))
 
@@ -113,22 +113,23 @@ export function PlayoffDuelResultDialog({
 
     setError(null)
 
-    startTransition(async () => {
-      const result = await savePlayoffDuelResult({
-        duelId: duel.id,
-        totalRingsA,
-        teilerA,
-        totalRingsB,
-        teilerB,
-      })
-
-      if ("error" in result) {
-        setError(typeof result.error === "string" ? result.error : "Fehler beim Speichern.")
-      } else {
-        setOpen(false)
-        router.refresh()
-      }
+    setSubmitting(true)
+    const result = await savePlayoffDuelResult({
+      duelId: duel.id,
+      totalRingsA,
+      teilerA,
+      totalRingsB,
+      teilerB,
     })
+    setSubmitting(false)
+
+    if ("error" in result) {
+      setError(typeof result.error === "string" ? result.error : "Fehler beim Speichern.")
+      return
+    }
+    setOpen(false)
+    // router.refresh() outside a transition so the result reliably appears on the card.
+    router.refresh()
   }
 
   const shotLabel = `${shotsPerSeries} Schüsse`
@@ -181,7 +182,7 @@ export function PlayoffDuelResultDialog({
                   shotsPerSeries={shotsPerSeries}
                   value={fieldA.totalRings}
                   onChange={(e) => setFieldA((p) => ({ ...p, totalRings: e.target.value }))}
-                  disabled={isPending}
+                  disabled={submitting}
                 />
               </div>
               {showTeiler && (
@@ -196,7 +197,7 @@ export function PlayoffDuelResultDialog({
                     value={fieldA.teiler}
                     onChange={(e) => setFieldA((p) => ({ ...p, teiler: e.target.value }))}
                     placeholder="z.B. 3,7"
-                    disabled={isPending}
+                    disabled={submitting}
                   />
                 </div>
               )}
@@ -225,7 +226,7 @@ export function PlayoffDuelResultDialog({
                   shotsPerSeries={shotsPerSeries}
                   value={fieldB.totalRings}
                   onChange={(e) => setFieldB((p) => ({ ...p, totalRings: e.target.value }))}
-                  disabled={isPending}
+                  disabled={submitting}
                 />
               </div>
               {showTeiler && (
@@ -240,7 +241,7 @@ export function PlayoffDuelResultDialog({
                     value={fieldB.teiler}
                     onChange={(e) => setFieldB((p) => ({ ...p, teiler: e.target.value }))}
                     placeholder="z.B. 3,7"
-                    disabled={isPending}
+                    disabled={submitting}
                   />
                 </div>
               )}
@@ -251,11 +252,11 @@ export function PlayoffDuelResultDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={isPending}>
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={submitting}>
             Abbrechen
           </Button>
-          <Button onClick={handleSubmit} disabled={isPending}>
-            {isPending ? "Speichern…" : "Speichern"}
+          <Button onClick={handleSubmit} disabled={submitting}>
+            {submitting ? "Speichern…" : "Speichern"}
           </Button>
         </DialogFooter>
       </DialogContent>

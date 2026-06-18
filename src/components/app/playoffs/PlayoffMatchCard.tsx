@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, Trash2, Trophy } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -75,7 +75,7 @@ export function PlayoffMatchCard({
   const requiredWins = requiredWinsFromBestOf(playoffBestOf)
   const bestOfLabel = playoffBestOf ? `Best-of-${playoffBestOf}` : "Best-of-Five"
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
+  const [submitting, setSubmitting] = useState(false)
   const [confirmDuelId, setConfirmDuelId] = useState<string | null>(null)
 
   const isFinal = match.round === "FINAL"
@@ -102,33 +102,35 @@ export function PlayoffMatchCard({
     nextPendingDuel === undefined &&
     (!isFinal || match.duels.length === 0)
 
-  function handleAddDuel() {
-    startTransition(async () => {
-      const result = await addPlayoffDuel(match.id)
-      if ("error" in result) {
-        toast.error(
-          typeof result.error === "string" ? result.error : "Fehler beim Anlegen des Duells."
-        )
-      } else {
-        // revalidatePath allein aktualisiert die Playoff-Ansicht hier nicht zuverlässig.
-        router.refresh()
-      }
-    })
+  // The action no longer revalidates the playoffs route — refresh client-side here.
+  // router.refresh() runs outside a transition so the button never sticks at
+  // "Anlegen…" and a single click reliably re-fetches (no interrupted transition).
+  async function handleAddDuel() {
+    setSubmitting(true)
+    const result = await addPlayoffDuel(match.id)
+    setSubmitting(false)
+    if ("error" in result) {
+      toast.error(
+        typeof result.error === "string" ? result.error : "Fehler beim Anlegen des Duells."
+      )
+      return
+    }
+    router.refresh()
   }
 
-  function handleDeleteDuel() {
+  async function handleDeleteDuel() {
     if (!confirmDuelId) return
-    startTransition(async () => {
-      const result = await deleteLastPlayoffDuel(confirmDuelId)
-      if ("error" in result) {
-        toast.error(
-          typeof result.error === "string" ? result.error : "Fehler beim Löschen des Duells."
-        )
-      } else {
-        router.refresh()
-      }
-      setConfirmDuelId(null)
-    })
+    setSubmitting(true)
+    const result = await deleteLastPlayoffDuel(confirmDuelId)
+    setSubmitting(false)
+    setConfirmDuelId(null)
+    if ("error" in result) {
+      toast.error(
+        typeof result.error === "string" ? result.error : "Fehler beim Löschen des Duells."
+      )
+      return
+    }
+    router.refresh()
   }
 
   const nameA = `${match.participantA.firstName} ${match.participantA.lastName}`
@@ -257,7 +259,7 @@ export function PlayoffMatchCard({
                                 size="icon"
                                 className="h-6 w-6 text-destructive hover:text-destructive"
                                 onClick={() => setConfirmDuelId(duel.id)}
-                                disabled={isPending}
+                                disabled={submitting}
                               >
                                 <Trash2 className="h-3 w-3" />
                               </Button>
@@ -288,7 +290,7 @@ export function PlayoffMatchCard({
                                 size="sm"
                                 className="h-7 px-2 text-xs text-destructive hover:text-destructive"
                                 onClick={() => setConfirmDuelId(duel.id)}
-                                disabled={isPending}
+                                disabled={submitting}
                               >
                                 <Trash2 className="h-3 w-3" />
                               </Button>
@@ -310,10 +312,10 @@ export function PlayoffMatchCard({
               size="sm"
               className="w-full text-xs"
               onClick={handleAddDuel}
-              disabled={isPending}
+              disabled={submitting}
             >
               <Plus className="mr-1 h-3 w-3" />
-              {isPending
+              {submitting
                 ? "Anlegen…"
                 : isFinal
                   ? `${shotsPerSeries} Schüsse anlegen`

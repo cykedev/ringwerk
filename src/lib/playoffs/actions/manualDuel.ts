@@ -1,6 +1,5 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
@@ -42,7 +41,9 @@ export async function addPlayoffDuel(
       select: { id: true },
     })
 
-    revalidatePath(`/competitions/${match.competitionId}/playoffs`)
+    // No revalidatePath for the playoffs route here: the client refreshes via
+    // router.refresh(). A bundled revalidation re-render competes with that
+    // client refresh and leaves the inline card stale until a second action.
     return { success: true, data: { duelId: duel.id } }
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
