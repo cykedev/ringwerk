@@ -229,6 +229,61 @@ App-Umfang: **nur Ergebniserfassung** (keine Zeitnahme oder Ansage-Unterstützun
 
 ---
 
+---
+
+## Liga-Modus BEST_OF_SINGLE ✓ IMPLEMENTIERT
+
+### Konzept
+
+BEST_OF_SINGLE ist ein alternatives Gruppenphase-Format für LEAGUE-Wettbewerbe. Statt Hin- und Rückrunde (DOUBLE_ROUND_ROBIN) trägt jeder Teilnehmer gegen jeden genau eine Begegnung aus. Jede Begegnung besteht aus N Duellen (Best-of-N), wobei alle N Duelle immer gespielt werden (kein vorzeitiger Abbruch). Ein Duell = je eine Serie pro Schütze. Kein Heimrecht — gemeinsame Terminabstimmung.
+
+### Konfiguration
+
+| Parameter           | Default        | Beschreibung                                                                                  |
+| ------------------- | -------------- | --------------------------------------------------------------------------------------------- |
+| leagueFormat        | BEST_OF_SINGLE | Aktiviert dieses Format                                                                       |
+| scoringMode         | RINGTEILER     | Wertungsmodus pro Duell                                                                       |
+| groupBestOf         | 3              | N in Best-of-N (ungerade); benötigte Siege = ceil(N/2)                                        |
+| groupPlayAllDuels   | true           | Alle N Duelle werden immer gespielt (im Formular/Standard auf true gesetzt; DB-Default false) |
+| groupTiebreaker1    | null           | Optionaler Override: Sekundärkriterium bei Duel-Wert-Gleichstand (sonst Stechschuss)          |
+| groupTiebreaker2    | null           | Optionaler Override: Tertiärkriterium                                                         |
+| groupHasSuddenDeath | true           | Stechschuss bei Paarungs-Gleichstand (Standard); false = Wiederholungsduell                   |
+
+### Spielplan
+
+- Single Round-Robin: Jeder gegen jeden einmal (Circle Method, wie DOUBLE_ROUND_ROBIN ohne Rückrunde)
+- Ungerade Teilnehmerzahl → Freilos-Matchup (awayParticipantId = null)
+- Spieltage (roundIndex) entsprechen dem Doppelrunden-Format: n-1 Spieltage für n Teilnehmer
+
+### Ergebniserfassung
+
+- Pro Begegnung: Duelle werden einzeln eingetragen (Duell 1, 2, 3 … N)
+- Jedes Duell hat je eine Serie pro Schütze mit `duelNumber` = 1..N, `isTiebreak = false`
+- UI-Komponente: `BestOfMatchCard.tsx` — zeigt alle Duelle, aktuellen Spielstand, Stechschuss-Prompt
+- Bei Gleichstand nach N Duellen: Stechschuss-Eingabe — einzelner Dezimalwert (in `rings`), `isTiebreak = true`, `duelNumber` = N+1 aufwärts
+- Höherer Schusswert beim Stechschuss gewinnt, unabhängig vom scoringMode
+- Korrekturen: Löschen des letzten Duells via `deleteLatestBestOfDuel`; Wiedererfassung überschreibt via Upsert
+
+### Tabelle
+
+Spalten: Pl., Name, Begegn. (gespielt), Siege, Niederl., Satzverhältnis (gewonnene:verlorene Duelle), Satzdiff. (duelDiff), bestes Erg. (Ringe oder Ringteiler je nach scoringMode)
+
+Sortierung:
+
+1. Siege (absteigend)
+2. Direkter Vergleich (nur Begegnungen zwischen den gleichstehenden Teilnehmern)
+3. Satzdifferenz (absteigend)
+4. Bestes Einzelergebnis (RINGS/RINGS_DECIMAL → höchste Ringe; sonst → niedrigster Ringteiler)
+5. Nachname alphabetisch
+
+Zurückgezogene Teilnehmer erscheinen am Ende (alle Ergebnisse mit ihnen werden ignoriert).
+
+### PDF
+
+`BestOfSchedulePdf.tsx` — zeigt Spielplan (alle Begegnungen mit Duell-Einzelergebnissen und Stechschuss-Runden) sowie die Tabelle. Route: `/api/competitions/[id]/pdf/schedule` (gleicher Endpunkt wie DOUBLE_ROUND_ROBIN, format-aware).
+
+---
+
 ## Event-Modus (EVENT) ✓ IMPLEMENTIERT (Phase 4)
 
 ### Konzept

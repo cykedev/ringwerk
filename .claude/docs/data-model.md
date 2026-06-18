@@ -31,21 +31,27 @@
 
 #### Liga-spezifisch (LEAGUE)
 
-| Feld                    | Typ          | Default    | Beschreibung                                                         |
-| ----------------------- | ------------ | ---------- | -------------------------------------------------------------------- |
-| roundDeadlineHin        | DateTime?    | null       | Stichtag Hinrunde                                                    |
-| roundDeadlineRueck      | DateTime?    | null       | Stichtag Rückrunde                                                   |
-| groupScoringMode        | ScoringMode? | RINGTEILER | Wertungsmodus Gruppenphase (= scoringMode)                           |
-| playoffBestOf           | Int?         | 3          | Siege zum Weiterkommen VF/HF (3 = Best-of-Five)                      |
-| playoffHasViertelfinale | Boolean      | true       | Viertelfinale aktiv (Top 8, 4 Paarungen)                             |
-| playoffHasAchtelfinale  | Boolean      | false      | Achtelfinale aktiv (Top 16, 8 Paarungen); überschreibt VF-Flag       |
-| playoffQualThreshold    | Int?         | 8          | Ab dieser TN-Zahl → Viertelfinale                                    |
-| playoffQualTopN1        | Int?         | 4          | Qualifikanten für HF bei Direkteinstieg                              |
-| playoffQualTopN2        | Int?         | 8          | Qualifikanten für VF                                                 |
-| finalePrimary           | ScoringMode  | RINGS      | Hauptkriterium Finale (Pflicht); Default: nur Ringe, höchste gewinnt |
-| finaleTiebreaker1       | ScoringMode? | null       | Tiebreaker-Kriterium 1 bei Gleichstand (optional)                    |
-| finaleTiebreaker2       | ScoringMode? | null       | Tiebreaker-Kriterium 2 bei weiterem Gleichstand (optional)           |
-| finaleHasSuddenDeath    | Boolean?     | true       | Sudden Death nach allen Kriterien noch Gleichstand                   |
+| Feld                    | Typ          | Default            | Beschreibung                                                                                                        |
+| ----------------------- | ------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| roundDeadlineHin        | DateTime?    | null               | Stichtag Hinrunde                                                                                                   |
+| roundDeadlineRueck      | DateTime?    | null               | Stichtag Rückrunde                                                                                                  |
+| groupScoringMode        | ScoringMode? | RINGTEILER         | Wertungsmodus Gruppenphase (= scoringMode)                                                                          |
+| playoffBestOf           | Int?         | 3                  | Siege zum Weiterkommen VF/HF (3 = Best-of-Five)                                                                     |
+| playoffHasViertelfinale | Boolean      | true               | Viertelfinale aktiv (Top 8, 4 Paarungen)                                                                            |
+| playoffHasAchtelfinale  | Boolean      | false              | Achtelfinale aktiv (Top 16, 8 Paarungen); überschreibt VF-Flag                                                      |
+| playoffQualThreshold    | Int?         | 8                  | Ab dieser TN-Zahl → Viertelfinale                                                                                   |
+| playoffQualTopN1        | Int?         | 4                  | Qualifikanten für HF bei Direkteinstieg                                                                             |
+| playoffQualTopN2        | Int?         | 8                  | Qualifikanten für VF                                                                                                |
+| finalePrimary           | ScoringMode  | RINGS              | Hauptkriterium Finale (Pflicht); Default: nur Ringe, höchste gewinnt                                                |
+| finaleTiebreaker1       | ScoringMode? | null               | Tiebreaker-Kriterium 1 bei Gleichstand (optional)                                                                   |
+| finaleTiebreaker2       | ScoringMode? | null               | Tiebreaker-Kriterium 2 bei weiterem Gleichstand (optional)                                                          |
+| finaleHasSuddenDeath    | Boolean?     | true               | Sudden Death nach allen Kriterien noch Gleichstand                                                                  |
+| leagueFormat            | LeagueFormat | DOUBLE_ROUND_ROBIN | Spielplan-Format (Doppelrunde oder Einfachrunde Best-of-N)                                                          |
+| groupBestOf             | Int?         | 3                  | N in Best-of-N (muss ungerade sein); benötigte Siege = ceil(N/2)                                                    |
+| groupPlayAllDuels       | Boolean      | false (DB)         | Alle N Duelle immer austragen, kein vorzeitiger Abbruch; im Formular/Standard für BEST_OF_SINGLE auf true vorbelegt |
+| groupTiebreaker1        | ScoringMode? | null               | Optionaler Override: sekundäres Kriterium bei Duel-Wert-Gleichstand statt Stechschuss                               |
+| groupTiebreaker2        | ScoringMode? | null               | Optionaler Override: tertiäres Kriterium bei weiterem Gleichstand                                                   |
+| groupHasSuddenDeath     | Boolean      | true               | true = Stechschuss bei Paarungs-Gleichstand (Standard); false = Wiederholungsduell                                  |
 
 #### Event-spezifisch (EVENT)
 
@@ -101,13 +107,15 @@ Universelle Ergebniseinheit für alle Wettbewerbstypen:
 
 - **competitionParticipantId: String? (FK)** — Zuordnung zur konkreten Einschreibung (Pflicht für neue Serien bei Events; null nur bei Legacy-Serien). Disambiguiert Doppel-Enrollment bei Team-Events.
 - **disciplineId: String (FK)** — geschossene Disziplin (wichtig bei gemischten Wettbewerben)
-- **rings: Decimal** — Gesamtringe der Serie
-- **teiler: Decimal** — bester Teiler der Serie
+- **rings: Decimal** — Gesamtringe der Serie; bei Stechschuss-Runden: der einzelne Dezimalwert des Schusses
+- **teiler: Decimal** — bester Teiler der Serie; bei Stechschuss-Runden: 0 (ungenutzt)
 - **shots: Decimal[]?** — Einzelschusswerte (Pflicht bei DECIMAL_REST-Modus in LEAGUE; optional sonst)
-- **shotCount: Int** — Anzahl Schüsse (default aus Competition.shotsPerSeries)
+- **shotCount: Int** — Anzahl Schüsse (default aus Competition.shotsPerSeries); bei Stechschuss-Runden: 1
 - **sessionDate: DateTime** — Schießdatum (relevant für Saison-Modus)
 - **matchupId: String? (FK)** — nur bei Liga: Verknüpfung zur Paarung
 - **isGuest: Boolean (default false)** — Hilfsflag für Event-Rangliste (denormalisiert aus CompetitionParticipant.isGuest)
+- **duelNumber: Int?** — BEST_OF_SINGLE: 1..N für reguläre Duelle, > N für Stechschuss-Runden; DOUBLE_ROUND_ROBIN: immer 1; Event/Saison: null. Unique-Constraint: `@@unique([matchupId, participantId, duelNumber])` (NULL-Werte sind per SQL-Standard distinct).
+- **isTiebreak: Boolean (default false)** — true = Stechschuss-Runde; `shots` und `teiler` sind ungenutzt (0), `rings` enthält den einzelnen Dezimal-Schusswert
 
 ### Paarung (Matchup) — nur Liga
 
@@ -175,6 +183,13 @@ ARCHIVED    – archiviert
 ```
 
 **Hinweis:** DRAFT ist das neue Status-Feld, das für alle Wettbewerbstypen beim Erstellen gesetzt wird.
+
+### LeagueFormat (NEU)
+
+```
+DOUBLE_ROUND_ROBIN  – Standard-Liga: Hin- und Rückrunde (jeder gegen jeden zweimal)
+BEST_OF_SINGLE      – Einfachrunde: Jeder gegen jeden einmal, jede Begegnung als Best-of-N
+```
 
 ### Bestehende Enums (unveraendert)
 
@@ -300,11 +315,35 @@ Ergebnis: Wer unter dem Ziel liegt, kommt immer nach allen die drüber oder glei
 2. Besserer Teiler (kleinerer Wert, ggf. mit Faktor) → 2 Punkte
 3. Kein Gewinner moeglich → beide 1 Punkt (DRAW)
 
-### Liga-spezifisch: Tabellensortierung
+### Liga-spezifisch: Tabellensortierung (DOUBLE_ROUND_ROBIN)
 
 1. Punkte (absteigend)
 2. Direkter Vergleich bei Punktgleichstand
 3. Bestes individuelles Ergebnis (niedrigster Ringteiler aus allen Gruppenspielen)
+
+### Liga-spezifisch: BEST_OF_SINGLE — Duel-Auflösung
+
+Jede Begegnung besteht aus N Duellen (groupBestOf, default 3). Pro Duell schießt jeder Teilnehmer eine Serie. Der Gewinner eines Duells wird durch `duelOutcome` ermittelt:
+
+1. Primär: scoringMode (RINGTEILER, RINGS, RINGS_DECIMAL, TEILER …)
+2. Optional groupTiebreaker1, dann groupTiebreaker2
+
+Ergebnis ist immer A, B oder TIE. Bei TIE zählt das Duell für keinen Seite. Keine Zeichenergebnis auf Begegnungsebene — nach N Duellen muss ein Stechschuss entscheiden.
+
+**Match-Auflösung via `resolveBestOf`:**
+
+- `playAll=true` (Standard für BEST_OF_SINGLE): alle N Duelle werden immer gespielt
+- Gewinner = wer nach N Duellen mehr Duelle gewonnen hat
+- Bei Gleichstand nach N Duellen → Stechschuss-Runden (`isTiebreak=true`): entschieden durch einzelnen Dezimalschuss, höherer Wert gewinnt (unabhängig von scoringMode). Erste nicht-gleichwertige Runde entscheidet.
+- Stechschuss-duelNumbers werden ab maxRegularDuel+1 aufwärts vergeben.
+
+### Liga-spezifisch: BEST_OF_SINGLE — Tabellensortierung
+
+1. Siege (Begegnungssiege, absteigend)
+2. Direkter Vergleich (Siege aus Begegnungen ausschließlich innerhalb der Gleichstandsgruppe)
+3. Satzdifferenz (duelsWon − duelsLost, absteigend)
+4. Bestes Einzelergebnis (bei RINGS/RINGS_DECIMAL: höchste Ringe; sonst: niedrigster Ringteiler)
+5. Nachname alphabetisch (de)
 
 ### Saison-spezifisch: Mehrfach-Wertung
 
@@ -338,8 +377,13 @@ Nur Teilnehmer mit ≥ minSeries Serien werden gewertet.
 | Zielwert                    | Vorgabewert bei TARGET-Modi; Teilnehmer schießen möglichst nah daran                                           |
 | Ganzring-Disziplin          | Ringe ganzzahlig 0–10; Max. 100/Serie bei 10 Schuss (z.B. LP freistehend)                                      |
 | Zehntelring-Disziplin       | Ringe 0.0–10.9; Max. 109/Serie bei 10 Schuss (z.B. LG Auflage)                                                 |
-| Heimrecht                   | Erstgenannter Schütze in einer Liga-Paarung organisiert Termin                                                 |
-| Round Robin                 | Jeder gegen jeden (Hin- und Rückrunde); nur Liga                                                               |
+| Heimrecht                   | Erstgenannter Schütze in einer Liga-Paarung organisiert Termin (nur DOUBLE_ROUND_ROBIN)                        |
+| Round Robin                 | Jeder gegen jeden (Hin- und Rückrunde); nur DOUBLE_ROUND_ROBIN-Liga                                            |
+| Best-of-N (Gruppenphase)    | BEST_OF_SINGLE: jede Begegnung besteht aus N Duellen; wer mehr gewinnt, siegt in der Begegnung                 |
+| Duell                       | Einzelne Schiess-Runde innerhalb einer BEST_OF_SINGLE-Begegnung; duelNumber 1..N                               |
+| Stechschuss                 | Einzelner Dezimalschuss zur Entscheidung bei Gleichstand nach N Duellen; isTiebreak=true; höherer Wert gewinnt |
+| Satzverhältnis              | duelsWon:duelsLost in der BEST_OF_SINGLE-Tabelle                                                               |
+| Satzdifferenz               | duelsWon − duelsLost (duelDiff) in der BEST_OF_SINGLE-Tabelle                                                  |
 | Freilos                     | Kampfloser Sieg bei ungerader Teilnehmerzahl (2 Punkte); nur Liga                                              |
 | Rückzug                     | Vorzeitiges Ausscheiden; alle Ergebnisse rückwirkend gestrichen                                                |
 | Best-of-Five                | VF/HF-Format: wer zuerst 3 Duelle gewinnt, kommt weiter; konfigurierbar                                        |

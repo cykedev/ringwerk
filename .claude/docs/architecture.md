@@ -132,8 +132,10 @@ src/
       competitions/           ← Wettbewerbs-spezifische Komponenten, type badges
       competitionParticipants/ ← Einschreiben + Rückzug, isGuest/Disziplin-Support
       matchups/               ← Spielplan-Generierung + Anzeige
+        BestOfMatchCard.tsx   ← Duel-für-Duel-Erfassung, Stechschuss-UI, Match-Fortschritt (BEST_OF_SINGLE)
       results/                ← Ergebniserfassung (Dialog)
       standings/              ← Tabellenberechnung + Anzeige
+        BestOfStandingsTable.tsx ← Tabelle für BEST_OF_SINGLE (Siege, Satzverhältnis, Satzdiff., bestes Erg.)
       playoffs/               ← Playoff-Bracket + Duell-Karten
       auditLog/               ← Protokoll-Liste (AuditLogList)
       events/                 ← Event-spezifische Komponenten
@@ -172,20 +174,23 @@ src/
       queries.ts
       types.ts                ← isGuest, disciplineId Felder
     matchups/
-      actions.ts              ← Spielplan generieren (Round-Robin)
+      actions.ts              ← Spielplan generieren (Round-Robin + Best-of-Single)
       queries.ts              ← Paarungen laden, Schedule-Status
-      generateSchedule.ts     ← Circle-Method-Algorithmus (testpflichtig)
+      generateSchedule.ts     ← Circle-Method-Algorithmus DOUBLE_ROUND_ROBIN (testpflichtig)
       generateSchedule.test.ts
+      generateBestOfSchedule.ts ← Circle-Method-Algorithmus BEST_OF_SINGLE (einfache Runde; kein Heimrecht-Tausch)
       types.ts
     results/
-      actions.ts              ← Ergebnis eintragen/korrigieren
+      actions.ts              ← Ergebnis eintragen/korrigieren (DOUBLE_ROUND_ROBIN)
+      bestOfActions.ts        ← saveBestOfDuel, saveStechschuss, deleteLatestBestOfDuel (BEST_OF_SINGLE)
       calculateResult.ts      ← Ringteiler-Berechnung, Outcome (testpflichtig)
       calculateResult.test.ts
       types.ts
     standings/
       queries.ts              ← Tabellendaten laden
-      calculateStandings.ts   ← Tabellenberechnung (Punkte, Direktvergleich, RT, testpflichtig)
+      calculateStandings.ts   ← Tabellenberechnung DOUBLE_ROUND_ROBIN (Punkte, Direktvergleich, RT, testpflichtig)
       calculateStandings.test.ts
+      calculateBestOfStandings.ts ← Tabellenberechnung BEST_OF_SINGLE (Siege, Direktvergleich, Satzdiff, bestes Erg.)
     scoring/
       calculateScore.ts       ← Kernfunktion für alle 7 Wertungsmodi
       calculateScore.test.ts
@@ -193,6 +198,7 @@ src/
       rankParticipants.test.ts
       rankEventParticipants.ts ← Event-Ranking mit Faktor-Korrektur
       calculateSeasonStandings.ts ← Saison-Ranking (Bestwerte: beste Ringe, bester Teiler, bester Ringteiler; mit Mindestserien-Prüfung)
+      bestOf.ts               ← duelOutcome, stechschussOutcome, resolveBestOf (Best-of-N Logik)
       types.ts                ← ScoringMode, ScoreInput, RankableEntry, RankedEntry, EventRankedEntry, SeasonRankedEntry
     series/
       actions.ts              ← saveEventSeries, deleteEventSeries, saveSeasonSeries, deleteSeasonSeries (mit Disziplin-Unterstützung)
@@ -222,7 +228,8 @@ src/
       types.ts                ← AuditEventType, AUDIT_EVENT_LABELS, formatAuditDetails()
     pdf/
       styles.ts               ← Gemeinsames StyleSheet + Farbkonstanten (react-pdf)
-      SchedulePdf.tsx         ← PDF: Spielplan (Hin-/Rückrunde) + Tabelle
+      SchedulePdf.tsx         ← PDF: Spielplan (Hin-/Rückrunde) + Tabelle (DOUBLE_ROUND_ROBIN)
+      BestOfSchedulePdf.tsx   ← PDF: Spielplan mit Duell-Einzelergebnissen + Tabelle (BEST_OF_SINGLE)
       PlayoffsPdf.tsx         ← PDF: Playoff-Bracket-Ausdruck
       EventRankingPdf.tsx     ← PDF: Event-Rangliste (Kranzlschiessen)
       SeasonStandingsPdf.tsx  ← PDF: Saison-Standings (Bestwerte: Ringe, Teiler, Ringteiler)
