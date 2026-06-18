@@ -43,12 +43,18 @@ function rankBadgeColor(rank: number): string {
   return "#9ca3af"
 }
 
+interface SatzResult {
+  homeWins: number
+  awayWins: number
+  winner: "home" | "away"
+  wasStechschuss: boolean
+}
+
 /**
- * Derives the Satz result (Duell wins) for a completed matchup.
- * Returns e.g. "2:1" or "1:1 n. St." (decided by Stechschuss).
+ * Derives the structured Satz result (Duell wins + winner) for a completed matchup.
  * Returns null if the matchup is not complete or data is insufficient.
  */
-function deriveSatzLabel(
+function deriveSatzResult(
   matchup: MatchupListItem,
   scoringMode: ScoringMode,
   disciplineId: string | null,
@@ -56,7 +62,7 @@ function deriveSatzLabel(
   groupPlayAllDuels: boolean,
   groupTiebreaker1: ScoringMode | null,
   groupTiebreaker2: ScoringMode | null
-): string | null {
+): SatzResult | null {
   if (matchup.status !== "COMPLETED") return null
   if (!matchup.awayParticipant) return null
 
@@ -128,24 +134,12 @@ function deriveSatzLabel(
 
   const wasStechschuss = tiebreakPairs.length > 0 && homeWins === awayWins
 
-  if (wasStechschuss) {
-    return `${homeWins}:${awayWins} n. St.`
+  return {
+    homeWins,
+    awayWins,
+    winner: status.winner === "A" ? "home" : "away",
+    wasStechschuss,
   }
-  return `${homeWins}:${awayWins}`
-}
-
-/**
- * Returns the neutral paring label.
- * For regular matchups: "Name A vs. Name B"
- * For BYE matchups: "Name A – spielfrei"
- */
-function pairingLabel(matchup: MatchupListItem): string {
-  const homeName = `${matchup.homeParticipant.firstName} ${matchup.homeParticipant.lastName}`
-  if (!matchup.awayParticipant) {
-    return `${homeName} – spielfrei`
-  }
-  const awayName = `${matchup.awayParticipant.firstName} ${matchup.awayParticipant.lastName}`
-  return `${homeName} vs. ${awayName}`
 }
 
 // ─── Spaltenbreiten ───────────────────────────────────────────────────────────
@@ -161,8 +155,8 @@ const WS = {
   best: 85,
 }
 
-// Schedule table widths
-const WM = { pairing: 380, satz: 70, status: 65 }
+// Schedule table widths (two participant cells + status, mirrors the classic PDF)
+const WM = { home: 225, away: 225, status: 65 }
 
 // ─── Kopfzeile ────────────────────────────────────────────────────────────────
 
@@ -267,6 +261,43 @@ function BestOfStandingsSection({
 
 // ─── Spielplan-Abschnitt ──────────────────────────────────────────────────────
 
+/**
+ * One participant cell in the schedule table. The winner gets a highlighted
+ * background (mirrors the classic SchedulePdf PlayerCell).
+ */
+function BestOfPlayerCell({
+  name,
+  satzWins,
+  isWinner,
+  isWithdrawn,
+  showScore,
+}: {
+  name: string
+  satzWins: number
+  isWinner: boolean
+  isWithdrawn: boolean
+  showScore: boolean
+}): ReactElement {
+  if (isWithdrawn) {
+    return (
+      <View style={styles.playerCell}>
+        <Text style={styles.playerNameWithdrawn}>{name}</Text>
+      </View>
+    )
+  }
+
+  return (
+    <View style={[styles.playerCell, isWinner ? styles.playerCellWinner : {}]}>
+      <Text style={isWinner ? styles.playerNameWinner : styles.playerName}>{name}</Text>
+      {showScore && (
+        <Text style={styles.resultSmall}>
+          {satzWins} {satzWins === 1 ? "Satz" : "Sätze"}
+        </Text>
+      )}
+    </View>
+  )
+}
+
 function BestOfMatchupsSection({
   matchups,
   scoringMode,
@@ -293,8 +324,8 @@ function BestOfMatchupsSection({
       <View style={styles.table}>
         {/* Header */}
         <View style={styles.tableHeaderRow}>
-          <Text style={[styles.tableHeaderCellLeft, { width: WM.pairing }]}>Begegnung</Text>
-          <Text style={[styles.tableHeaderCell, { width: WM.satz }]}>Satz</Text>
+          <Text style={[styles.tableHeaderCellLeft, { width: WM.home }]}>Teilnehmer A</Text>
+          <Text style={[styles.tableHeaderCellLeft, { width: WM.away }]}>Teilnehmer B</Text>
           <Text style={[styles.tableHeaderCell, { width: WM.status }]}>Status</Text>
         </View>
 
@@ -302,21 +333,26 @@ function BestOfMatchupsSection({
           const isAlt = idx % 2 === 1
           const isBye = !m.awayParticipant
           const isCompleted = m.status === "COMPLETED"
-
-          const pairing = pairingLabel(m)
+          const isPending = m.status === "PENDING"
           const isWithdrawn = m.homeParticipant.withdrawn || (m.awayParticipant?.withdrawn ?? false)
 
-          const satzLabel = isCompleted
-            ? (deriveSatzLabel(
-                m,
-                scoringMode,
-                disciplineId,
-                groupBestOf,
-                groupPlayAllDuels,
-                groupTiebreaker1,
-                groupTiebreaker2
-              ) ?? "")
-            : ""
+          const homeName = `${m.homeParticipant.firstName} ${m.homeParticipant.lastName}`
+          const awayName = m.awayParticipant
+            ? `${m.awayParticipant.firstName} ${m.awayParticipant.lastName}`
+            : null
+
+          const satz =
+            isCompleted && !isWithdrawn
+              ? deriveSatzResult(
+                  m,
+                  scoringMode,
+                  disciplineId,
+                  groupBestOf,
+                  groupPlayAllDuels,
+                  groupTiebreaker1,
+                  groupTiebreaker2
+                )
+              : null
 
           let statusText: string
           if (isWithdrawn) {
@@ -324,12 +360,10 @@ function BestOfMatchupsSection({
           } else if (isBye) {
             statusText = "Freilos"
           } else if (isCompleted) {
-            statusText = "Abg."
+            statusText = satz?.wasStechschuss ? "Abg. (St.)" : "Abg."
           } else {
             statusText = "Offen"
           }
-
-          const isPending = m.status === "PENDING"
 
           return (
             <View
@@ -342,22 +376,30 @@ function BestOfMatchupsSection({
                 { alignItems: "center" },
               ]}
             >
-              <Text
-                style={[
-                  isWithdrawn ? styles.tableCellMuted : styles.tableCellLeft,
-                  { width: WM.pairing },
-                ]}
-              >
-                {pairing}
-              </Text>
-              <Text
-                style={[
-                  styles.tableCellBold,
-                  { width: WM.satz, color: isCompleted ? PDF_COLORS.dark : "#bbbbbb" },
-                ]}
-              >
-                {satzLabel}
-              </Text>
+              <View style={{ width: WM.home }}>
+                <BestOfPlayerCell
+                  name={homeName}
+                  satzWins={satz?.homeWins ?? 0}
+                  isWinner={satz?.winner === "home"}
+                  isWithdrawn={isWithdrawn}
+                  showScore={satz !== null}
+                />
+              </View>
+              <View style={{ width: WM.away }}>
+                {awayName ? (
+                  <BestOfPlayerCell
+                    name={awayName}
+                    satzWins={satz?.awayWins ?? 0}
+                    isWinner={satz?.winner === "away"}
+                    isWithdrawn={isWithdrawn}
+                    showScore={satz !== null}
+                  />
+                ) : (
+                  <View style={styles.playerCell}>
+                    <Text style={styles.playerName}>—</Text>
+                  </View>
+                )}
+              </View>
               <Text
                 style={[isPending ? styles.statusPending : styles.statusDone, { width: WM.status }]}
               >

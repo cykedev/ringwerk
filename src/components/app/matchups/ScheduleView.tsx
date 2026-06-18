@@ -306,7 +306,7 @@ function deriveBestOfLabel(
   tiebreaker2: ScoringMode | null,
   bestOf: number,
   playAll: boolean
-): { label: string; isComplete: boolean } {
+): { label: string; isComplete: boolean; winner: "home" | "away" | null } {
   const regularByDuel = new Map<number, { home?: DuelSeries; away?: DuelSeries }>()
   const tiebreakByDuel = new Map<number, { homeRings?: number; awayRings?: number }>()
 
@@ -359,22 +359,24 @@ function deriveBestOfLabel(
     return {
       label: hasStechschuss ? `${scoreLabel} n. St.` : scoreLabel,
       isComplete: true,
+      winner: status.winner === "A" ? "home" : "away",
     }
   }
 
   if (status.kind === "needs_tiebreak") {
-    return { label: "Stechschuss", isComplete: false }
+    return { label: "Stechschuss", isComplete: false, winner: null }
   }
 
   // in_progress
   const completedCount = completePairs.length
   const remaining = bestOf - completedCount
   if (completedCount === 0) {
-    return { label: "offen", isComplete: false }
+    return { label: "offen", isComplete: false, winner: null }
   }
   return {
     label: `${homeWins}:${awayWins} (${remaining} ${remaining === 1 ? "Duell" : "Duelle"} offen)`,
     isComplete: false,
+    winner: null,
   }
 }
 
@@ -454,7 +456,7 @@ function BestOfMatchupTable({
               m.homeParticipant.scoringType ? { scoringType: m.homeParticipant.scoringType } : null
             )
 
-            const { label, isComplete } = deriveBestOfLabel(
+            const { label, isComplete, winner } = deriveBestOfLabel(
               m.homeParticipant.id,
               m.awayParticipant!.id,
               m.results,
@@ -470,10 +472,10 @@ function BestOfMatchupTable({
 
             return (
               <tr key={m.id} className="transition-colors hover:bg-muted/20">
-                <td className="px-2 py-3 sm:px-4">
+                <td className={`px-2 py-3 sm:px-4 ${winner === "home" ? "bg-emerald-500/10" : ""}`}>
                   <span className="font-medium">{participantName(m.homeParticipant)}</span>
                 </td>
-                <td className="px-2 py-3 sm:px-4">
+                <td className={`px-2 py-3 sm:px-4 ${winner === "away" ? "bg-emerald-500/10" : ""}`}>
                   <span className="font-medium">{participantName(m.awayParticipant!)}</span>
                 </td>
                 <td className="px-2 py-3 text-center sm:px-4">
