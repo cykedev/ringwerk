@@ -1,10 +1,20 @@
 # Vorschlag: Neuer Liga-Modus „Best-of-Begegnung"
 
-**Stand:** 17.06.2026 · Entwurf zur Abstimmung mit der Sportleitung
+**Stand:** 18.06.2026 · Entwurf zur Abstimmung mit der Sportleitung
+_(überarbeitet nach der Umsetzungs- und Testphase — siehe „Änderungen gegenüber dem ersten Entwurf")_
 
 Dieser Modus ist als **Alternative** zum bisherigen Liga-Ablauf gedacht. Der heutige Modus
 (Hin- und Rückrunde) bleibt vollständig erhalten — pro Liga wird einfach beim Anlegen
 entschieden, welcher Ablauf gilt.
+
+> **Änderungen gegenüber dem ersten Entwurf** (aus der Test-/Abstimmungsphase, bitte mitbeschließen):
+>
+> 1. **Stechschuss zählt als gewonnenes Duell.** Ein wertungsgleiches Duell wird per Stechschuss
+>    entschieden und **dem Sieger als Duell gutgeschrieben** — eine Begegnung endet damit immer 3:0
+>    oder 2:1 (statt „1:1, aber Sieg für einen"). In der Anzeige als „2:1 n. St." gekennzeichnet.
+> 2. **Tabelle ohne direkten Vergleich.** Bei Sieggleichstand entscheidet zuerst die
+>    **Satzdifferenz** (wie in der FIFA-Gruppenphase), nicht mehr das direkte Aufeinandertreffen — so
+>    ist die Platzierung vollständig aus den Tabellenspalten ablesbar.
 
 ---
 
@@ -36,8 +46,9 @@ gleich viele Serien schießt) — eine Begegnung endet also **3:0** oder **2:1**
 
 Beide Schützen treten — wie bisher — gemeinsam am Stand an und schießen nacheinander ihre drei
 Duelle. Wer von den drei Duellen mehr gewinnt, gewinnt die Begegnung (3:0 oder 2:1). Geht ein Duell
-einmal **wertungsgleich** aus (z. B. gleicher Ringteiler), kann es 1:1 stehen — dann entscheidet am Ende ein **Stechschuss** (siehe
-unten).
+einmal **wertungsgleich** aus (z. B. gleicher Ringteiler), wird **dieses Duell per Stechschuss
+entschieden** (siehe unten) — der Stechschuss-Sieger bekommt das Duell. Eine Begegnung endet damit
+**immer 3:0 oder 2:1**, nie unentschieden.
 
 > Optional kann eine Liga auf „frühes Ende" stellen — dann entfällt bei 2:0 das dritte Duell. Der
 > **Standard ist aber, alle drei Duelle zu schießen**, damit jeder auf gleich viele Serien kommt.
@@ -64,17 +75,22 @@ Welche Wertung in den Duellen gilt, ist pro Liga einstellbar — wie schon heute
 - **Ringteiler**
 
 **Gleichstand in einem Duell:** Ein Duell wird über die gewählte Wertung entschieden. Haben beide
-denselben Wertungswert, gilt das Duell als **unentschieden** (kein Sieger):
+denselben Wertungswert, ist das Duell zunächst **unentschieden** — und wird dann **per Stechschuss
+entschieden** (siehe unten):
 
-- **Ringteiler (Standard):** Gleicher Ringteiler → unentschieden — auch wenn er aus
+- **Ringteiler (Standard):** Gleicher Ringteiler → Stechschuss — auch wenn er aus
   _unterschiedlichen_ Ringen/Teilern entsteht. Bewusst so: bei gleichem Ringteiler sind beide nach der
   Wertung gleichwertig; statt sie über ein willkürliches Zweitkriterium zu trennen, wird gestochen.
-- **Serie (Ringe) / Teiler:** Gleiche Ringzahl bzw. gleicher Teiler → unentschieden.
+- **Serie (Ringe) / Teiler:** Gleiche Ringzahl bzw. gleicher Teiler → Stechschuss.
 
-**Steht die Begegnung am Ende gleich** (z. B. 1:1, weil ein Duell unentschieden war), entscheidet ein
-**Stechschuss**: Jeder gibt **einen Schuss in Zehntelwertung** ab — der höhere Wert gewinnt die
-Begegnung. Sind beide gleich, folgt der nächste Stechschuss, so lange bis einer besser ist. Das ist
-**dasselbe Prinzip wie im Finale** und damit vertraut; so bleibt die Tabelle ohne Unentschieden.
+**Der Stechschuss:** Jeder gibt **einen Schuss in Zehntelwertung** ab — der höhere Wert **gewinnt das
+Duell**. Sind beide gleich, folgt der nächste Stechschuss, so lange bis einer besser ist. Das per
+Stechschuss gewonnene Duell **zählt ganz normal mit**; die Begegnung endet also auch hier 2:1 oder
+3:0 (in der Anzeige als „2:1 n. St." gekennzeichnet). Das ist **dasselbe Prinzip wie im Finale** und
+damit vertraut; so bleibt die Tabelle ohne Unentschieden.
+
+**Beispiel mit Stechschuss:** Duell 1 geht an Anna, Duell 2 an Bernd, Duell 3 endet wertungsgleich →
+Stechschuss: **Anna 10,3 zu Bernd 9,8** → Anna gewinnt Duell 3. Endstand **2:1 (n. St.)** für Anna.
 
 _Konfigurierbar bleibt:_ Eine Liga kann Gleichstände optional doch über ein Zweitkriterium trennen
 (v. a. sinnvoll bei reiner Ringe-Wertung, wo gleiche Ringe häufig sind) — Standard ist aber der
@@ -87,33 +103,38 @@ _Konfigurierbar bleibt:_ Eine Liga kann Gleichstände optional doch über ein Zw
 Gezählt werden die **gewonnenen Begegnungen**. Die Reihenfolge ergibt sich aus den meisten
 Siegen. Bei Gleichstand entscheidet nacheinander:
 
-1. **Direkter Vergleich** — wer hat das Aufeinandertreffen der beiden gewonnen?
-2. **Satzdifferenz** — gewonnene minus verlorene Duelle über alle Begegnungen.
+1. **Satzdifferenz** — gewonnene minus verlorene Duelle über alle Begegnungen.
+2. **Mehr gewonnene Duelle (Sätze)** — wer insgesamt mehr Duelle für sich entschieden hat.
 3. **Bestes Einzelergebnis** — die beste einzelne Serie der Saison.
+
+Bewusst **ohne „direkten Vergleich"**: Die Reihenfolge soll vollständig aus den **Tabellenspalten
+ablesbar** sein (wie in der FIFA-Gruppenphase, wo die Tordifferenz entscheidet) — die Spalten stehen
+in genau dieser Reihenfolge. Das heißt auch: Ein Schütze kann vor jemandem stehen, gegen den er das
+direkte Duell verloren hat, **wenn seine Satzdifferenz besser ist**. Das ist an der Tabelle
+nachvollziehbar (bessere Satzdifferenz), während ein „unsichtbares" Kriterium wie der direkte
+Vergleich die Reihenfolge für die Schützen unerklärbar machen würde.
 
 Weil ein Best-of immer einen Sieger hat, gibt es **keine Unentschieden** — die Tabelle ist
 eindeutig.
 
 **Beispiel einer Tabelle (4 Schützen, Best-of-3):**
 
-| Pl. | Name  | Begegn. | Siege | Niederl. | Satzverh. | Satzdiff. | bestes Erg. |
-| --- | ----- | ------- | ----- | -------- | --------- | --------- | ----------- |
-| 1   | Anna  | 3       | 3     | 0        | 8:1       | +7        | 7,1         |
-| 2   | Bernd | 3       | 2     | 1        | 5:4       | +1        | 6,8         |
-| 3   | Clara | 3       | 1     | 2        | 3:6       | −3        | 8,0         |
-| 4   | David | 3       | 0     | 3        | 2:7       | −5        | 9,2         |
+| Pl. | Name  | Begegn. | Siege | Satzdiff. | Satzverh. | bestes Erg. |
+| --- | ----- | ------- | ----- | --------- | --------- | ----------- |
+| 1   | Anna  | 3       | 3     | +7        | 8:1       | 7,1         |
+| 2   | Bernd | 3       | 2     | +1        | 5:4       | 6,8         |
+| 3   | Clara | 3       | 1     | −3        | 3:6       | 8,0         |
+| 4   | David | 3       | 0     | −5        | 2:7       | 9,2         |
 
 ### Was, wenn die Siege gleich sind?
 
-Stell dir vor, am Saisonende stehen drei Schützen bei **je 5 Siegen**:
+Stell dir vor, am Saisonende stehen drei Schützen bei **je 5 Siegen**. Dann entscheidet direkt die
+**Satzdifferenz** (über alle Begegnungen): Eva **+8**, Frank **+5**, Georg **+1** → Reihenfolge
+**Eva, Frank, Georg.**
 
-- **Direkter Vergleich:** Eva schlug Frank, Frank schlug Georg, Georg schlug Eva — ein „Ring".
-  Jeder hat gegen die anderen genau einen Sieg und eine Niederlage → **keine Entscheidung.**
-- **Satzdifferenz** (über alle Begegnungen): Eva **+8**, Frank **+5**, Georg **+1**.
-- → Reihenfolge: **Eva, Frank, Georg.**
-
-So wird auch ein „Dreier-Patt" eindeutig aufgelöst, ohne dass es zu Stechen oder Losentscheid
-kommt.
+(Selbst wenn sich die drei im direkten Vergleich „im Kreis" geschlagen hätten — Eva schlug Frank,
+Frank schlug Georg, Georg schlug Eva — bräuchte es keine Sonderregel: Die Satzdifferenz löst das
+„Dreier-Patt" eindeutig auf, ohne Stechen oder Losentscheid, und sie steht direkt in der Tabelle.)
 
 ---
 
