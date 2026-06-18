@@ -316,7 +316,7 @@ describe("Match decided by Stechschuss (tiebreak)", () => {
     homeParticipantId: "A",
     awayParticipantId: "B",
     series: [
-      // Duel 1: A wins (lower teiler)
+      // Duel 1: A wins (lower ringteiler; ringteiler defaults to teiler in mkSeries)
       mkSeries("A", 1, 90, 10),
       mkSeries("B", 1, 90, 20),
       // Duel 2: B wins
@@ -325,9 +325,10 @@ describe("Match decided by Stechschuss (tiebreak)", () => {
       // Duel 3: TIE (same teiler, same rings)
       mkSeries("A", 3, 90, 15),
       mkSeries("B", 3, 90, 15),
-      // Tiebreak round 1 (duelNumber=4, isTiebreak=true): A wins
-      mkSeries("A", 4, 90, 5, { isTiebreak: true }),
-      mkSeries("B", 4, 90, 25, { isTiebreak: true }),
+      // Tiebreak round 1 (duelNumber=4, isTiebreak=true): A wins.
+      // A Stechschuss stores the single decimal shot in `rings`; higher shot wins.
+      mkSeries("A", 4, 9.8, 0, { isTiebreak: true }),
+      mkSeries("B", 4, 9.5, 0, { isTiebreak: true }),
     ],
   }
 
@@ -721,5 +722,112 @@ describe("Early clinch — playAll=false, best-of-3", () => {
     expect(row(rows, "A").duelsWon).toBe(2)
     expect(row(rows, "A").duelsLost).toBe(0)
     expect(row(rows, "A").duelDiff).toBe(2)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Test 12: TEILER-mode match decided by Stechschuss
+// Bug: tiebreak was routed through duelOutcome with scoringMode=TEILER,
+// and Stechschuss series have teiler=0 → always TIE → never resolves.
+// Fix: Stechschuss outcome is decided purely by shot value (rings field).
+// ---------------------------------------------------------------------------
+describe("TEILER-mode match decided by Stechschuss", () => {
+  // Best-of-3, playAll=true, TEILER scoring:
+  // Regular duel 1: A wins (teiler 2.0 < 3.0, factor=1 in fixed discipline)
+  // Regular duel 2: B wins (teiler 2.0 < 3.0)
+  // Regular duel 3: TIE (same teiler)
+  // After 3 duels: 1:1 → needs_tiebreak
+  // Stechschuss duel 4: A shot=9.8, B shot=9.5 → A wins (higher shot)
+  // Result: A is the match winner.
+  //
+  // Before fix: tiebreak series have teiler=0, duelOutcome(TEILER, 0, 0) → TIE → never resolves.
+
+  const participants = [mkParticipant("A"), mkParticipant("B")]
+
+  const config: BestOfStandingsConfig = {
+    scoringMode: "TEILER",
+    bestOf: 3,
+    playAll: true,
+    tiebreaker1: null,
+    tiebreaker2: null,
+    competitionDisciplineId: "disc-1", // fixed discipline, factor=1
+  }
+
+  const matchup: BestOfStandingsMatchup = {
+    homeParticipantId: "A",
+    awayParticipantId: "B",
+    series: [
+      // Duel 1: A wins (lower teiler = better in TEILER mode)
+      mkSeries("A", 1, 90, 2.0, { teilerFaktor: 1 }),
+      mkSeries("B", 1, 90, 3.0, { teilerFaktor: 1 }),
+      // Duel 2: B wins
+      mkSeries("A", 2, 90, 3.0, { teilerFaktor: 1 }),
+      mkSeries("B", 2, 90, 2.0, { teilerFaktor: 1 }),
+      // Duel 3: TIE (same teiler)
+      mkSeries("A", 3, 90, 2.5, { teilerFaktor: 1 }),
+      mkSeries("B", 3, 90, 2.5, { teilerFaktor: 1 }),
+      // Stechschuss duel 4: A shot=9.8, B shot=9.5 → A wins (higher shot value in rings field)
+      // teiler=0 because Stechschuss stores shot value in rings only
+      mkSeries("A", 4, 9.8, 0, { isTiebreak: true, teilerFaktor: 1 }),
+      mkSeries("B", 4, 9.5, 0, { isTiebreak: true, teilerFaktor: 1 }),
+    ],
+  }
+
+  const rows = calculateBestOfStandings(participants, [matchup], config)
+
+  it("A wins the match (Stechschuss decided by shot value, not teiler)", () => {
+    expect(row(rows, "A").wins).toBe(1)
+    expect(row(rows, "A").losses).toBe(0)
+  })
+
+  it("B loses the match", () => {
+    expect(row(rows, "B").wins).toBe(0)
+    expect(row(rows, "B").losses).toBe(1)
+  })
+
+  it("A ranks 1st", () => {
+    expect(row(rows, "A").rank).toBe(1)
+    expect(row(rows, "B").rank).toBe(2)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Test 13: TEILER-mode with corrected teiler (mixed discipline, factor active)
+// Bug: evaluateMatchState passes raw teiler as correctedTeiler.
+// Fix: apply effectiveTeilerFaktor via per-series teilerFaktor.
+// This tests calculateBestOfStandings (which already had the fix);
+// the corresponding bestOfActions test is in bestOfActions.test.ts.
+// ---------------------------------------------------------------------------
+describe("TEILER-mode mixed discipline — corrected teiler decides duels", () => {
+  // A: teiler=10, factor=2 → correctedTeiler=20 (worse)
+  // B: teiler=15, factor=1 → correctedTeiler=15 (better — lower wins in TEILER)
+  // Without correction A(10) < B(15) → A would win each duel incorrectly.
+  // With correction B(15) < A(20) → B wins each duel correctly.
+
+  const participants = [mkParticipant("A"), mkParticipant("B")]
+
+  const config: BestOfStandingsConfig = {
+    scoringMode: "TEILER",
+    bestOf: 3,
+    playAll: true,
+    tiebreaker1: null,
+    tiebreaker2: null,
+    competitionDisciplineId: null, // mixed — factor active
+  }
+
+  const matchup: BestOfStandingsMatchup = {
+    homeParticipantId: "A",
+    awayParticipantId: "B",
+    series: [1, 2, 3].flatMap((n) => [
+      mkSeries("A", n, 90, 10, { teilerFaktor: 2 }), // corrected: 20
+      mkSeries("B", n, 90, 15, { teilerFaktor: 1 }), // corrected: 15 (lower wins)
+    ]),
+  }
+
+  const rows = calculateBestOfStandings(participants, [matchup], config)
+
+  it("B wins the match (corrected teiler 15 < 20)", () => {
+    expect(row(rows, "B").wins).toBe(1)
+    expect(row(rows, "A").wins).toBe(0)
   })
 })

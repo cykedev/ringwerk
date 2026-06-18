@@ -6,7 +6,7 @@ import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import type { ActionResult } from "@/lib/types"
 import { calculateRingteiler, MAX_RINGS } from "./calculateResult"
 import { effectiveTeilerFaktor } from "@/lib/scoring/calculateScore"
-import { duelOutcome, resolveBestOf } from "@/lib/scoring/bestOf"
+import { duelOutcome, resolveBestOf, stechschussOutcome } from "@/lib/scoring/bestOf"
 import type { DuelSeries, BestOfStatus } from "@/lib/scoring/bestOf"
 import type { ScoringMode } from "@/generated/prisma/client"
 import { revalidatePublicSlugForCompetition } from "@/lib/competitions/actions/_shared"
@@ -41,6 +41,8 @@ interface PlainSeries {
   rings: number
   teiler: number
   ringteiler: number
+  /** The discipline's configured factor (used with competitionDisciplineId to compute correctedTeiler). */
+  teilerFaktor: number
   duelNumber: number | null
   isTiebreak: boolean
 }
@@ -82,6 +84,7 @@ async function loadMatchup(matchupId: string) {
           ringteiler: true,
           duelNumber: true,
           isTiebreak: true,
+          discipline: { select: { teilerFaktor: true } },
         },
       },
     },
@@ -134,11 +137,16 @@ async function resolveDisciplines(matchup: LoadedMatchup) {
  * series without fighting Prisma's Decimal type.
  *
  * Home participant = A, away participant = B.
+ *
+ * - Regular duels: evaluated with duelOutcome (uses correctedTeiler = teiler * effectiveTeilerFaktor).
+ * - Tiebreak (Stechschuss) rounds: evaluated with stechschussOutcome (shot value in rings, higher wins),
+ *   independent of scoringMode.
  */
 function evaluateMatchState(
   homeId: string,
   awayId: string,
   series: PlainSeries[],
+  competitionDisciplineId: string | null,
   scoringMode: ScoringMode,
   groupTiebreaker1: ScoringMode | null,
   groupTiebreaker2: ScoringMode | null,
@@ -146,36 +154,32 @@ function evaluateMatchState(
   playAll: boolean
 ): BestOfStatus {
   const regularByDuel = new Map<number, { home?: DuelSeries; away?: DuelSeries }>()
-  const tiebreakByDuel = new Map<number, { home?: DuelSeries; away?: DuelSeries }>()
+  const tiebreakByDuel = new Map<number, { homeRings?: number; awayRings?: number }>()
 
   for (const s of series) {
     if (s.duelNumber === null) continue
 
-    const entry: DuelSeries = {
-      rings: s.rings,
-      // correctedTeiler = teiler * effectiveFaktor; but ringteiler is already
-      // stored with effective factor applied, and for duel comparison we use
-      // the ringteiler field. For TEILER/RINGS modes correctedTeiler is needed.
-      // Since we stored ringteiler = maxRings - rings + teiler * factor, we
-      // cannot easily back-derive correctedTeiler. However, saveMatchResult
-      // stores (teiler × factor) as ringteiler - (maxRings - rings). We pass
-      // raw teiler here because duelOutcome calls compareByMode which, for
-      // TEILER mode, compares correctedTeiler. For the typical RINGTEILER mode
-      // it uses the ringteiler field. For RINGS mode it uses rings only.
-      // Best-of group duels almost always use RINGTEILER; supporting TEILER
-      // cleanly would require storing correctedTeiler separately. We store raw
-      // teiler in correctedTeiler as a pragmatic fallback — the UI can enforce
-      // RINGTEILER mode for BEST_OF_SINGLE.
-      correctedTeiler: s.teiler,
-      ringteiler: s.ringteiler,
-    }
-
-    const target = s.isTiebreak ? tiebreakByDuel : regularByDuel
-    const existing = target.get(s.duelNumber) ?? {}
-    if (s.participantId === homeId) {
-      target.set(s.duelNumber, { ...existing, home: entry })
-    } else if (s.participantId === awayId) {
-      target.set(s.duelNumber, { ...existing, away: entry })
+    if (s.isTiebreak) {
+      // Stechschuss: only the shot value (rings) matters.
+      const existing = tiebreakByDuel.get(s.duelNumber) ?? {}
+      if (s.participantId === homeId) {
+        tiebreakByDuel.set(s.duelNumber, { ...existing, homeRings: s.rings })
+      } else if (s.participantId === awayId) {
+        tiebreakByDuel.set(s.duelNumber, { ...existing, awayRings: s.rings })
+      }
+    } else {
+      const factor = effectiveTeilerFaktor(competitionDisciplineId, s.teilerFaktor)
+      const entry: DuelSeries = {
+        rings: s.rings,
+        correctedTeiler: s.teiler * factor,
+        ringteiler: s.ringteiler,
+      }
+      const existing = regularByDuel.get(s.duelNumber) ?? {}
+      if (s.participantId === homeId) {
+        regularByDuel.set(s.duelNumber, { ...existing, home: entry })
+      } else if (s.participantId === awayId) {
+        regularByDuel.set(s.duelNumber, { ...existing, away: entry })
+      }
     }
   }
 
@@ -188,11 +192,9 @@ function evaluateMatchState(
     )
 
   const tiebreakOutcomes = Array.from(tiebreakByDuel.entries())
-    .filter(([, pair]) => pair.home && pair.away)
+    .filter(([, pair]) => pair.homeRings !== undefined && pair.awayRings !== undefined)
     .sort(([a], [b]) => a - b)
-    .map(([, pair]) =>
-      duelOutcome(pair.home!, pair.away!, scoringMode, groupTiebreaker1, groupTiebreaker2)
-    )
+    .map(([, pair]) => stechschussOutcome(pair.homeRings!, pair.awayRings!))
 
   return resolveBestOf(regularOutcomes, tiebreakOutcomes, { bestOf, playAll })
 }
@@ -206,6 +208,7 @@ function toPlain(series: LoadedMatchup["series"]): PlainSeries[] {
     rings: s.rings.toNumber(),
     teiler: s.teiler.toNumber(),
     ringteiler: s.ringteiler.toNumber(),
+    teilerFaktor: s.discipline?.teilerFaktor.toNumber() ?? 1,
     duelNumber: s.duelNumber,
     isTiebreak: s.isTiebreak,
   }))
@@ -273,6 +276,8 @@ export async function saveBestOfDuel(input: SaveBestOfDuelInput): Promise<Action
       rings: input.homeResult.rings,
       teiler: input.homeResult.teiler,
       ringteiler: homeRingteiler,
+      // Raw (uncorrected) factor: evaluateMatchState applies effectiveTeilerFaktor itself.
+      teilerFaktor: homeDiscipline.teilerFaktor.toNumber(),
       duelNumber: input.duelNumber,
       isTiebreak: false,
     },
@@ -281,6 +286,7 @@ export async function saveBestOfDuel(input: SaveBestOfDuelInput): Promise<Action
       rings: input.awayResult.rings,
       teiler: input.awayResult.teiler,
       ringteiler: awayRingteiler,
+      teilerFaktor: awayDiscipline.teilerFaktor.toNumber(),
       duelNumber: input.duelNumber,
       isTiebreak: false,
     },
@@ -290,6 +296,7 @@ export async function saveBestOfDuel(input: SaveBestOfDuelInput): Promise<Action
     matchup.homeParticipantId,
     matchup.awayParticipantId!,
     updatedSeries,
+    competitionDisciplineId,
     matchup.competition.scoringMode,
     matchup.competition.groupTiebreaker1 ?? null,
     matchup.competition.groupTiebreaker2 ?? null,
@@ -451,7 +458,7 @@ export async function saveStechschuss(input: SaveStechschussInput): Promise<Acti
 
   // If both sides have the same latest tiebreak duelNumber we need to decide:
   // was it a TIE (→ new round needed) or was it decided (→ correction of that round)?
-  // We evaluate the outcome of the latest tiebreak pair to distinguish the two.
+  // A Stechschuss is decided purely by shot value (rings field), regardless of scoringMode.
   let latestTiebreakWasTie = false
   if (homeTbMax > 0 && homeTbMax === awayTbMax) {
     const homeTbSeries = tiebreakSeries.find(
@@ -461,20 +468,9 @@ export async function saveStechschuss(input: SaveStechschussInput): Promise<Acti
       (s) => s.participantId === matchup.awayParticipantId! && s.duelNumber === homeTbMax
     )
     if (homeTbSeries && awayTbSeries) {
-      const outcome = duelOutcome(
-        {
-          rings: homeTbSeries.rings.toNumber(),
-          correctedTeiler: homeTbSeries.teiler.toNumber(),
-          ringteiler: homeTbSeries.ringteiler.toNumber(),
-        },
-        {
-          rings: awayTbSeries.rings.toNumber(),
-          correctedTeiler: awayTbSeries.teiler.toNumber(),
-          ringteiler: awayTbSeries.ringteiler.toNumber(),
-        },
-        matchup.competition.scoringMode,
-        matchup.competition.groupTiebreaker1 ?? null,
-        matchup.competition.groupTiebreaker2 ?? null
+      const outcome = stechschussOutcome(
+        homeTbSeries.rings.toNumber(),
+        awayTbSeries.rings.toNumber()
       )
       latestTiebreakWasTie = outcome === "TIE"
     }
@@ -506,6 +502,8 @@ export async function saveStechschuss(input: SaveStechschussInput): Promise<Acti
       rings: input.homeShot,
       teiler: 0,
       ringteiler: homeStechRingteiler,
+      // teilerFaktor is irrelevant for tiebreaks (evaluated by stechschussOutcome).
+      teilerFaktor: 1,
       duelNumber: tiebreakDuelNumber,
       isTiebreak: true,
     },
@@ -514,6 +512,7 @@ export async function saveStechschuss(input: SaveStechschussInput): Promise<Acti
       rings: input.awayShot,
       teiler: 0,
       ringteiler: awayStechRingteiler,
+      teilerFaktor: 1,
       duelNumber: tiebreakDuelNumber,
       isTiebreak: true,
     },
@@ -523,6 +522,7 @@ export async function saveStechschuss(input: SaveStechschussInput): Promise<Acti
     matchup.homeParticipantId,
     matchup.awayParticipantId!,
     updatedSeries,
+    matchup.competition.disciplineId,
     matchup.competition.scoringMode,
     matchup.competition.groupTiebreaker1 ?? null,
     matchup.competition.groupTiebreaker2 ?? null,

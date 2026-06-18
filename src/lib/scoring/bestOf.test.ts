@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { duelOutcome, resolveBestOf } from "./bestOf"
+import { duelOutcome, resolveBestOf, stechschussOutcome } from "./bestOf"
 
 const opts = (o: Partial<{ bestOf: number; playAll: boolean }> = {}) => ({
   bestOf: 3,
@@ -69,5 +69,17 @@ describe("duelOutcome", () => {
   })
   it("TEILER: lower corrected teiler wins", () => {
     expect(duelOutcome(s(90, 2.0, 12), s(90, 3.0, 13), "TEILER", null, null)).toBe("A")
+  })
+})
+
+describe("stechschussOutcome", () => {
+  it("home higher shot wins (A)", () => {
+    expect(stechschussOutcome(9.8, 9.5)).toBe("A")
+  })
+  it("away higher shot wins (B)", () => {
+    expect(stechschussOutcome(9.3, 9.7)).toBe("B")
+  })
+  it("equal shots → TIE", () => {
+    expect(stechschussOutcome(9.5, 9.5)).toBe("TIE")
   })
 })

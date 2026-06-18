@@ -28,6 +28,16 @@ function compareByMode(a: DuelSeries, b: DuelSeries, mode: ScoringMode): -1 | 0 
   return 0
 }
 
+/**
+ * A Stechschuss round is decided purely by the single decimal shot value (higher wins),
+ * independent of the league scoringMode. The shot value is carried in `rings`.
+ */
+export function stechschussOutcome(homeShot: number, awayShot: number): DuelOutcome {
+  if (homeShot > awayShot) return "A"
+  if (homeShot < awayShot) return "B"
+  return "TIE"
+}
+
 export function duelOutcome(
   a: DuelSeries,
   b: DuelSeries,

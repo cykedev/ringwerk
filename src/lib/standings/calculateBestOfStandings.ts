@@ -1,5 +1,10 @@
 import type { ScoringMode } from "@/generated/prisma/client"
-import { duelOutcome, resolveBestOf, type DuelOutcome } from "@/lib/scoring/bestOf"
+import {
+  duelOutcome,
+  resolveBestOf,
+  stechschussOutcome,
+  type DuelOutcome,
+} from "@/lib/scoring/bestOf"
 import { effectiveTeilerFaktor } from "@/lib/scoring/calculateScore"
 
 // ---------------------------------------------------------------------------
@@ -101,13 +106,8 @@ export function calculateBestOfStandings(
   }
 
   // We need to remember decided matchups for the direct-comparison step.
-  // Each entry records: who were home/away and what the regular-duel outcomes were.
-  interface DecidedMatchup {
-    homeId: string
-    awayId: string
-    winner: "A" | "B" // "A" = home, "B" = away
-  }
-  const decidedMatchups: DecidedMatchup[] = []
+  // Each entry records: who were home/away and who won.
+  const decidedMatchups: DecidedMatchupRecord[] = []
 
   for (const matchup of matchups) {
     // Skip BYEs.
@@ -118,44 +118,28 @@ export function calculateBestOfStandings(
     // Skip matchups involving withdrawn participants.
     if (withdrawnIds.has(homeId) || withdrawnIds.has(awayId)) continue
 
-    // Build corrected DuelSeries for every series entry.
-    function toDuelSeries(s: BestOfStandingsSeries) {
-      const factor = effectiveTeilerFaktor(config.competitionDisciplineId, s.teilerFaktor)
-      return {
-        rings: s.rings,
-        correctedTeiler: s.teiler * factor,
-        ringteiler: s.ringteiler,
-      }
-    }
-
     // Separate regular from tiebreak series.
     const regularSeries = matchup.series.filter((s) => !s.isTiebreak)
     const tiebreakSeries = matchup.series.filter((s) => s.isTiebreak)
 
-    // Group regular series by duelNumber → compute outcomes.
+    // Group regular series by duelNumber → compute outcomes using full duelOutcome.
     const regularByDuel = groupByDuelNumber(regularSeries, homeId, awayId)
     const regularOutcomes: DuelOutcome[] = sortedDuelNumbers(regularByDuel).map((dn) => {
       const { home, away } = regularByDuel.get(dn)!
       return duelOutcome(
-        toDuelSeries(home),
-        toDuelSeries(away),
+        toDuelSeries(home, config.competitionDisciplineId),
+        toDuelSeries(away, config.competitionDisciplineId),
         config.scoringMode,
         config.tiebreaker1,
         config.tiebreaker2
       )
     })
 
-    // Group tiebreak series by duelNumber → compute outcomes.
+    // Group tiebreak (Stechschuss) series by duelNumber → decided purely by shot value (rings).
     const tiebreakByDuel = groupByDuelNumber(tiebreakSeries, homeId, awayId)
     const tiebreakOutcomes: DuelOutcome[] = sortedDuelNumbers(tiebreakByDuel).map((dn) => {
       const { home, away } = tiebreakByDuel.get(dn)!
-      return duelOutcome(
-        toDuelSeries(home),
-        toDuelSeries(away),
-        config.scoringMode,
-        config.tiebreaker1,
-        config.tiebreaker2
-      )
+      return stechschussOutcome(home.rings, away.rings)
     })
 
     // Resolve the match.
@@ -249,6 +233,16 @@ export function calculateBestOfStandings(
 interface DuelPair {
   home: BestOfStandingsSeries
   away: BestOfStandingsSeries
+}
+
+/** Build a corrected DuelSeries from a raw standings series entry. */
+function toDuelSeries(s: BestOfStandingsSeries, competitionDisciplineId: string | null) {
+  const factor = effectiveTeilerFaktor(competitionDisciplineId, s.teilerFaktor)
+  return {
+    rings: s.rings,
+    correctedTeiler: s.teiler * factor,
+    ringteiler: s.ringteiler,
+  }
 }
 
 /**
