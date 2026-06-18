@@ -63,7 +63,7 @@ interface Props {
   teilerFaktor: number
 }
 
-// ─── Helpers (mirrored from BestOfMatchCard) ──────────────────────────────────
+// ─── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Group series by duelNumber into DuelSeries pairs for client-side resolveBestOf. */
 function deriveMatchStatus(
