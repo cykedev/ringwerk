@@ -557,7 +557,10 @@ export function ScheduleView({
   // BEST_OF_SINGLE: one flat list of all encounters — no Spieltag grouping, no Hin-/Rückrunde.
   // Dates are agreed individually, so there are no fixed match days to group by.
   if (leagueFormat === "BEST_OF_SINGLE" && bestOfConfig) {
-    const allSorted = [...matchups].sort((a, b) => a.roundIndex - b.roundIndex)
+    // Byes ("Freilos") carry no information for the reader — omit them entirely.
+    const allSorted = [...matchups]
+      .filter((m) => m.awayParticipant !== null && m.status !== "BYE")
+      .sort((a, b) => a.roundIndex - b.roundIndex)
 
     return (
       <BestOfMatchupTable

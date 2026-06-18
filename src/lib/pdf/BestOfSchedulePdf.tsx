@@ -317,7 +317,9 @@ function BestOfMatchupsSection({
   groupTiebreaker2: ScoringMode | null
 }): ReactElement {
   // Flat list — no Spieltag grouping (dates are agreed individually in best-of single).
-  const sorted = [...matchups].sort((a, b) => a.roundIndex - b.roundIndex)
+  const sorted = [...matchups]
+    .filter((m) => m.awayParticipant !== null)
+    .sort((a, b) => a.roundIndex - b.roundIndex)
 
   return (
     <View break>
