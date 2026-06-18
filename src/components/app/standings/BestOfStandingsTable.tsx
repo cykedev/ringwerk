@@ -43,11 +43,14 @@ export function BestOfStandingsTable({ rows, scoringMode }: Props) {
             <th className="hidden px-4 py-2.5 text-center font-medium text-muted-foreground sm:table-cell">
               Begegn.
             </th>
-            <th className="hidden px-4 py-2.5 text-center font-medium text-muted-foreground sm:table-cell">
-              Satzverhältnis
+            <th className="px-2 py-2.5 text-center font-medium text-muted-foreground sm:px-4">
+              Siege
             </th>
             <th className="hidden px-4 py-2.5 text-center font-medium text-muted-foreground sm:table-cell">
               Satzdiff.
+            </th>
+            <th className="hidden px-4 py-2.5 text-center font-medium text-muted-foreground sm:table-cell">
+              Satzverhältnis
             </th>
             <th className="hidden px-4 py-2.5 text-right font-medium text-muted-foreground sm:table-cell">
               {showRings ? "Best. Ringe" : "Best. RT"}
@@ -86,9 +89,7 @@ export function BestOfStandingsTable({ rows, scoringMode }: Props) {
                 <td className="hidden px-4 py-3 text-center text-muted-foreground sm:table-cell">
                   {row.played}
                 </td>
-                <td className="hidden px-4 py-3 text-center text-muted-foreground sm:table-cell">
-                  {row.duelsWon}:{row.duelsLost}
-                </td>
+                <td className="px-2 py-3 text-center font-medium sm:px-4">{row.wins}</td>
                 <td className="hidden px-4 py-3 text-center sm:table-cell">
                   <span
                     className={
@@ -101,6 +102,9 @@ export function BestOfStandingsTable({ rows, scoringMode }: Props) {
                   >
                     {row.duelDiff > 0 ? `+${row.duelDiff}` : row.duelDiff}
                   </span>
+                </td>
+                <td className="hidden px-4 py-3 text-center text-muted-foreground sm:table-cell">
+                  {row.duelsWon}:{row.duelsLost}
                 </td>
                 <td className="hidden px-4 py-3 text-right text-muted-foreground sm:table-cell">
                   {showRings

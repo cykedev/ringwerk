@@ -339,11 +339,15 @@ Ergebnis ist immer A, B oder TIE. Bei TIE zählt das Duell für keinen Seite. Ke
 
 ### Liga-spezifisch: BEST_OF_SINGLE — Tabellensortierung
 
+Nur tabellensichtbare Kriterien (kein direkter Vergleich), Spaltenreihenfolge = Bewertungsreihenfolge:
+
 1. Siege (Begegnungssiege, absteigend)
-2. Direkter Vergleich (Siege aus Begegnungen ausschließlich innerhalb der Gleichstandsgruppe)
-3. Satzdifferenz (duelsWon − duelsLost, absteigend)
+2. Satzdifferenz (duelsWon − duelsLost, absteigend)
+3. Mehr gewonnene Sätze (duelsWon, absteigend)
 4. Bestes Einzelergebnis (bei RINGS/RINGS_DECIMAL: höchste Ringe; sonst: niedrigster Ringteiler)
-5. Nachname alphabetisch (de)
+5. Nachname (Stabilisierung)
+
+Ein per Stechschuss entschiedenes Gleichstands-Duell zählt für den Stechschuss-Sieger (Best-of-3 endet so z. B. 2:1, nicht 1:1). 5. Nachname alphabetisch (de)
 
 ### Saison-spezifisch: Mehrfach-Wertung
 

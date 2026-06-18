@@ -266,13 +266,13 @@ BEST_OF_SINGLE ist ein alternatives Gruppenphase-Format für LEAGUE-Wettbewerbe.
 
 ### Tabelle
 
-Spalten: Pl., Name, Begegn. (gespielt), Siege, Niederl., Satzverhältnis (gewonnene:verlorene Duelle), Satzdiff. (duelDiff), bestes Erg. (Ringe oder Ringteiler je nach scoringMode)
+Spalten (Reihenfolge = Bewertungsreihenfolge): Pl., Name, Begegn. (gespielt), Siege, Satzdiff. (duelDiff), Satzverhältnis (gewonnene:verlorene Duelle), bestes Erg. (Ringe oder Ringteiler je nach scoringMode)
 
-Sortierung:
+Sortierung (nur tabellensichtbare Kriterien, kein direkter Vergleich):
 
 1. Siege (absteigend)
-2. Direkter Vergleich (nur Begegnungen zwischen den gleichstehenden Teilnehmern)
-3. Satzdifferenz (absteigend)
+2. Satzdifferenz (absteigend)
+3. Mehr gewonnene Sätze (duelsWon, absteigend)
 4. Bestes Einzelergebnis (RINGS/RINGS_DECIMAL → höchste Ringe; sonst → niedrigster Ringteiler)
 5. Nachname alphabetisch
 

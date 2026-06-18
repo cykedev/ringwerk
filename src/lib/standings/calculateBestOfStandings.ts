@@ -106,10 +106,6 @@ export function calculateBestOfStandings(
     })
   }
 
-  // We need to remember decided matchups for the direct-comparison step.
-  // Each entry records: who were home/away and who won.
-  const decidedMatchups: DecidedMatchupRecord[] = []
-
   for (const matchup of matchups) {
     // Skip BYEs.
     if (matchup.awayParticipantId === null) continue
@@ -180,9 +176,6 @@ export function calculateBestOfStandings(
       stats.ringteilers.push(s.ringteiler)
       stats.ringsValues.push(s.rings)
     }
-
-    // Record this decided matchup for direct-comparison.
-    decidedMatchups.push({ homeId, awayId, winner: status.winner })
   }
 
   // Build rows.
@@ -210,7 +203,7 @@ export function calculateBestOfStandings(
   const active = rows.filter((r) => !r.withdrawn)
   const withdrawn = rows.filter((r) => r.withdrawn)
 
-  const sorted = sortWithDirectComparison(active, decidedMatchups, config.scoringMode)
+  const sorted = sortStandings(active, config.scoringMode)
 
   sorted.forEach((r, i) => {
     r.rank = i + 1
@@ -276,86 +269,41 @@ function sortedDuelNumbers(map: Map<number, DuelPair>): number[] {
 }
 
 // ---------------------------------------------------------------------------
-// Sort with direct comparison
+// Sort
 // ---------------------------------------------------------------------------
 
-interface DecidedMatchupRecord {
-  homeId: string
-  awayId: string
-  winner: "A" | "B"
-}
-
 /**
- * Sorts active rows:
- *   1. wins desc
- *   2. Within tied wins group: direct match-wins counted only among group members
- *   3. duelDiff desc
- *   4. Best single result (mode-aware): RINGS/RINGS_DECIMAL → bestRings desc; else → bestRingteiler asc (null last)
- *   5. lastName localeCompare "de"
+ * Sorts active rows purely by column-visible criteria (no head-to-head), so the
+ * table order is explicable from the displayed columns:
+ *   1. wins desc (Match-Siege)
+ *   2. duelDiff desc (Satzdifferenz)
+ *   3. duelsWon desc (mehr gewonnene Sätze)
+ *   4. best single result (mode-aware): RINGS/RINGS_DECIMAL → bestRings desc; else → bestRingteiler asc (null last)
+ *   5. lastName localeCompare "de" (deterministic fallback)
  */
-function sortWithDirectComparison(
-  rows: BestOfStandingRow[],
-  decidedMatchups: DecidedMatchupRecord[],
-  scoringMode: ScoringMode
-): BestOfStandingRow[] {
-  // Group by wins.
-  const winsGroups = new Map<number, BestOfStandingRow[]>()
-  for (const row of rows) {
-    const group = winsGroups.get(row.wins) ?? []
-    group.push(row)
-    winsGroups.set(row.wins, group)
-  }
+function sortStandings(rows: BestOfStandingRow[], scoringMode: ScoringMode): BestOfStandingRow[] {
+  return [...rows].sort((a, b) => {
+    // 1. Match wins
+    if (a.wins !== b.wins) return b.wins - a.wins
 
-  const result: BestOfStandingRow[] = []
-  const sortedWins = [...winsGroups.keys()].sort((a, b) => b - a)
+    // 2. Satzdifferenz
+    if (a.duelDiff !== b.duelDiff) return b.duelDiff - a.duelDiff
 
-  for (const wins of sortedWins) {
-    const group = winsGroups.get(wins)!
+    // 3. Mehr gewonnene Sätze
+    if (a.duelsWon !== b.duelsWon) return b.duelsWon - a.duelsWon
 
-    if (group.length === 1) {
-      result.push(group[0])
-      continue
+    // 4. Best single result (mode-aware)
+    if (scoringMode === "RINGS" || scoringMode === "RINGS_DECIMAL") {
+      const ra = a.bestRings ?? -Infinity
+      const rb = b.bestRings ?? -Infinity
+      if (ra !== rb) return rb - ra
+    } else {
+      const rta = a.bestRingteiler ?? Infinity
+      const rtb = b.bestRingteiler ?? Infinity
+      if (rta !== rtb) return rta - rtb
     }
 
-    // Compute direct match-wins among the group.
-    const groupIds = new Set(group.map((r) => r.participantId))
-    const directWins = new Map<string, number>()
-    for (const row of group) {
-      directWins.set(row.participantId, 0)
-    }
-
-    for (const m of decidedMatchups) {
-      // Only count matchups between participants in this group.
-      if (!groupIds.has(m.homeId) || !groupIds.has(m.awayId)) continue
-      const winnerId = m.winner === "A" ? m.homeId : m.awayId
-      directWins.set(winnerId, (directWins.get(winnerId) ?? 0) + 1)
-    }
-
-    group.sort((a, b) => {
-      // 2. Direct comparison
-      const dwDiff = (directWins.get(b.participantId) ?? 0) - (directWins.get(a.participantId) ?? 0)
-      if (dwDiff !== 0) return dwDiff
-
-      // 3. duelDiff desc
-      if (a.duelDiff !== b.duelDiff) return b.duelDiff - a.duelDiff
-
-      // 4. Best single result (mode-aware)
-      if (scoringMode === "RINGS" || scoringMode === "RINGS_DECIMAL") {
-        const ra = a.bestRings ?? -Infinity
-        const rb = b.bestRings ?? -Infinity
-        if (ra !== rb) return rb - ra
-      } else {
-        const rta = a.bestRingteiler ?? Infinity
-        const rtb = b.bestRingteiler ?? Infinity
-        if (rta !== rtb) return rta - rtb
-      }
-
-      // 5. lastName alphabetical
-      return a.lastName.localeCompare(b.lastName, "de")
-    })
-
-    result.push(...group)
-  }
-
-  return result
+    // 5. lastName alphabetical (deterministic fallback)
+    return a.lastName.localeCompare(b.lastName, "de")
+  })
 }

@@ -143,14 +143,15 @@ function deriveSatzResult(
 // ─── Spaltenbreiten ───────────────────────────────────────────────────────────
 
 // Standings table widths (A4 portrait, 40pt padding each side → 515pt usable)
-// Pl. · Name · Begegn. · Satzverhältnis · Satzdiff. · bestes Erg.
+// Pl. · Name · Begegn. · Siege · Satzdiff. · Satzverhältnis · bestes Erg.
 const WS = {
   rank: 30,
-  name: 185,
-  played: 60,
-  ratio: 95,
-  diff: 60,
-  best: 85,
+  name: 150,
+  played: 50,
+  wins: 42,
+  diff: 55,
+  ratio: 98,
+  best: 90,
 }
 
 // Schedule table widths (two participant cells + status, mirrors the classic PDF)
@@ -200,8 +201,9 @@ function BestOfStandingsSection({
           <Text style={[styles.tableHeaderCell, { width: WS.rank }]}>Pl.</Text>
           <Text style={[styles.tableHeaderCellLeft, { width: WS.name }]}>Name</Text>
           <Text style={[styles.tableHeaderCell, { width: WS.played }]}>Begegn.</Text>
-          <Text style={[styles.tableHeaderCell, { width: WS.ratio }]}>Satzverhältnis</Text>
+          <Text style={[styles.tableHeaderCell, { width: WS.wins }]}>Siege</Text>
           <Text style={[styles.tableHeaderCell, { width: WS.diff }]}>Satzdiff.</Text>
+          <Text style={[styles.tableHeaderCell, { width: WS.ratio }]}>Satzverhältnis</Text>
           <Text style={[styles.tableHeaderCell, { width: WS.best }]}>
             {showRings ? "Best. Ringe" : "Best. RT"}
           </Text>
@@ -240,10 +242,11 @@ function BestOfStandingsSection({
                 {name}
               </Text>
               <Text style={[styles.tableCell, { width: WS.played }]}>{row.played}</Text>
+              <Text style={[styles.tableCell, { width: WS.wins }]}>{row.wins}</Text>
+              <Text style={[styles.tableCell, { width: WS.diff }]}>{duelDiffLabel}</Text>
               <Text style={[styles.tableCell, { width: WS.ratio }]}>
                 {row.duelsWon}:{row.duelsLost}
               </Text>
-              <Text style={[styles.tableCell, { width: WS.diff }]}>{duelDiffLabel}</Text>
               <Text style={[styles.tableCell, { width: WS.best }]}>
                 {showRings
                   ? formatRings(row.bestRings, scoringType)

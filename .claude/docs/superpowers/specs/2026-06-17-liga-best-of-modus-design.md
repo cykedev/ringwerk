@@ -34,7 +34,7 @@ Der bisherige Modus bleibt unverändert erhalten. Die Wahl erfolgt pro Liga beim
 | 5   | Match-Gleichstand → **Stechschuss** | Steht eine Begegnung nach allen Duellen gleich (gleich viele Duell-Siege): **Stechschuss** — je ein Schuss in **Zehntelwertung**, höherer gewinnt, bei Gleichstand wiederholen bis einer besser ist. **Standard** (`groupHasSuddenDeath = true`), einheitlich mit dem Finale. Alternative: Wiederholungsduell. Details §4.2. |
 | 5a  | Stechschuss erfassbar               | Der Stechschuss **muss in der Erfassungsmaske eingegeben werden** (Zehntelwert pro Schütze), damit die Software den Gleichstand korrekt wertet — nicht nur „am Stand" entscheiden. Siehe §6.                                                                                                                                 |
 | 6   | Wertungsmodi                        | Nur `RINGS`, `RINGS_DECIMAL`, `TEILER`, `RINGTEILER` (kein `DECIMAL_REST`, kein `TARGET`).                                                                                                                                                                                                                                   |
-| 7   | Tabelle                             | Zähl-Einheit = **Match-Siege**. Sortierkette: Siege → direkter Vergleich → Satzdifferenz → bestes Einzelergebnis. **Keine Unentschieden** möglich (Stechschuss erzwingt einen Sieger).                                                                                                                                       |
+| 7   | Tabelle                             | Zähl-Einheit = **Match-Siege**. Sortierkette: Siege → Satzdifferenz → mehr gewonnene Sätze → bestes Einzelergebnis. **Keine Unentschieden** möglich (Stechschuss erzwingt einen Sieger).                                                                                                                                     |
 | 8   | Datenmodell                         | Ansatz „Matchup bleibt Paarung, Duelle als Serien" (`Series.duelNumber`, Stechschuss via `Series.isTiebreak`). Playoff-Strukturen unberührt.                                                                                                                                                                                 |
 | 9   | Terminabstimmung                    | „Heimrecht" entfällt fachlich. **Termin wird gemeinsam abgestimmt** (keine feste Zuständigkeit). `homeParticipantId`/`awayParticipantId` nur zur Speicherung der Paarung. Datenmodell unverändert.                                                                                                                           |
 | 10  | Playoffs                            | Best-of-5, **unverändert**. Seeding aus der neuen Tabelle. Stechschuss-Konzept = dasselbe wie der bestehende Finale-Sudden-Death.                                                                                                                                                                                            |
@@ -229,24 +229,26 @@ Ablauf wie bei Playoff-Best-of (VF/HF), nur am `Matchup` statt am `PlayoffMatch`
   (höchster `isTiebreak`-Wert je Runde). Begegnungen mit zurückgezogenem Teilnehmer ausschließen.
 - Zeilenwerte: `played` (Begegnungen), `wins`, `losses`, `duelsWon`, `duelsLost`,
   `duelDiff` (= won − lost), `bestRingteiler`/`bestRings`.
-- **Sortierkette:**
+- **Sortierkette** (bewusst nur tabellensichtbare Kriterien — der direkte Vergleich entfällt, damit
+  die Reihenfolge aus den angezeigten Spalten ablesbar ist; Spaltenreihenfolge = Bewertungsreihenfolge):
   1. Match-Siege (absteigend)
-  2. Direkter Vergleich (Match-Siege innerhalb der punktgleichen Gruppe; löst 2er-Gleichstände immer)
-  3. Satzdifferenz (`duelDiff`, absteigend) — relevant v. a. bei zirkulären 3er-Gleichständen
+  2. Satzdifferenz (`duelDiff`, absteigend)
+  3. Mehr gewonnene Sätze (`duelsWon`, absteigend)
   4. Bestes Einzelergebnis (modusabhängig: höchste Ringe bzw. niedrigster Ringteiler; **ohne**
      Stechschuss-Serien)
   5. Nachname (Stabilisierung)
 - Zurückgezogene Teilnehmer ans Tabellenende (wie heute).
 
-**Auswirkung von `groupPlayAllDuels`:** Match-Siege (Kriterium 1) und direkter Vergleich (Kriterium 2)
-bleiben **unverändert** — der Match-Sieger ist die Mehrheit der Duelle (bzw. der Stechschuss-Sieger
-bei Gleichstand). Betroffen ist **nur die Satzdifferenz** (Kriterium 3): voll ausgespielte
+**Auswirkung von `groupPlayAllDuels`:** Die Match-Siege (Kriterium 1) bleiben **unverändert** — der
+Match-Sieger ist die Mehrheit der Duelle (bzw. der Stechschuss-Sieger bei Gleichstand). Betroffen ist
+**nur die Satzdifferenz** (Kriterium 2): voll ausgespielte
 Begegnungen liefern den vollen Satz-Spread. Da die Einstellung **liga-weit** gilt, bleibt das fair.
 Ein per Stechschuss entschiedenes Match zählt als Sieg/Niederlage; das per Stechschuss gewonnene
 Duell zählt im Satz mit (z. B. 2:1).
 
-**Worked Example (zirkulärer 3er-Gleichstand):** Eva/Frank/Georg je 5 Siege; Eva→Frank→Georg→Eva
-(direkter Vergleich je 1:1, keine Entscheidung); Satzdifferenz +8 / +5 / +1 → Eva, Frank, Georg.
+**Worked Example (3er-Gleichstand):** Eva/Frank/Georg je 5 Siege; Head-to-Head zirkulär
+(Eva→Frank→Georg→Eva) und nicht mehr gewertet — die Satzdifferenz +8 / +5 / +1 entscheidet direkt
+→ Eva, Frank, Georg.
 
 ---
 
@@ -276,7 +278,7 @@ Duell zählt im Satz mit (z. B. 2:1).
 
 - `lib/pdf/SchedulePdf.tsx`: Variante für `BEST_OF_SINGLE` — einfache Runde, Begegnungen mit
   Satzergebnis („2:1"; per Stechschuss entschieden als „2:1 n. St."), Tabelle mit den neuen Spalten
-  (Siege/Niederlagen/Satzverhältnis/Satzdifferenz/bestes Erg.); „Heim/Gast" entfällt.
+  (Siege/Satzdifferenz/Satzverhältnis/bestes Erg.); „Heim/Gast" entfällt.
 - Öffentliches PDF (`/api/public/c/[slug]/pdf`) bleibt phasenabhängig: vor Playoff-Start
   Spielplan+Tabelle (Best-of-Variante), nach Start Playoff-Bracket. Cache-Invalidierung wie bisher.
 

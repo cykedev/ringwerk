@@ -163,25 +163,13 @@ describe("4-participant round robin — clean ranking", () => {
 // ---------------------------------------------------------------------------
 // Test 2: Circular 3-way tie broken by duelDiff
 // ---------------------------------------------------------------------------
-describe("Circular 3-way tie — broken by duelDiff", () => {
-  // A beats B 2:1 (duels)
-  // B beats C 2:1
-  // C beats A 2:1
-  // All have 1 win, 1 loss → tied on wins.
-  // Direct comparison among the 3 is circular (each has 1 win vs the group).
-  // duelDiff: A = +1-1=0? No — let's make it explicit:
-  //   A vs B: A wins match (2 duels won, 1 lost in match) → duelDiff from this match: A +2-1=+1, B +1-2=-1
-  //   B vs C: B wins match (2 duels won, 1 lost)         → B: +2-1=+1 extra, C: +1-2=-1
-  //   C vs A: C wins match (2 duels won, 1 lost)         → C: +2-1=+1 extra, A: +1-2=-1
-  //
-  //   Total duelDiff: A = +1 + (-1) = 0, B = (-1) + 1 = 0, C = (-1) + 1 = 0 — circular!
-  //
-  // Let's make them different: A vs B: A wins 3:0; B vs C: B wins 3:0; C vs A: C wins 2:1
-  //   A: +3 (vs B) -1 (vs C) = +2
-  //   B: -3 (vs A) +3 (vs B→C) = 0
-  //   C: +2 (vs A) -3 (vs B) = -1
-  //   All have 1 win 1 loss → direct comparison: A won vs B, B won vs C, C won vs A → circular → duelDiff decides.
-  //   Ranking: A(+2) > B(0) > C(-1)
+describe("3-way tie on wins — broken by Satzdifferenz", () => {
+  // All three end on 1 win / 1 loss (tied on wins). Head-to-head is circular
+  // (A beat B, B beat C, C beat A) and is NOT a ranking criterion — the
+  // Satzdifferenz decides directly.
+  //   A vs B: A wins 3:0 · B vs C: B wins 3:0 · C vs A: C wins 2:1
+  //   Satzdifferenz: A = +3 −1 = +2 · B = −3 +3 = 0 · C = +2 −3 = −2
+  //   Ranking: A(+2) > B(0) > C(−2)
 
   const participants = [mkParticipant("A"), mkParticipant("B"), mkParticipant("C")]
 
@@ -229,10 +217,8 @@ describe("Circular 3-way tie — broken by duelDiff", () => {
     }
   })
 
-  it("direct comparison is circular (each has 1 win in the group)", () => {
-    // This is verified implicitly by needing duelDiff to separate them.
-    // A beat B, B beat C, C beat A → circular.
-    // duelDiff breakdown:
+  it("all tied on 1 win — Satzdifferenz separates them", () => {
+    // Head-to-head is circular and unused; the Satzdifferenz decides:
     //   A: wins 3 duels vs B, loses 1 duel vs C → 3-1 = +2
     //   B: wins 3 duels vs C, loses 3 duels vs A → 3-3 = 0
     //   C: wins 2 duels vs A, loses 3 duels vs B → 2-4 = -2
@@ -254,8 +240,7 @@ describe("Circular 3-way tie — broken by duelDiff", () => {
   })
 })
 
-// Fix the duelDiff expectation for C: 2 - 3 = -1
-describe("Circular 3-way tie — duelDiff values are correct", () => {
+describe("3-way tie on wins — Satzdifferenz values are correct", () => {
   const participants = [mkParticipant("A"), mkParticipant("B"), mkParticipant("C")]
 
   const matchupAB: BestOfStandingsMatchup = {
@@ -286,6 +271,72 @@ describe("Circular 3-way tie — duelDiff values are correct", () => {
   it("A duelDiff = +2", () => expect(row(rows, "A").duelDiff).toBe(2))
   it("B duelDiff = 0", () => expect(row(rows, "B").duelDiff).toBe(0))
   it("C duelDiff = -2", () => expect(row(rows, "C").duelDiff).toBe(-2))
+})
+
+// ---------------------------------------------------------------------------
+// Head-to-head is NOT a criterion — Satzdifferenz outranks a direct win
+// ---------------------------------------------------------------------------
+describe("Head-to-head loser ranks higher with better Satzdifferenz", () => {
+  // A beats B directly (2:1), but B's overall Satzdifferenz is far better.
+  // Head-to-head is not a ranking criterion, so B ranks above A.
+  //   A: beat B (2:1), lost to C (0:3), beat D (3:0) → 2 wins, Satzdiff +1
+  //   B: lost to A (1:2), beat C (3:0), beat D (3:0) → 2 wins, Satzdiff +5
+  //   C: beat A (3:0), lost to B (0:3), beat D (3:0) → 2 wins, Satzdiff +3
+  //   D: lost to all                                  → 0 wins, Satzdiff -9
+  //   Ranking: B(+5) > C(+3) > A(+1) > D
+  const participants = [
+    mkParticipant("A"),
+    mkParticipant("B"),
+    mkParticipant("C"),
+    mkParticipant("D"),
+  ]
+
+  const win30 = (winner: string, loser: string): BestOfStandingsMatchup => ({
+    homeParticipantId: winner,
+    awayParticipantId: loser,
+    series: [1, 2, 3].flatMap((n) => [mkSeries(winner, n, 90, 10), mkSeries(loser, n, 90, 20)]),
+  })
+
+  const matchups: BestOfStandingsMatchup[] = [
+    {
+      // A vs B: A wins 2:1
+      homeParticipantId: "A",
+      awayParticipantId: "B",
+      series: [
+        mkSeries("A", 1, 90, 10),
+        mkSeries("B", 1, 90, 20),
+        mkSeries("A", 2, 90, 10),
+        mkSeries("B", 2, 90, 20),
+        mkSeries("A", 3, 90, 20),
+        mkSeries("B", 3, 90, 10),
+      ],
+    },
+    win30("C", "A"),
+    win30("A", "D"),
+    win30("B", "C"),
+    win30("B", "D"),
+    win30("C", "D"),
+  ]
+
+  const rows = calculateBestOfStandings(participants, matchups, stdConfig)
+
+  it("A and B are tied on wins; B has the better Satzdifferenz", () => {
+    expect(row(rows, "A").wins).toBe(2)
+    expect(row(rows, "B").wins).toBe(2)
+    expect(row(rows, "A").duelDiff).toBe(1)
+    expect(row(rows, "B").duelDiff).toBe(5)
+  })
+
+  it("B ranks above A despite losing the direct duel to A", () => {
+    expect(row(rows, "B").rank).toBeLessThan(row(rows, "A").rank)
+    expect(row(rows, "B").rank).toBe(1)
+  })
+
+  it("A (the head-to-head winner) is last in the 2-win group", () => {
+    expect(row(rows, "C").rank).toBe(2)
+    expect(row(rows, "A").rank).toBe(3)
+    expect(row(rows, "D").rank).toBe(4)
+  })
 })
 
 // ---------------------------------------------------------------------------
