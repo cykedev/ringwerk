@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
 import { Pencil, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -52,6 +53,7 @@ export function PlayoffDuelResultDialog({
   // Teiler anzeigen: immer bei VF/HF; im Finale nur wenn ein Kriterium Teiler erfordert
   const showTeiler =
     !isFinalMatch || finaleNeedsTeiler(finalePrimary, finaleTiebreaker1, finaleTiebreaker2)
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -124,6 +126,7 @@ export function PlayoffDuelResultDialog({
         setError(typeof result.error === "string" ? result.error : "Fehler beim Speichern.")
       } else {
         setOpen(false)
+        router.refresh()
       }
     })
   }

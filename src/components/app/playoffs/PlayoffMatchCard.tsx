@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
 import { Plus, Trash2, Trophy } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -73,6 +74,7 @@ export function PlayoffMatchCard({
 }: Props) {
   const requiredWins = requiredWinsFromBestOf(playoffBestOf)
   const bestOfLabel = playoffBestOf ? `Best-of-${playoffBestOf}` : "Best-of-Five"
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [confirmDuelId, setConfirmDuelId] = useState<string | null>(null)
 
@@ -107,6 +109,9 @@ export function PlayoffMatchCard({
         toast.error(
           typeof result.error === "string" ? result.error : "Fehler beim Anlegen des Duells."
         )
+      } else {
+        // revalidatePath allein aktualisiert die Playoff-Ansicht hier nicht zuverlässig.
+        router.refresh()
       }
     })
   }
@@ -119,6 +124,8 @@ export function PlayoffMatchCard({
         toast.error(
           typeof result.error === "string" ? result.error : "Fehler beim Löschen des Duells."
         )
+      } else {
+        router.refresh()
       }
       setConfirmDuelId(null)
     })
