@@ -174,9 +174,11 @@ ein Duell **wertungsgleich** ausging, z. B. gleicher Ringteiler), wird sie so au
 
 Eigenschaften:
 
-- Der Stechschuss **entscheidet die Begegnung** (Sieg/Niederlage) und erhält damit die „keine
-  Unentschieden"-Garantie der Tabelle. Das **Satzverhältnis** zählt nur die regulären Duelle (eine
-  per Stechschuss entschiedene Begegnung bleibt z. B. „1:1" im Satz, ist aber ein Sieg für einen).
+- Der Stechschuss **entscheidet das gleichstehende Duell** für den Stechschuss-Sieger; dieses Duell
+  **zählt im Satzverhältnis mit**. Eine per Stechschuss entschiedene Best-of-3-Begegnung endet damit
+  z. B. **2:1** (nicht „1:1") und behält die „keine Unentschieden"-Garantie der Tabelle. In der
+  Kurzanzeige wird sie als „2:1 n. St." markiert. Der Stechschuss-Schuss selbst zählt nicht als
+  Serie für „bestes Einzelergebnis".
 - Der Stechschuss ist **dasselbe Prinzip wie der bestehende Finale-Sudden-Death** (Einzelschuss) →
   einheitlich über Vorrunde und Finale, vertraut für die Schützen.
 - **Zehntelwertung** macht ein zweites Patt sehr unwahrscheinlich; meist fällt die Entscheidung im
@@ -240,8 +242,8 @@ Ablauf wie bei Playoff-Best-of (VF/HF), nur am `Matchup` statt am `PlayoffMatch`
 bleiben **unverändert** — der Match-Sieger ist die Mehrheit der Duelle (bzw. der Stechschuss-Sieger
 bei Gleichstand). Betroffen ist **nur die Satzdifferenz** (Kriterium 3): voll ausgespielte
 Begegnungen liefern den vollen Satz-Spread. Da die Einstellung **liga-weit** gilt, bleibt das fair.
-Ein per Stechschuss entschiedenes Match zählt als Sieg/Niederlage, beim Satz aber als das reguläre
-Duell-Ergebnis (z. B. 1:1).
+Ein per Stechschuss entschiedenes Match zählt als Sieg/Niederlage; das per Stechschuss gewonnene
+Duell zählt im Satz mit (z. B. 2:1).
 
 **Worked Example (zirkulärer 3er-Gleichstand):** Eva/Frank/Georg je 5 Siege; Eva→Frank→Georg→Eva
 (direkter Vergleich je 1:1, keine Entscheidung); Satzdifferenz +8 / +5 / +1 → Eva, Frank, Georg.
@@ -273,7 +275,7 @@ Duell-Ergebnis (z. B. 1:1).
 ## 10. PDF / Auswertung
 
 - `lib/pdf/SchedulePdf.tsx`: Variante für `BEST_OF_SINGLE` — einfache Runde, Begegnungen mit
-  Satzergebnis („2:1"; per Stechschuss entschieden als „1:1 n. St."), Tabelle mit den neuen Spalten
+  Satzergebnis („2:1"; per Stechschuss entschieden als „2:1 n. St."), Tabelle mit den neuen Spalten
   (Siege/Niederlagen/Satzverhältnis/Satzdifferenz/bestes Erg.); „Heim/Gast" entfällt.
 - Öffentliches PDF (`/api/public/c/[slug]/pdf`) bleibt phasenabhängig: vor Playoff-Start
   Spielplan+Tabelle (Best-of-Variante), nach Start Playoff-Bracket. Cache-Invalidierung wie bisher.
@@ -307,8 +309,8 @@ Duell-Ergebnis (z. B. 1:1).
   Best-of-5; `playAll`; unentschiedenes Duell → Match-Gleichstand → **Stechschuss** entscheidet, inkl.
   wiederholtem Stechschuss bei gleichem Zehntelwert; Alternative Wiederholungsduell),
   `calculateBestOfStandings` (Sortierkette inkl. zirkulärem 3er-Patt, per Stechschuss entschiedene
-  Begegnung zählt als Sieg aber 1:1 im Satz, Stechschuss-Serien aus „bestes Einzelergebnis"
-  ausgeschlossen, Rückzug-Ausschluss, alle vier Modi), Single-Round-Robin-Generator.
+  Begegnung zählt als Sieg und das Stechschuss-Duell im Satz mit (z. B. 2:1), Stechschuss-Serien aus
+  „bestes Einzelergebnis" ausgeschlossen, Rückzug-Ausschluss, alle vier Modi), Single-Round-Robin-Generator.
 - `determineOutcome` und die Finale-Kette (`compareByFinale`) sind bereits getestet; bei Extraktion
   Tests mitziehen/erweitern.
 - **Action-Tests:** Duell-Erfassung; unentschiedenes Duell; **Stechschuss-Erfassung** erzeugt Sieger

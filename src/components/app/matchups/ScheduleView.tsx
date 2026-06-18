@@ -6,7 +6,12 @@ import type { MatchupListItem, MatchupParticipant, MatchResultSummary } from "@/
 import { ResultEntryDialog } from "@/components/app/results/ResultEntryDialog"
 import { BestOfEntryDialog } from "@/components/app/matchups/BestOfEntryDialog"
 import { formatDecimal1, formatRings, getEffectiveScoringType } from "@/lib/series/scoring-format"
-import { duelOutcome, resolveBestOf, stechschussOutcome } from "@/lib/scoring/bestOf"
+import {
+  bestOfDuelTally,
+  duelOutcome,
+  resolveBestOf,
+  stechschussOutcome,
+} from "@/lib/scoring/bestOf"
 import { effectiveTeilerFaktor } from "@/lib/scoring/calculateScore"
 import type { DuelSeries } from "@/lib/scoring/bestOf"
 
@@ -350,14 +355,12 @@ function deriveBestOfLabel(
 
   const status = resolveBestOf(regularOutcomes, tiebreakOutcomes, { bestOf, playAll })
 
-  const homeWins = regularOutcomes.filter((o) => o === "A").length
-  const awayWins = regularOutcomes.filter((o) => o === "B").length
+  const { homeWins, awayWins, decidedByStechschuss } = bestOfDuelTally(regularOutcomes, status)
 
   if (status.kind === "complete") {
-    const hasStechschuss = tiebreakOutcomes.length > 0
     const scoreLabel = `${homeWins}:${awayWins}`
     return {
-      label: hasStechschuss ? `${scoreLabel} n. St.` : scoreLabel,
+      label: decidedByStechschuss ? `${scoreLabel} n. St.` : scoreLabel,
       isComplete: true,
       winner: status.winner === "A" ? "home" : "away",
     }

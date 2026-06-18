@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { duelOutcome, resolveBestOf, stechschussOutcome } from "./bestOf"
+import { bestOfDuelTally, duelOutcome, resolveBestOf, stechschussOutcome } from "./bestOf"
 
 const opts = (o: Partial<{ bestOf: number; playAll: boolean }> = {}) => ({
   bestOf: 3,
@@ -81,5 +81,57 @@ describe("stechschussOutcome", () => {
   })
   it("equal shots → TIE", () => {
     expect(stechschussOutcome(9.5, 9.5)).toBe("TIE")
+  })
+})
+
+describe("bestOfDuelTally", () => {
+  it("decisive match counts regular duels directly (2:1)", () => {
+    expect(bestOfDuelTally(["A", "B", "A"], { kind: "complete", winner: "A" })).toEqual({
+      homeWins: 2,
+      awayWins: 1,
+      decidedByStechschuss: false,
+    })
+  })
+  it("Stechschuss-decided tie is awarded to winner A (1:1 → 2:1)", () => {
+    expect(bestOfDuelTally(["A", "B", "TIE"], { kind: "complete", winner: "A" })).toEqual({
+      homeWins: 2,
+      awayWins: 1,
+      decidedByStechschuss: true,
+    })
+  })
+  it("Stechschuss-decided tie is awarded to winner B (1:1 → 1:2)", () => {
+    expect(bestOfDuelTally(["A", "B", "TIE"], { kind: "complete", winner: "B" })).toEqual({
+      homeWins: 1,
+      awayWins: 2,
+      decidedByStechschuss: true,
+    })
+  })
+  it("all-tie match awards every tie to the Stechschuss winner (0:0 → 3:0)", () => {
+    expect(bestOfDuelTally(["TIE", "TIE", "TIE"], { kind: "complete", winner: "A" })).toEqual({
+      homeWins: 3,
+      awayWins: 0,
+      decidedByStechschuss: true,
+    })
+  })
+  it("dead-rubber tie at 2:0 stays a tie (not awarded)", () => {
+    expect(bestOfDuelTally(["A", "A", "TIE"], { kind: "complete", winner: "A" })).toEqual({
+      homeWins: 2,
+      awayWins: 0,
+      decidedByStechschuss: false,
+    })
+  })
+  it("level but not yet decided: tie is not awarded", () => {
+    expect(bestOfDuelTally(["A", "B", "TIE"], { kind: "needs_tiebreak" })).toEqual({
+      homeWins: 1,
+      awayWins: 1,
+      decidedByStechschuss: false,
+    })
+  })
+  it("in_progress reflects regular wins only", () => {
+    expect(bestOfDuelTally(["A"], { kind: "in_progress" })).toEqual({
+      homeWins: 1,
+      awayWins: 0,
+      decidedByStechschuss: false,
+    })
   })
 })

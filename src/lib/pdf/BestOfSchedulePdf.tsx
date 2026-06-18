@@ -3,7 +3,12 @@ import type { ReactElement } from "react"
 import type { ScoringMode, ScoringType } from "@/generated/prisma/client"
 import type { MatchupListItem } from "@/lib/matchups/types"
 import type { BestOfStandingRow } from "@/lib/standings/queries"
-import { duelOutcome, stechschussOutcome, resolveBestOf } from "@/lib/scoring/bestOf"
+import {
+  bestOfDuelTally,
+  duelOutcome,
+  stechschussOutcome,
+  resolveBestOf,
+} from "@/lib/scoring/bestOf"
 import type { DuelSeries } from "@/lib/scoring/bestOf"
 import { formatDecimal1, formatRings } from "@/lib/series/scoring-format"
 import { styles, PDF_COLORS } from "@/lib/pdf/styles"
@@ -125,20 +130,13 @@ function deriveSatzResult(
 
   if (status.kind !== "complete") return null
 
-  let homeWins = 0
-  let awayWins = 0
-  for (const o of regularOutcomes) {
-    if (o === "A") homeWins++
-    else if (o === "B") awayWins++
-  }
-
-  const wasStechschuss = tiebreakPairs.length > 0 && homeWins === awayWins
+  const { homeWins, awayWins, decidedByStechschuss } = bestOfDuelTally(regularOutcomes, status)
 
   return {
     homeWins,
     awayWins,
     winner: status.winner === "A" ? "home" : "away",
-    wasStechschuss,
+    wasStechschuss: decidedByStechschuss,
   }
 }
 

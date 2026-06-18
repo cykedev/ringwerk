@@ -28,7 +28,12 @@ import {
   saveStechschuss,
   deleteLatestBestOfDuel,
 } from "@/lib/results/bestOfActions"
-import { duelOutcome, resolveBestOf, stechschussOutcome } from "@/lib/scoring/bestOf"
+import {
+  bestOfDuelTally,
+  duelOutcome,
+  resolveBestOf,
+  stechschussOutcome,
+} from "@/lib/scoring/bestOf"
 import { effectiveTeilerFaktor } from "@/lib/scoring/calculateScore"
 import { formatRings, formatDecimal1 } from "@/lib/series/scoring-format"
 import type { DuelSeries, BestOfStatus } from "@/lib/scoring/bestOf"
@@ -122,7 +127,8 @@ function countDuelWins(
   disciplineId: string | null,
   scoringMode: ScoringMode,
   tiebreaker1: ScoringMode | null,
-  tiebreaker2: ScoringMode | null
+  tiebreaker2: ScoringMode | null,
+  status: BestOfStatus
 ): { homeWins: number; awayWins: number } {
   const byDuel = new Map<number, { home?: DuelSeries; away?: DuelSeries }>()
   for (const s of series) {
@@ -141,14 +147,13 @@ function countDuelWins(
     }
   }
 
-  let homeWins = 0
-  let awayWins = 0
-  for (const [, pair] of byDuel) {
-    if (!pair.home || !pair.away) continue
-    const outcome = duelOutcome(pair.home, pair.away, scoringMode, tiebreaker1, tiebreaker2)
-    if (outcome === "A") homeWins++
-    else if (outcome === "B") awayWins++
-  }
+  // A Stechschuss-decided tie counts for the winner — same logic as the table.
+  const regularOutcomes = Array.from(byDuel.entries())
+    .filter(([, pair]) => pair.home && pair.away)
+    .sort(([a], [b]) => a - b)
+    .map(([, pair]) => duelOutcome(pair.home!, pair.away!, scoringMode, tiebreaker1, tiebreaker2))
+
+  const { homeWins, awayWins } = bestOfDuelTally(regularOutcomes, status)
   return { homeWins, awayWins }
 }
 
@@ -324,7 +329,8 @@ export function BestOfEntryDialog({
     disciplineId,
     scoringMode,
     groupTiebreaker1,
-    groupTiebreaker2
+    groupTiebreaker2,
+    matchStatus
   )
 
   const duelNumbers = completedDuelNumbers(homeId, awayId, series)

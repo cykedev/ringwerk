@@ -105,3 +105,35 @@ export function resolveBestOf(
   if (decided) return { kind: "complete", winner: decided }
   return { kind: "needs_tiebreak" }
 }
+
+export interface DuelTally {
+  /** Duell-Siege der Heim-Seite (A), inkl. eines per Stechschuss entschiedenen Gleichstands-Duells. */
+  homeWins: number
+  /** Duell-Siege der Gast-Seite (B), inkl. eines per Stechschuss entschiedenen Gleichstands-Duells. */
+  awayWins: number
+  /** true, wenn die Begegnung nach den regulären Duellen gleichstand und per Stechschuss fiel. */
+  decidedByStechschuss: boolean
+}
+
+/**
+ * Computes the Satz (duel-win) tally for a best-of match.
+ *
+ * Regular A/B duels count directly. When the match is level on regular duels
+ * and decided by Stechschuss, the tied duel(s) are awarded to the Stechschuss
+ * winner — so a best-of-N never ends level in the Satz (e.g. best-of-3 → 2:1).
+ * A tie in an already-decided match (e.g. a dead rubber at 2:0) stays a tie.
+ */
+export function bestOfDuelTally(regularOutcomes: DuelOutcome[], status: BestOfStatus): DuelTally {
+  const a = regularOutcomes.filter((o) => o === "A").length
+  const b = regularOutcomes.filter((o) => o === "B").length
+  const ties = regularOutcomes.filter((o) => o === "TIE").length
+  const decidedByStechschuss = status.kind === "complete" && a === b
+
+  let homeWins = a
+  let awayWins = b
+  if (decidedByStechschuss) {
+    if (status.winner === "A") homeWins += ties
+    else awayWins += ties
+  }
+  return { homeWins, awayWins, decidedByStechschuss }
+}

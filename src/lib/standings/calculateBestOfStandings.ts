@@ -1,5 +1,6 @@
 import type { ScoringMode } from "@/generated/prisma/client"
 import {
+  bestOfDuelTally,
   duelOutcome,
   resolveBestOf,
   stechschussOutcome,
@@ -165,17 +166,12 @@ export function calculateBestOfStandings(
       homeStats.losses++
     }
 
-    // Tally duel wins/losses from regular outcomes only.
-    for (const outcome of regularOutcomes) {
-      if (outcome === "A") {
-        homeStats.duelsWon++
-        awayStats.duelsLost++
-      } else if (outcome === "B") {
-        awayStats.duelsWon++
-        homeStats.duelsLost++
-      }
-      // TIE: no change
-    }
+    // Tally duel wins. A Stechschuss-decided tie counts for the Stechschuss winner.
+    const tally = bestOfDuelTally(regularOutcomes, status)
+    homeStats.duelsWon += tally.homeWins
+    homeStats.duelsLost += tally.awayWins
+    awayStats.duelsWon += tally.awayWins
+    awayStats.duelsLost += tally.homeWins
 
     // Collect best-result data from each participant's regular series.
     for (const s of regularSeries) {

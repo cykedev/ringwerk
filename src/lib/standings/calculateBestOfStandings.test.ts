@@ -298,8 +298,8 @@ describe("Match decided by Stechschuss (tiebreak)", () => {
   // Tiebreak round (duelNumber=4, isTiebreak=true): A wins
   // Result: A is the match winner.
   //
-  // duelDiff from regular duels: A: +1 (won duel 1) -1 (lost duel 2) = 0
-  // (TIE duels contribute 0 to duelsWon and duelsLost)
+  // duelDiff: A won duel 1, lost duel 2, and the TIE in duel 3 is awarded to A
+  // (the Stechschuss winner) → A: 2 won, 1 lost = +1; B: 1 won, 2 lost = -1.
 
   const participants = [mkParticipant("A"), mkParticipant("B")]
 
@@ -349,14 +349,14 @@ describe("Match decided by Stechschuss (tiebreak)", () => {
     expect(row(rows, "B").played).toBe(1)
   })
 
-  it("duelDiff reflects only regular duels: A=0, B=0 (1 won, 1 lost each; TIE not counted)", () => {
-    // A won duel 1, lost duel 2, duel 3 was TIE
-    expect(row(rows, "A").duelsWon).toBe(1)
+  it("Stechschuss-decided tie counts for the winner: A=2:1 (+1), B=1:2 (-1)", () => {
+    // A won duel 1, lost duel 2; duel 3 (TIE) is awarded to A as the Stechschuss winner.
+    expect(row(rows, "A").duelsWon).toBe(2)
     expect(row(rows, "A").duelsLost).toBe(1)
-    expect(row(rows, "A").duelDiff).toBe(0)
+    expect(row(rows, "A").duelDiff).toBe(1)
     expect(row(rows, "B").duelsWon).toBe(1)
-    expect(row(rows, "B").duelsLost).toBe(1)
-    expect(row(rows, "B").duelDiff).toBe(0)
+    expect(row(rows, "B").duelsLost).toBe(2)
+    expect(row(rows, "B").duelDiff).toBe(-1)
   })
 
   it("bestRingteiler does NOT include tiebreak series", () => {
