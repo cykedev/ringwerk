@@ -40,6 +40,13 @@ const SEASON_SCORING_MODE_LABELS = Object.fromEntries(
   )
 )
 
+// BEST_OF_SINGLE group phase: only modes where a head-to-head duel yields a clear numeric result
+const BEST_OF_SINGLE_SCORING_MODE_LABELS = Object.fromEntries(
+  Object.entries(SCORING_MODE_LABELS).filter(([k]) =>
+    ["RINGS", "RINGS_DECIMAL", "TEILER", "RINGTEILER"].includes(k)
+  )
+)
+
 const TARGET_VALUE_TYPE_LABELS: Record<string, string> = {
   RINGS: "Ringe (ganzzahlig)",
   RINGS_DECIMAL: "Ringe (Zehntelwertung)",
@@ -70,6 +77,26 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
   const [finaleHasSuddenDeath, setFinaleHasSuddenDeath] = useState<boolean>(
     competition?.finaleHasSuddenDeath ?? true
   )
+
+  // BEST_OF_SINGLE group-phase config
+  const [leagueFormat, setLeagueFormat] = useState<string>(
+    competition?.leagueFormat ?? "DOUBLE_ROUND_ROBIN"
+  )
+  const [groupBestOf, setGroupBestOf] = useState<string>(String(competition?.groupBestOf ?? 3))
+  const [groupPlayAllDuels, setGroupPlayAllDuels] = useState<boolean>(
+    competition?.groupPlayAllDuels ?? true
+  )
+  const [groupTiebreaker1, setGroupTiebreaker1] = useState<string>(
+    competition?.groupTiebreaker1 ?? "none"
+  )
+  const [groupTiebreaker2, setGroupTiebreaker2] = useState<string>(
+    competition?.groupTiebreaker2 ?? "none"
+  )
+  const [groupHasSuddenDeath, setGroupHasSuddenDeath] = useState<boolean>(
+    competition?.groupHasSuddenDeath ?? true
+  )
+
+  const isBestOfSingle = leagueFormat === "BEST_OF_SINGLE"
 
   const [name, setName] = useState<string>(competition?.name ?? "")
   const [shotsPerSeries, setShotsPerSeries] = useState<string>(
@@ -196,9 +223,11 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
           </SelectTrigger>
           <SelectContent>
             {Object.entries(
-              type === "SEASON" || type === "LEAGUE"
-                ? SEASON_SCORING_MODE_LABELS
-                : EVENT_SCORING_MODE_LABELS
+              isBestOfSingle
+                ? BEST_OF_SINGLE_SCORING_MODE_LABELS
+                : type === "SEASON" || type === "LEAGUE"
+                  ? SEASON_SCORING_MODE_LABELS
+                  : EVENT_SCORING_MODE_LABELS
             ).map(([value, label]) => (
               <SelectItem key={value} value={value}>
                 {label}
@@ -206,6 +235,11 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
             ))}
           </SelectContent>
         </Select>
+        {isBestOfSingle && (
+          <p className="text-xs text-muted-foreground">
+            Im Best-of-Modus nur Ringteiler, Ringe, Zehntelringe oder Teiler erlaubt.
+          </p>
+        )}
       </div>
 
       {/* Schusszahl (nur für Event/Saison — Liga hat es im Regelset) */}
@@ -330,7 +364,7 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
           {/* ── Regelset ──────────────────────────────────────────── */}
           <div className="rounded-lg border bg-card p-4">
             <div className="mb-3 flex items-center gap-2">
-              <p className="text-sm font-medium">Regelset (Playoffs)</p>
+              <p className="text-sm font-medium">Regelset</p>
               {hasMatchups && (
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Lock className="h-3 w-3" />
@@ -339,6 +373,160 @@ export function CompetitionForm({ competition, disciplines, action, hasMatchups 
               )}
             </div>
             <fieldset disabled={hasMatchups || isPending} className="space-y-4">
+              {/* Liga-Format */}
+              <div className="space-y-2">
+                <Label htmlFor="leagueFormat">Format</Label>
+                <Select
+                  name="leagueFormat"
+                  value={leagueFormat}
+                  onValueChange={(v) => {
+                    setLeagueFormat(v)
+                    // When switching to BEST_OF_SINGLE, reset scoringMode to RINGTEILER
+                    // if the current mode is not allowed in head-to-head duels.
+                    if (
+                      v === "BEST_OF_SINGLE" &&
+                      !["RINGS", "RINGS_DECIMAL", "TEILER", "RINGTEILER"].includes(scoringMode)
+                    ) {
+                      setScoringMode("RINGTEILER")
+                    }
+                  }}
+                >
+                  <SelectTrigger id="leagueFormat">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DOUBLE_ROUND_ROBIN">Doppelrunde (Hin/Rück)</SelectItem>
+                    <SelectItem value="BEST_OF_SINGLE">
+                      Best-of-Begegnung (einfache Runde)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* BEST_OF_SINGLE group-phase fields */}
+              {isBestOfSingle && (
+                <div className="space-y-4 rounded-lg border bg-card p-4">
+                  <p className="text-sm font-medium">Gruppenphase (Best-of)</p>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="groupBestOf">Best-of</Label>
+                      <Select name="groupBestOf" value={groupBestOf} onValueChange={setGroupBestOf}>
+                        <SelectTrigger id="groupBestOf">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="3">Best-of-3 (2 Siege)</SelectItem>
+                          <SelectItem value="5">Best-of-5 (3 Siege)</SelectItem>
+                          <SelectItem value="7">Best-of-7 (4 Siege)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex items-end pb-1">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="groupPlayAllDuels"
+                          checked={groupPlayAllDuels}
+                          onCheckedChange={(checked: boolean | "indeterminate") =>
+                            setGroupPlayAllDuels(checked === true)
+                          }
+                        />
+                        <Label htmlFor="groupPlayAllDuels" className="cursor-pointer">
+                          Alle Duelle ausspielen
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="hidden"
+                    name="groupPlayAllDuels"
+                    value={groupPlayAllDuels ? "true" : "false"}
+                  />
+
+                  {/* Advanced / Tiebreaker area */}
+                  <details>
+                    <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
+                      Erweitert (Tiebreaker &amp; Stechschuss)
+                    </summary>
+                    <div className="mt-3 space-y-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="groupTiebreaker1">Tiebreaker 1</Label>
+                        <Select
+                          name="groupTiebreaker1"
+                          value={groupTiebreaker1}
+                          onValueChange={(v) => {
+                            setGroupTiebreaker1(v)
+                            if (v === "none") setGroupTiebreaker2("none")
+                          }}
+                        >
+                          <SelectTrigger id="groupTiebreaker1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">— Kein Tiebreaker</SelectItem>
+                            {Object.entries(BEST_OF_SINGLE_SCORING_MODE_LABELS).map(
+                              ([value, label]) => (
+                                <SelectItem key={value} value={value}>
+                                  {label}
+                                </SelectItem>
+                              )
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Bei Gleichstand nach Gruppenphase (optional).
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="groupTiebreaker2">Tiebreaker 2</Label>
+                        <Select
+                          name="groupTiebreaker2"
+                          value={groupTiebreaker2}
+                          onValueChange={setGroupTiebreaker2}
+                          disabled={groupTiebreaker1 === "none"}
+                        >
+                          <SelectTrigger id="groupTiebreaker2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">— Kein Tiebreaker</SelectItem>
+                            {Object.entries(BEST_OF_SINGLE_SCORING_MODE_LABELS).map(
+                              ([value, label]) => (
+                                <SelectItem key={value} value={value}>
+                                  {label}
+                                </SelectItem>
+                              )
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Bei Gleichstand nach Tiebreaker 1 (nur wenn TB1 gesetzt).
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="groupHasSuddenDeath"
+                          checked={groupHasSuddenDeath}
+                          onCheckedChange={(checked: boolean | "indeterminate") =>
+                            setGroupHasSuddenDeath(checked === true)
+                          }
+                        />
+                        <Label htmlFor="groupHasSuddenDeath" className="cursor-pointer">
+                          Gleichstand per Stechschuss
+                        </Label>
+                      </div>
+                      <input
+                        type="hidden"
+                        name="groupHasSuddenDeath"
+                        value={groupHasSuddenDeath ? "true" : "false"}
+                      />
+                    </div>
+                  </details>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="playoffBestOf">Best-of (VF/HF)</Label>
