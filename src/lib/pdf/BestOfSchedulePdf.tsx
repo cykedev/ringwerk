@@ -290,14 +290,8 @@ function BestOfMatchupsSection({
   groupTiebreaker1: ScoringMode | null
   groupTiebreaker2: ScoringMode | null
 }): ReactElement {
-  // Group by roundIndex
-  const byRound = new Map<number, MatchupListItem[]>()
-  for (const m of matchups) {
-    const existing = byRound.get(m.roundIndex) ?? []
-    existing.push(m)
-    byRound.set(m.roundIndex, existing)
-  }
-  const rounds = [...byRound.entries()].sort(([a], [b]) => a - b)
+  // Flat list — no Spieltag grouping (dates are agreed individually in best-of single).
+  const sorted = [...matchups].sort((a, b) => a.roundIndex - b.roundIndex)
 
   return (
     <View break>
@@ -310,87 +304,74 @@ function BestOfMatchupsSection({
           <Text style={[styles.tableHeaderCell, { width: WM.status }]}>Status</Text>
         </View>
 
-        {rounds.map(([roundIndex, items]) => (
-          <View key={roundIndex}>
-            {/* Round separator label */}
-            <View style={styles.spieltagLabel}>
-              <Text>Spieltag {roundIndex + 1}</Text>
+        {sorted.map((m, idx) => {
+          const isAlt = idx % 2 === 1
+          const isBye = !m.awayParticipant
+          const isCompleted = m.status === "COMPLETED"
+
+          const pairing = pairingLabel(m)
+          const isWithdrawn = m.homeParticipant.withdrawn || (m.awayParticipant?.withdrawn ?? false)
+
+          const satzLabel = isCompleted
+            ? (deriveSatzLabel(
+                m,
+                scoringMode,
+                disciplineId,
+                groupBestOf,
+                groupPlayAllDuels,
+                groupTiebreaker1,
+                groupTiebreaker2
+              ) ?? "")
+            : ""
+
+          let statusText: string
+          if (isWithdrawn) {
+            statusText = "Zur."
+          } else if (isBye) {
+            statusText = "Freilos"
+          } else if (isCompleted) {
+            statusText = "Abg."
+          } else {
+            statusText = "Offen"
+          }
+
+          const isPending = m.status === "PENDING"
+
+          return (
+            <View
+              key={m.id}
+              wrap={false}
+              style={[
+                styles.tableRow,
+                isAlt ? styles.tableRowAlt : {},
+                isWithdrawn ? styles.tableRowWithdrawn : {},
+                { alignItems: "center" },
+              ]}
+            >
+              <Text
+                style={[
+                  isWithdrawn ? styles.tableCellMuted : styles.tableCellLeft,
+                  { width: WM.pairing },
+                ]}
+              >
+                {pairing}
+              </Text>
+              <Text
+                style={[
+                  styles.tableCellBold,
+                  { width: WM.satz, color: isCompleted ? PDF_COLORS.dark : "#bbbbbb" },
+                ]}
+              >
+                {satzLabel}
+              </Text>
+              <Text
+                style={[isPending ? styles.statusPending : styles.statusDone, { width: WM.status }]}
+              >
+                {statusText}
+              </Text>
             </View>
-
-            {items.map((m, idx) => {
-              const isAlt = idx % 2 === 1
-              const isBye = !m.awayParticipant
-              const isCompleted = m.status === "COMPLETED"
-
-              const pairing = pairingLabel(m)
-              const isWithdrawn =
-                m.homeParticipant.withdrawn || (m.awayParticipant?.withdrawn ?? false)
-
-              const satzLabel = isCompleted
-                ? (deriveSatzLabel(
-                    m,
-                    scoringMode,
-                    disciplineId,
-                    groupBestOf,
-                    groupPlayAllDuels,
-                    groupTiebreaker1,
-                    groupTiebreaker2
-                  ) ?? "")
-                : ""
-
-              let statusText: string
-              if (isWithdrawn) {
-                statusText = "Zur."
-              } else if (isBye) {
-                statusText = "Freilos"
-              } else if (isCompleted) {
-                statusText = "Abg."
-              } else {
-                statusText = "Offen"
-              }
-
-              const isPending = m.status === "PENDING"
-
-              return (
-                <View
-                  key={m.id}
-                  wrap={false}
-                  style={[
-                    styles.tableRow,
-                    isAlt ? styles.tableRowAlt : {},
-                    isWithdrawn ? styles.tableRowWithdrawn : {},
-                    { alignItems: "center" },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      isWithdrawn ? styles.tableCellMuted : styles.tableCellLeft,
-                      { width: WM.pairing },
-                    ]}
-                  >
-                    {pairing}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.tableCellBold,
-                      { width: WM.satz, color: isCompleted ? PDF_COLORS.dark : "#bbbbbb" },
-                    ]}
-                  >
-                    {satzLabel}
-                  </Text>
-                  <Text
-                    style={[
-                      isPending ? styles.statusPending : styles.statusDone,
-                      { width: WM.status },
-                    ]}
-                  >
-                    {statusText}
-                  </Text>
-                </View>
-              )
-            })}
-          </View>
-        ))}
+          )
+        })}
       </View>
     </View>
   )

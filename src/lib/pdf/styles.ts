@@ -189,23 +189,6 @@ export const styles = StyleSheet.create({
   },
 
   // ── Spielplan spezifisch ──────────────────────────────────────────────────
-  spieltagDivider: {
-    height: 1,
-    backgroundColor: "#dddddd",
-    marginVertical: 2,
-    marginHorizontal: -8,
-  },
-  spieltagLabel: {
-    fontSize: 8,
-    fontFamily: "Helvetica-Bold",
-    color: "#555555",
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    backgroundColor: "#eeeeee",
-    borderBottomWidth: 1,
-    borderBottomColor: "#dddddd",
-    borderBottomStyle: "solid",
-  },
   tableRowPending: {
     backgroundColor: "#fafafa",
   },
