@@ -24,6 +24,7 @@ export type CompetitionListItem = {
     scoringType: ScoringType
   } | null
   // Liga
+  leagueFormat: LeagueFormat
   hinrundeDeadline: Date | null
   rueckrundeDeadline: Date | null
   // Event

@@ -20,6 +20,7 @@ const listSelect = {
   scoringMode: true,
   shotsPerSeries: true,
   discipline: { select: { id: true, name: true, scoringType: true } },
+  leagueFormat: true,
   hinrundeDeadline: true,
   rueckrundeDeadline: true,
   eventDate: true,

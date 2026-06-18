@@ -7,12 +7,16 @@ import {
   getEventWithSeries,
   getSeasonWithSeries,
 } from "@/lib/competitions/queries"
-import { getStandingsForCompetition } from "@/lib/standings/queries"
+import {
+  getBestOfStandingsForCompetition,
+  getStandingsForCompetition,
+} from "@/lib/standings/queries"
 import { getPlayoffBracket } from "@/lib/playoffs/queries"
 import { getEffectiveScoringType } from "@/lib/series/scoring-format"
 import { rankEventParticipants, rankEventTeams } from "@/lib/scoring/rankEventParticipants"
 import { calculateSeasonStandings } from "@/lib/scoring/calculateSeasonStandings"
 import { StandingsTable } from "@/components/app/standings/StandingsTable"
+import { BestOfStandingsTable } from "@/components/app/standings/BestOfStandingsTable"
 import { PlayoffBracket } from "@/components/app/playoffs/PlayoffBracket"
 import { EventRankingTable } from "@/components/app/series/EventRankingTable"
 import { EventTeamRankingTable } from "@/components/app/series/EventTeamRankingTable"
@@ -34,11 +38,15 @@ export default async function DashboardPage() {
 
   const [leagueData, eventData, seasonData] = await Promise.all([
     Promise.all(
-      activeLeagues.map(async (c) => ({
-        competition: c,
-        standings: await getStandingsForCompetition(c.id),
-        bracket: await getPlayoffBracket(c.id),
-      }))
+      activeLeagues.map(async (c) => {
+        const isBestOf = c.leagueFormat === "BEST_OF_SINGLE"
+        const [standings, bestOfStandings, bracket] = await Promise.all([
+          isBestOf ? Promise.resolve([]) : getStandingsForCompetition(c.id),
+          isBestOf ? getBestOfStandingsForCompetition(c.id) : Promise.resolve([]),
+          getPlayoffBracket(c.id),
+        ])
+        return { competition: c, isBestOf, standings, bestOfStandings, bracket }
+      })
     ),
     Promise.all(
       activeEvents.map(async (c) => {
@@ -91,7 +99,7 @@ export default async function DashboardPage() {
       ) : (
         <div className="space-y-10">
           {/* Liga-Wettbewerbe: Tabelle / Playoffs */}
-          {leagueData.map(({ competition, standings, bracket }) => {
+          {leagueData.map(({ competition, isBestOf, standings, bestOfStandings, bracket }) => {
             const playoffsStarted =
               bracket.eighthFinals.length +
                 bracket.quarterFinals.length +
@@ -131,7 +139,14 @@ export default async function DashboardPage() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <StandingsTable rows={standings} />
+                    {isBestOf ? (
+                      <BestOfStandingsTable
+                        rows={bestOfStandings}
+                        scoringMode={competition.scoringMode}
+                      />
+                    ) : (
+                      <StandingsTable rows={standings} />
+                    )}
                     <div className="flex justify-end">
                       <Button asChild variant="outline" size="sm">
                         <Link href={`/competitions/${competition.id}/schedule`}>Details →</Link>
