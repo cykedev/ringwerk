@@ -114,6 +114,8 @@ function CompetitionCardMeta({ c, tz }: { c: CompetitionListItem; tz: string }) 
       </p>
     )
   }
+  // BEST_OF_SINGLE has no Hin-/Rückrunde — the single encounter's date is agreed individually.
+  if (c.leagueFormat === "BEST_OF_SINGLE") return null
   return (
     <p className="text-xs text-muted-foreground/70">
       Hinrunde bis {formatDate(c.hinrundeDeadline, tz)} · Rückrunde bis{" "}
