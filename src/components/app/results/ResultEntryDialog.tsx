@@ -1,7 +1,5 @@
 "use client"
 
-import { useState, useTransition } from "react"
-import { toast } from "sonner"
 import { Pencil, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -12,17 +10,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { RingsInput } from "@/components/app/series/RingsInput"
-import { saveMatchResult } from "@/lib/results/actions"
 import type { MatchResultSummary } from "@/lib/matchups/types"
 import type { ScoringType } from "@/generated/prisma/client"
-
-interface ParticipantResult {
-  rings: string
-  teiler: string
-}
+import { ResultFields, useResultEntry } from "./result-entry"
 
 interface Props {
   matchupId: string
@@ -41,13 +31,6 @@ interface Props {
   awayTeilerFaktor: number
 }
 
-function getExisting(
-  results: MatchResultSummary[],
-  participantId: string
-): MatchResultSummary | undefined {
-  return results.find((r) => r.participantId === participantId)
-}
-
 export function ResultEntryDialog({
   matchupId,
   homeName,
@@ -62,79 +45,18 @@ export function ResultEntryDialog({
   homeTeilerFaktor,
   awayTeilerFaktor,
 }: Props) {
-  const [open, setOpen] = useState(false)
-  const [isPending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
-
-  const existingHome = getExisting(existingResults, homeParticipantId)
-  const existingAway = getExisting(existingResults, awayParticipantId)
-
-  const [home, setHome] = useState<ParticipantResult>({
-    rings: existingHome ? String(existingHome.rings) : "",
-    teiler: existingHome ? String(existingHome.teiler) : "",
-  })
-  const [away, setAway] = useState<ParticipantResult>({
-    rings: existingAway ? String(existingAway.rings) : "",
-    teiler: existingAway ? String(existingAway.teiler) : "",
-  })
-
-  function handleOpen(isOpen: boolean) {
-    if (isOpen) {
-      setHome({
-        rings: existingHome ? String(existingHome.rings) : "",
-        teiler: existingHome ? String(existingHome.teiler) : "",
-      })
-      setAway({
-        rings: existingAway ? String(existingAway.rings) : "",
-        teiler: existingAway ? String(existingAway.teiler) : "",
-      })
-      setError(null)
-    }
-    setOpen(isOpen)
-  }
-
-  function handleSubmit() {
-    const homeTotalRings = parseFloat(home.rings.replace(",", "."))
-    const homeTeiler = parseFloat(home.teiler.replace(",", "."))
-    const awayTotalRings = parseFloat(away.rings.replace(",", "."))
-    const awayTeiler = parseFloat(away.teiler.replace(",", "."))
-
-    if (isNaN(homeTotalRings) || isNaN(homeTeiler) || isNaN(awayTotalRings) || isNaN(awayTeiler)) {
-      setError("Alle Felder müssen ausgefüllt sein.")
-      return
-    }
-
-    if (homeTotalRings < 0 || awayTotalRings < 0) {
-      setError("Gesamtringe müssen positiv sein.")
-      return
-    }
-
-    if (homeTeiler < 0 || awayTeiler < 0) {
-      setError("Teiler müssen positiv sein.")
-      return
-    }
-
-    setOpen(false)
-
-    startTransition(async () => {
-      const result = await saveMatchResult(matchupId, {
-        homeResult: { rings: homeTotalRings, teiler: homeTeiler },
-        awayResult: { rings: awayTotalRings, teiler: awayTeiler },
-      })
-
-      if ("error" in result) {
-        toast.error(typeof result.error === "string" ? result.error : "Fehler beim Speichern.")
-      }
-    })
-  }
-
-  const homeTeilerNum = parseFloat(home.teiler.replace(",", "."))
-  const homeCorrectedTeiler =
-    isNaN(homeTeilerNum) || homeTeilerFaktor === 1 ? null : homeTeilerNum * homeTeilerFaktor
-
-  const awayTeilerNum = parseFloat(away.teiler.replace(",", "."))
-  const awayCorrectedTeiler =
-    isNaN(awayTeilerNum) || awayTeilerFaktor === 1 ? null : awayTeilerNum * awayTeilerFaktor
+  const {
+    open,
+    setOpen,
+    isPending,
+    error,
+    home,
+    setHome,
+    away,
+    setAway,
+    handleOpen,
+    handleSubmit,
+  } = useResultEntry({ matchupId, homeParticipantId, awayParticipantId, existingResults })
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
@@ -156,42 +78,16 @@ export function ResultEntryDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          {/* Heim */}
-          <div className="space-y-2">
-            <p className="text-sm font-medium">{homeName}</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label htmlFor="home-rings" className="text-xs text-muted-foreground">
-                  Gesamtringe
-                </Label>
-                <RingsInput
-                  id="home-rings"
-                  scoringType={homeScoringType}
-                  shotsPerSeries={shotsPerSeries}
-                  value={home.rings}
-                  onChange={(e) => setHome((p) => ({ ...p, rings: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="home-teiler" className="text-xs text-muted-foreground">
-                  Bester Teiler
-                </Label>
-                <Input
-                  id="home-teiler"
-                  type="text"
-                  inputMode="decimal"
-                  value={home.teiler}
-                  onChange={(e) => setHome((p) => ({ ...p, teiler: e.target.value }))}
-                  placeholder="z.B. 3,7"
-                />
-                {homeCorrectedTeiler !== null && (
-                  <p className="text-xs text-muted-foreground">
-                    Korr. Teiler: {homeCorrectedTeiler.toFixed(2)}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
+          <ResultFields
+            idPrefix="home"
+            name={homeName}
+            fields={home}
+            setFields={setHome}
+            scoringType={homeScoringType}
+            shotsPerSeries={shotsPerSeries}
+            teilerFaktor={homeTeilerFaktor}
+            teilerPlaceholder="z.B. 3,7"
+          />
 
           {/* Trennlinie */}
           <div className="flex items-center gap-2">
@@ -200,42 +96,16 @@ export function ResultEntryDialog({
             <div className="h-px flex-1 bg-border" />
           </div>
 
-          {/* Gast */}
-          <div className="space-y-2">
-            <p className="text-sm font-medium">{awayName}</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label htmlFor="away-rings" className="text-xs text-muted-foreground">
-                  Gesamtringe
-                </Label>
-                <RingsInput
-                  id="away-rings"
-                  scoringType={awayScoringType}
-                  shotsPerSeries={shotsPerSeries}
-                  value={away.rings}
-                  onChange={(e) => setAway((p) => ({ ...p, rings: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="away-teiler" className="text-xs text-muted-foreground">
-                  Bester Teiler
-                </Label>
-                <Input
-                  id="away-teiler"
-                  type="text"
-                  inputMode="decimal"
-                  value={away.teiler}
-                  onChange={(e) => setAway((p) => ({ ...p, teiler: e.target.value }))}
-                  placeholder="z.B. 5,0"
-                />
-                {awayCorrectedTeiler !== null && (
-                  <p className="text-xs text-muted-foreground">
-                    Korr. Teiler: {awayCorrectedTeiler.toFixed(2)}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
+          <ResultFields
+            idPrefix="away"
+            name={awayName}
+            fields={away}
+            setFields={setAway}
+            scoringType={awayScoringType}
+            shotsPerSeries={shotsPerSeries}
+            teilerFaktor={awayTeilerFaktor}
+            teilerPlaceholder="z.B. 5,0"
+          />
 
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>

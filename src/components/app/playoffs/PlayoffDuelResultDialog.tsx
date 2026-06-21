@@ -1,7 +1,5 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { Pencil, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -12,13 +10,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { RingsInput } from "@/components/app/series/RingsInput"
-import { savePlayoffDuelResult } from "@/lib/playoffs/actions"
-import { finaleNeedsTeiler } from "@/lib/playoffs/calculatePlayoffs"
 import type { PlayoffDuelItem, PlayoffParticipant } from "@/lib/playoffs/types"
 import type { ScoringMode, ScoringType } from "@/generated/prisma/client"
+import { ParticipantResultFields, usePlayoffDuelResult } from "./duel-result"
 
 interface Props {
   duel: PlayoffDuelItem
@@ -33,11 +27,6 @@ interface Props {
   finaleTiebreaker2: ScoringMode | null
 }
 
-interface ResultFields {
-  totalRings: string
-  teiler: string
-}
-
 export function PlayoffDuelResultDialog({
   duel,
   participantA,
@@ -50,100 +39,28 @@ export function PlayoffDuelResultDialog({
   finaleTiebreaker1,
   finaleTiebreaker2,
 }: Props) {
-  // Teiler anzeigen: immer bei VF/HF; im Finale nur wenn ein Kriterium Teiler erfordert
-  const showTeiler =
-    !isFinalMatch || finaleNeedsTeiler(finalePrimary, finaleTiebreaker1, finaleTiebreaker2)
-  const router = useRouter()
-  const [open, setOpen] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const [fieldA, setFieldA] = useState<ResultFields>({
-    totalRings: duel.resultA ? String(duel.resultA.totalRings) : "",
-    teiler: duel.resultA?.teiler != null ? String(duel.resultA.teiler) : "",
+  const {
+    showTeiler,
+    open,
+    setOpen,
+    submitting,
+    error,
+    fieldA,
+    setFieldA,
+    fieldB,
+    setFieldB,
+    handleOpen,
+    handleSubmit,
+    title,
+  } = usePlayoffDuelResult({
+    duel,
+    isCorrection,
+    isFinalMatch,
+    shotsPerSeries,
+    finalePrimary,
+    finaleTiebreaker1,
+    finaleTiebreaker2,
   })
-  const [fieldB, setFieldB] = useState<ResultFields>({
-    totalRings: duel.resultB ? String(duel.resultB.totalRings) : "",
-    teiler: duel.resultB?.teiler != null ? String(duel.resultB.teiler) : "",
-  })
-
-  function handleOpen(isOpen: boolean) {
-    if (isOpen) {
-      setFieldA({
-        totalRings: duel.resultA ? String(duel.resultA.totalRings) : "",
-        teiler: duel.resultA?.teiler != null ? String(duel.resultA.teiler) : "",
-      })
-      setFieldB({
-        totalRings: duel.resultB ? String(duel.resultB.totalRings) : "",
-        teiler: duel.resultB?.teiler != null ? String(duel.resultB.teiler) : "",
-      })
-      setError(null)
-    }
-    setOpen(isOpen)
-  }
-
-  async function handleSubmit() {
-    const totalRingsA = parseFloat(fieldA.totalRings.replace(",", "."))
-    const totalRingsB = parseFloat(fieldB.totalRings.replace(",", "."))
-
-    if (isNaN(totalRingsA) || isNaN(totalRingsB)) {
-      setError("Gesamtringe müssen ausgefüllt sein.")
-      return
-    }
-    if (totalRingsA < 0 || totalRingsB < 0) {
-      setError("Gesamtringe müssen positiv sein.")
-      return
-    }
-
-    let teilerA: number | undefined
-    let teilerB: number | undefined
-
-    if (showTeiler) {
-      teilerA = parseFloat(fieldA.teiler.replace(",", "."))
-      teilerB = parseFloat(fieldB.teiler.replace(",", "."))
-      if (isNaN(teilerA) || isNaN(teilerB)) {
-        setError("Teiler müssen ausgefüllt sein.")
-        return
-      }
-      if (teilerA < 0 || teilerB < 0) {
-        setError("Teiler müssen positiv sein.")
-        return
-      }
-    }
-
-    setError(null)
-
-    setSubmitting(true)
-    const result = await savePlayoffDuelResult({
-      duelId: duel.id,
-      totalRingsA,
-      teilerA,
-      totalRingsB,
-      teilerB,
-    })
-    setSubmitting(false)
-
-    if ("error" in result) {
-      setError(typeof result.error === "string" ? result.error : "Fehler beim Speichern.")
-      return
-    }
-    setOpen(false)
-    // router.refresh() outside a transition so the result reliably appears on the card.
-    router.refresh()
-  }
-
-  const shotLabel = `${shotsPerSeries} Schüsse`
-  const title = isFinalMatch
-    ? duel.isSuddenDeath
-      ? "Verlängerung eintragen"
-      : isCorrection
-        ? `${shotLabel} korrigieren`
-        : `${shotLabel} eintragen`
-    : duel.isSuddenDeath
-      ? "Entscheidungsduell eintragen"
-      : isCorrection
-        ? `Duell ${duel.duelNumber} korrigieren`
-        : `Duell ${duel.duelNumber} eintragen`
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
@@ -166,43 +83,16 @@ export function PlayoffDuelResultDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          {/* Teilnehmer A */}
-          <div className="space-y-2">
-            <p className="text-sm font-medium">
-              {participantA.firstName} {participantA.lastName}
-            </p>
-            <div className={showTeiler ? "grid grid-cols-2 gap-3" : "max-w-[160px]"}>
-              <div className="space-y-1">
-                <Label htmlFor="a-rings" className="text-xs text-muted-foreground">
-                  Gesamtringe
-                </Label>
-                <RingsInput
-                  id="a-rings"
-                  scoringType={scoringType}
-                  shotsPerSeries={shotsPerSeries}
-                  value={fieldA.totalRings}
-                  onChange={(e) => setFieldA((p) => ({ ...p, totalRings: e.target.value }))}
-                  disabled={submitting}
-                />
-              </div>
-              {showTeiler && (
-                <div className="space-y-1">
-                  <Label htmlFor="a-teiler" className="text-xs text-muted-foreground">
-                    Bester Teiler
-                  </Label>
-                  <Input
-                    id="a-teiler"
-                    type="text"
-                    inputMode="decimal"
-                    value={fieldA.teiler}
-                    onChange={(e) => setFieldA((p) => ({ ...p, teiler: e.target.value }))}
-                    placeholder="z.B. 3,7"
-                    disabled={submitting}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
+          <ParticipantResultFields
+            idPrefix="a"
+            name={`${participantA.firstName} ${participantA.lastName}`}
+            fields={fieldA}
+            setFields={setFieldA}
+            showTeiler={showTeiler}
+            scoringType={scoringType}
+            shotsPerSeries={shotsPerSeries}
+            submitting={submitting}
+          />
 
           <div className="flex items-center gap-2">
             <div className="h-px flex-1 bg-border" />
@@ -210,43 +100,16 @@ export function PlayoffDuelResultDialog({
             <div className="h-px flex-1 bg-border" />
           </div>
 
-          {/* Teilnehmer B */}
-          <div className="space-y-2">
-            <p className="text-sm font-medium">
-              {participantB.firstName} {participantB.lastName}
-            </p>
-            <div className={showTeiler ? "grid grid-cols-2 gap-3" : "max-w-[160px]"}>
-              <div className="space-y-1">
-                <Label htmlFor="b-rings" className="text-xs text-muted-foreground">
-                  Gesamtringe
-                </Label>
-                <RingsInput
-                  id="b-rings"
-                  scoringType={scoringType}
-                  shotsPerSeries={shotsPerSeries}
-                  value={fieldB.totalRings}
-                  onChange={(e) => setFieldB((p) => ({ ...p, totalRings: e.target.value }))}
-                  disabled={submitting}
-                />
-              </div>
-              {showTeiler && (
-                <div className="space-y-1">
-                  <Label htmlFor="b-teiler" className="text-xs text-muted-foreground">
-                    Bester Teiler
-                  </Label>
-                  <Input
-                    id="b-teiler"
-                    type="text"
-                    inputMode="decimal"
-                    value={fieldB.teiler}
-                    onChange={(e) => setFieldB((p) => ({ ...p, teiler: e.target.value }))}
-                    placeholder="z.B. 3,7"
-                    disabled={submitting}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
+          <ParticipantResultFields
+            idPrefix="b"
+            name={`${participantB.firstName} ${participantB.lastName}`}
+            fields={fieldB}
+            setFields={setFieldB}
+            showTeiler={showTeiler}
+            scoringType={scoringType}
+            shotsPerSeries={shotsPerSeries}
+            submitting={submitting}
+          />
 
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
