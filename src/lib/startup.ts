@@ -16,7 +16,10 @@ export async function runStartup(): Promise<void> {
   if (hasRun) return
   hasRun = true
 
-  await ensureSystemDisciplines(db)
+  const createdDisciplines = await ensureSystemDisciplines(db)
+  if (createdDisciplines > 0) {
+    console.warn(`Standarddisziplinen angelegt: ${createdDisciplines}`)
+  }
 
   const adminEmail = process.env.SEED_ADMIN_EMAIL
   const adminPassword = process.env.SEED_ADMIN_PASSWORD

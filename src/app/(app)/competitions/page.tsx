@@ -1,166 +1,78 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import {
-  Plus,
-  Archive,
-  CalendarDays,
-  CheckCircle,
-  Trophy,
-  Users,
-  BarChart2,
-  ListOrdered,
-  CalendarCheck,
-} from "lucide-react"
+import { Plus, Archive, CheckCircle, Trophy } from "lucide-react"
 import { getAuthSession } from "@/lib/auth-helpers"
 import { getCompetitionsForManagement } from "@/lib/competitions/queries"
-import { CompetitionActions } from "@/components/app/competitions/CompetitionActions"
+import { getDisciplinesForManagement } from "@/lib/disciplines/queries"
+import { CompetitionListCard } from "@/components/app/competitions/CompetitionListCard"
+import { CompetitionsFilters } from "@/components/app/competitions/CompetitionsFilters"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
-import { getDisplayTimeZone, formatDateOnly } from "@/lib/dateTime"
+import { EmptyState } from "@/components/ui/empty-state"
+import { getDisplayTimeZone } from "@/lib/dateTime"
 import type { CompetitionListItem } from "@/lib/competitions/types"
 
-function formatDate(date: Date | null, tz: string): string {
-  if (!date) return "—"
-  return formatDateOnly(date, tz)
+const STATUS_OPTIONS = [
+  { value: "DRAFT", label: "Entwurf" },
+  { value: "ACTIVE", label: "Aktiv" },
+  { value: "COMPLETED", label: "Abgeschlossen" },
+  { value: "ARCHIVED", label: "Archiviert" },
+]
+
+const TYPE_OPTIONS = [
+  { value: "LEAGUE", label: "Liga" },
+  { value: "EVENT", label: "Event" },
+  { value: "SEASON", label: "Saison" },
+]
+
+interface PageProps {
+  searchParams: Promise<{ status?: string; type?: string; discipline?: string }>
 }
 
-const NAV_LINK =
-  "flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
-
-function CompetitionCardLinks({ c, canManage }: { c: CompetitionListItem; canManage: boolean }) {
-  if (c.type === "EVENT") {
-    return (
-      <>
-        {canManage && (
-          <Link href={`/competitions/${c.id}/participants`} className={NAV_LINK}>
-            <Users className="h-3.5 w-3.5" />
-            {c._count.participants} Teilnehmer
-          </Link>
-        )}
-        {canManage && (
-          <Link href={`/competitions/${c.id}/series`} className={NAV_LINK}>
-            <ListOrdered className="h-3.5 w-3.5" />
-            Serien
-          </Link>
-        )}
-        <Link href={`/competitions/${c.id}/ranking`} className={NAV_LINK}>
-          <BarChart2 className="h-3.5 w-3.5" />
-          Rangliste
-        </Link>
-      </>
-    )
+function matchesFilters(
+  c: CompetitionListItem,
+  status: string,
+  type: string,
+  discipline: string
+): boolean {
+  if (status !== "all" && c.status !== status) return false
+  if (type !== "all" && c.type !== type) return false
+  if (discipline !== "all") {
+    if (discipline === "mixed") return c.discipline === null
+    if (c.discipline?.id !== discipline) return false
   }
-  if (c.type === "SEASON") {
-    return (
-      <>
-        {canManage && (
-          <Link href={`/competitions/${c.id}/participants`} className={NAV_LINK}>
-            <Users className="h-3.5 w-3.5" />
-            {c._count.participants} Teilnehmer
-          </Link>
-        )}
-        {canManage && (
-          <Link href={`/competitions/${c.id}/series`} className={NAV_LINK}>
-            <ListOrdered className="h-3.5 w-3.5" />
-            Serien
-          </Link>
-        )}
-        <Link href={`/competitions/${c.id}/standings`} className={NAV_LINK}>
-          <BarChart2 className="h-3.5 w-3.5" />
-          Rangliste
-        </Link>
-      </>
-    )
-  }
-  // LEAGUE (default)
-  return (
-    <>
-      {canManage && (
-        <Link href={`/competitions/${c.id}/participants`} className={NAV_LINK}>
-          <Users className="h-3.5 w-3.5" />
-          {c._count.participants} Teilnehmer
-        </Link>
-      )}
-      <Link href={`/competitions/${c.id}/schedule`} className={NAV_LINK}>
-        <CalendarDays className="h-3.5 w-3.5" />
-        Spielplan & Tabelle
-      </Link>
-      <Link href={`/competitions/${c.id}/playoffs`} className={NAV_LINK}>
-        <Trophy className="h-3.5 w-3.5" />
-        Playoffs
-      </Link>
-    </>
-  )
+  return true
 }
 
-function CompetitionCardMeta({ c, tz }: { c: CompetitionListItem; tz: string }) {
-  if (c.type === "EVENT") {
-    if (!c.eventDate) return null
-    return (
-      <p className="text-xs text-muted-foreground/70 flex items-center gap-1">
-        <CalendarCheck className="h-3 w-3" />
-        {formatDate(c.eventDate, tz)}
-      </p>
-    )
-  }
-  if (c.type === "SEASON") {
-    if (!c.seasonStart) return null
-    return (
-      <p className="text-xs text-muted-foreground/70 flex items-center gap-1">
-        <CalendarCheck className="h-3 w-3" />
-        {formatDate(c.seasonStart, tz)}
-        {c.seasonEnd && <> – {formatDate(c.seasonEnd, tz)}</>}
-      </p>
-    )
-  }
-  // BEST_OF_SINGLE has no Hin-/Rückrunde — the single encounter's date is agreed individually.
-  if (c.leagueFormat === "BEST_OF_SINGLE") return null
-  return (
-    <p className="text-xs text-muted-foreground/70">
-      Hinrunde bis {formatDate(c.hinrundeDeadline, tz)} · Rückrunde bis{" "}
-      {formatDate(c.rueckrundeDeadline, tz)}
-    </p>
-  )
-}
-
-function CompetitionTypeBadge({ type }: { type: string }) {
-  if (type === "EVENT") {
-    return (
-      <Badge variant="outline" className="text-xs">
-        Event
-      </Badge>
-    )
-  }
-  if (type === "SEASON") {
-    return (
-      <Badge variant="outline" className="text-xs">
-        Saison
-      </Badge>
-    )
-  }
-  return null
-}
-
-export default async function CompetitionsPage() {
+export default async function CompetitionsPage({ searchParams }: PageProps) {
   const session = await getAuthSession()
   if (!session) redirect("/login")
 
   const canManage = session.user.role === "ADMIN" || session.user.role === "MANAGER"
   const tz = getDisplayTimeZone()
-  const competitions = await getCompetitionsForManagement()
+  const { status = "all", type = "all", discipline = "all" } = await searchParams
+  const all = await getCompetitionsForManagement()
+  const disciplines = await getDisciplinesForManagement()
 
-  const draft = competitions.filter((c) => c.status === "DRAFT")
-  const active = competitions.filter((c) => c.status === "ACTIVE")
-  const completed = competitions.filter((c) => c.status === "COMPLETED")
-  const archived = competitions.filter((c) => c.status === "ARCHIVED")
+  const disciplineOptions = [
+    { value: "mixed", label: "Gemischt" },
+    ...disciplines.map((d) => ({ value: d.id, label: d.name })),
+  ]
+
+  const filtered = all.filter((c) => matchesFilters(c, status, type, discipline))
+
+  const draft = filtered.filter((c) => c.status === "DRAFT")
+  const active = filtered.filter((c) => c.status === "ACTIVE")
+  const completed = filtered.filter((c) => c.status === "COMPLETED")
+  const archived = filtered.filter((c) => c.status === "ARCHIVED")
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8 px-4 py-8">
+    <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Wettbewerbe</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Alle Wettbewerbe des Vereins</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {filtered.length} von {all.length} Wettbewerben
+          </p>
         </div>
         {canManage && (
           <Button asChild size="sm">
@@ -172,71 +84,54 @@ export default async function CompetitionsPage() {
         )}
       </div>
 
+      <CompetitionsFilters
+        statusOptions={STATUS_OPTIONS}
+        typeOptions={TYPE_OPTIONS}
+        disciplineOptions={disciplineOptions}
+        selectedStatus={status}
+        selectedType={type}
+        selectedDiscipline={discipline}
+      />
+
+      {filtered.length === 0 && (
+        <EmptyState
+          title="Keine Wettbewerbe für die gewählten Filter."
+          icon={Trophy}
+          actionLabel={canManage && all.length === 0 ? "Neuer Wettbewerb" : undefined}
+          actionHref={canManage && all.length === 0 ? "/competitions/new" : undefined}
+        />
+      )}
+
       {/* Entwurf-Wettbewerbe */}
       {draft.length > 0 && (
         <div className="space-y-3">
           <p className="text-sm font-medium text-muted-foreground">Entwurf ({draft.length})</p>
           {draft.map((c) => (
-            <Card key={c.id} className="transition-colors hover:bg-muted/20 opacity-80">
-              <CardContent className="flex items-center justify-between gap-4 py-5">
-                <div className="min-w-0 flex-1 space-y-2.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-base font-semibold">{c.name}</span>
-                    <CompetitionTypeBadge type={c.type} />
-                    <Badge variant="secondary" className="text-xs">
-                      {c.discipline ? c.discipline.name : "Gemischt"}
-                    </Badge>
-                    {c.isPublic && (
-                      <Badge variant="outline" className="text-xs">
-                        Öffentlich
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-4">
-                    <CompetitionCardLinks c={c} canManage={canManage} />
-                  </div>
-                </div>
-                {canManage && <CompetitionActions competition={c} />}
-              </CardContent>
-            </Card>
+            <CompetitionListCard
+              key={c.id}
+              competition={c}
+              canManage={canManage}
+              tz={tz}
+              cardClassName="transition-colors hover:bg-muted/20 opacity-80"
+            />
           ))}
         </div>
       )}
 
       {/* Aktive Wettbewerbe */}
-      <div className="space-y-3">
-        {active.length === 0 && draft.length === 0 ? (
-          <p className="rounded-lg border bg-card px-4 py-8 text-center text-sm text-muted-foreground">
-            Keine aktiven Wettbewerbe vorhanden.
-          </p>
-        ) : (
-          active.map((c) => (
-            <Card key={c.id} className="transition-colors hover:bg-muted/20">
-              <CardContent className="flex items-center justify-between gap-4 py-5">
-                <div className="min-w-0 flex-1 space-y-2.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-base font-semibold">{c.name}</span>
-                    <CompetitionTypeBadge type={c.type} />
-                    <Badge variant="secondary" className="text-xs">
-                      {c.discipline ? c.discipline.name : "Gemischt"}
-                    </Badge>
-                    {c.isPublic && (
-                      <Badge variant="outline" className="text-xs">
-                        Öffentlich
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-4">
-                    <CompetitionCardLinks c={c} canManage={canManage} />
-                  </div>
-                  <CompetitionCardMeta c={c} tz={tz} />
-                </div>
-                {canManage && <CompetitionActions competition={c} />}
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+      {active.length > 0 && (
+        <div className="space-y-3">
+          {active.map((c) => (
+            <CompetitionListCard
+              key={c.id}
+              competition={c}
+              canManage={canManage}
+              tz={tz}
+              showMeta
+            />
+          ))}
+        </div>
+      )}
 
       {/* Abgeschlossene Wettbewerbe */}
       {completed.length > 0 && (
@@ -247,23 +142,7 @@ export default async function CompetitionsPage() {
           </div>
           <div className="space-y-2 opacity-70">
             {completed.map((c) => (
-              <Card key={c.id} className="transition-colors hover:bg-muted/20">
-                <CardContent className="flex items-center justify-between gap-4 py-4">
-                  <div className="min-w-0 flex-1 space-y-1.5">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-semibold">{c.name}</span>
-                      <CompetitionTypeBadge type={c.type} />
-                      <Badge variant="secondary" className="text-xs">
-                        {c.discipline ? c.discipline.name : "Gemischt"}
-                      </Badge>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-4">
-                      <CompetitionCardLinks c={c} canManage={canManage} />
-                    </div>
-                  </div>
-                  {canManage && <CompetitionActions competition={c} />}
-                </CardContent>
-              </Card>
+              <CompetitionListCard key={c.id} competition={c} canManage={canManage} tz={tz} />
             ))}
           </div>
         </div>
@@ -278,18 +157,7 @@ export default async function CompetitionsPage() {
           </div>
           <div className="space-y-2 opacity-50">
             {archived.map((c) => (
-              <Card key={c.id}>
-                <CardContent className="flex items-center justify-between gap-4 py-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm line-through">{c.name}</span>
-                    <CompetitionTypeBadge type={c.type} />
-                    <Badge variant="outline" className="text-xs">
-                      {c.discipline ? c.discipline.name : "Gemischt"}
-                    </Badge>
-                  </div>
-                  {canManage && <CompetitionActions competition={c} />}
-                </CardContent>
-              </Card>
+              <CompetitionListCard key={c.id} competition={c} canManage={canManage} tz={tz} />
             ))}
           </div>
         </div>

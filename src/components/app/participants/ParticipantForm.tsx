@@ -2,11 +2,14 @@
 
 import { useActionState, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { ParticipantDetail } from "@/lib/participants/types"
 import type { ActionResult } from "@/lib/types"
+import { getFieldError, getGeneralError } from "@/lib/forms/fieldErrors"
+import { FieldError } from "@/components/ui/field-error"
 
 interface Props {
   participant?: Pick<ParticipantDetail, "firstName" | "lastName" | "contact">
@@ -23,15 +26,18 @@ export function ParticipantForm({ participant, action, onSuccess }: Props) {
 
   useEffect(() => {
     if (state && "success" in state && state.success) {
+      toast.success("Teilnehmer gespeichert.")
       if (onSuccess) onSuccess()
       else router.push("/participants")
+    } else if (state && "error" in state && typeof state.error === "string") {
+      toast.error(state.error)
     }
   }, [state, router, onSuccess])
 
-  const fieldErrors =
-    state && "error" in state && typeof state.error === "object" ? state.error : null
-  const generalError =
-    state && "error" in state && typeof state.error === "string" ? state.error : null
+  const firstNameError = getFieldError(state, "firstName")
+  const lastNameError = getFieldError(state, "lastName")
+  const contactError = getFieldError(state, "contact")
+  const generalError = getGeneralError(state)
 
   return (
     <form action={formAction} className="space-y-4">
@@ -44,10 +50,10 @@ export function ParticipantForm({ participant, action, onSuccess }: Props) {
           onChange={(e) => setFirstName(e.target.value)}
           placeholder="z.B. Max"
           disabled={isPending}
+          aria-invalid={firstNameError ? true : undefined}
+          aria-describedby={firstNameError ? "firstName-error" : undefined}
         />
-        {fieldErrors?.firstName && (
-          <p className="text-sm text-destructive">{fieldErrors.firstName[0]}</p>
-        )}
+        <FieldError id="firstName-error" message={firstNameError} />
       </div>
 
       <div className="space-y-2">
@@ -59,10 +65,10 @@ export function ParticipantForm({ participant, action, onSuccess }: Props) {
           onChange={(e) => setLastName(e.target.value)}
           placeholder="z.B. Muster"
           disabled={isPending}
+          aria-invalid={lastNameError ? true : undefined}
+          aria-describedby={lastNameError ? "lastName-error" : undefined}
         />
-        {fieldErrors?.lastName && (
-          <p className="text-sm text-destructive">{fieldErrors.lastName[0]}</p>
-        )}
+        <FieldError id="lastName-error" message={lastNameError} />
       </div>
 
       <div className="space-y-2">
@@ -77,10 +83,10 @@ export function ParticipantForm({ participant, action, onSuccess }: Props) {
           onChange={(e) => setContact(e.target.value)}
           placeholder="z.B. max@example.com oder +49 151 12345678"
           disabled={isPending}
+          aria-invalid={contactError ? true : undefined}
+          aria-describedby={contactError ? "contact-error" : undefined}
         />
-        {fieldErrors?.contact && (
-          <p className="text-sm text-destructive">{fieldErrors.contact[0]}</p>
-        )}
+        <FieldError id="contact-error" message={contactError} />
       </div>
 
       {generalError && <p className="text-sm text-destructive">{generalError}</p>}

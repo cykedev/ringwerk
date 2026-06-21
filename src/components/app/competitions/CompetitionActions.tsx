@@ -2,16 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import {
-  MoreHorizontal,
-  Pencil,
-  CheckCircle,
-  Archive,
-  ArchiveRestore,
-  RotateCcw,
-  ScrollText,
-  Trash2,
-} from "lucide-react"
+import { ArrowLeft, Pencil, ScrollText, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   AlertDialog,
@@ -23,49 +14,32 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { toast } from "sonner"
-import { setCompetitionStatus, deleteCompetition } from "@/lib/competitions/actions"
+import { deleteCompetition } from "@/lib/competitions/actions"
+import { DetailActionBar } from "@/components/app/shell/DetailActionBar"
+import { CompetitionStatusActions } from "@/components/app/competitions/CompetitionStatusActions"
 import type { CompetitionListItem } from "@/lib/competitions/types"
-import type { CompetitionStatus } from "@/generated/prisma/client"
 
 interface Props {
   competition: CompetitionListItem
+  // Optionaler Zurück-Link (nur auf Detailseiten; in Listenkarten weggelassen).
+  backHref?: string
 }
 
-interface PendingStatus {
-  status: CompetitionStatus
-  label: string
-}
-
-export function CompetitionActions({ competition }: Props) {
+// Einheitliche Aktionsleiste für einen Wettbewerb: Inline-ghost-Buttons in der DetailActionBar.
+// Reihenfolge: fachlich/sekundär → destruktiv → Zurück.
+export function CompetitionActions({ competition, backHref }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [pendingStatus, setPendingStatus] = useState<PendingStatus | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
-
-  function handleStatusChange() {
-    if (!pendingStatus) return
-    startTransition(async () => {
-      const result = await setCompetitionStatus(competition.id, pendingStatus.status)
-      if ("error" in result) {
-        toast.error(typeof result.error === "string" ? result.error : "Fehler beim Statuswechsel.")
-      }
-      setPendingStatus(null)
-    })
-  }
 
   function handleDelete() {
     startTransition(async () => {
       const result = await deleteCompetition(competition.id)
       if ("error" in result) {
         toast.error(typeof result.error === "string" ? result.error : "Fehler beim Löschen.")
+      } else {
+        toast.success("Wettbewerb gelöscht.")
       }
       setDeleteOpen(false)
     })
@@ -73,106 +47,61 @@ export function CompetitionActions({ competition }: Props) {
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" disabled={isPending}>
-            <MoreHorizontal className="h-4 w-4" />
-            <span className="sr-only">Aktionen</span>
+      <DetailActionBar>
+        {/* Fachlich/sekundär */}
+        <Button
+          variant="ghost"
+          size="icon"
+          disabled={isPending}
+          title="Protokoll"
+          aria-label="Protokoll"
+          onClick={() => router.push(`/competitions/${competition.id}/audit-log`)}
+        >
+          <ScrollText className="h-4 w-4" />
+        </Button>
+
+        {competition.status !== "ARCHIVED" && (
+          <Button
+            variant="ghost"
+            size="icon"
+            disabled={isPending}
+            title="Bearbeiten"
+            aria-label="Bearbeiten"
+            onClick={() => router.push(`/competitions/${competition.id}/edit`)}
+          >
+            <Pencil className="h-4 w-4" />
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onClick={() => router.push(`/competitions/${competition.id}/audit-log`)}
+        )}
+
+        <CompetitionStatusActions competition={competition} disabled={isPending} />
+
+        {/* Destruktiv */}
+        <Button
+          variant="ghost"
+          size="icon"
+          disabled={isPending}
+          title="Löschen"
+          aria-label="Löschen"
+          className="text-destructive hover:text-destructive"
+          onClick={() => setDeleteOpen(true)}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+
+        {/* Zurück (nur auf Detailseiten) */}
+        {backHref && (
+          <Button
+            variant="ghost"
+            size="icon"
+            disabled={isPending}
+            title="Zurück"
+            aria-label="Zurück"
+            onClick={() => router.push(backHref)}
           >
-            <ScrollText className="mr-2 h-4 w-4" />
-            Protokoll
-          </DropdownMenuItem>
-
-          {competition.status !== "ARCHIVED" && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push(`/competitions/${competition.id}/edit`)}>
-                <Pencil className="mr-2 h-4 w-4" />
-                Bearbeiten
-              </DropdownMenuItem>
-            </>
-          )}
-
-          {competition.status === "ACTIVE" && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() =>
-                  setPendingStatus({ status: "COMPLETED", label: "als abgeschlossen markieren" })
-                }
-              >
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Als abgeschlossen markieren
-              </DropdownMenuItem>
-            </>
-          )}
-
-          {competition.status === "COMPLETED" && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => setPendingStatus({ status: "ACTIVE", label: "wieder öffnen" })}
-              >
-                <RotateCcw className="mr-2 h-4 w-4" />
-                Wieder öffnen
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setPendingStatus({ status: "ARCHIVED", label: "archivieren" })}
-              >
-                <Archive className="mr-2 h-4 w-4" />
-                Archivieren
-              </DropdownMenuItem>
-            </>
-          )}
-
-          {competition.status === "ARCHIVED" && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() =>
-                  setPendingStatus({
-                    status: "COMPLETED",
-                    label: "wiederherstellen (als abgeschlossen)",
-                  })
-                }
-              >
-                <ArchiveRestore className="mr-2 h-4 w-4" />
-                Wiederherstellen
-              </DropdownMenuItem>
-            </>
-          )}
-
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => setDeleteOpen(true)}
-            className="text-destructive focus:text-destructive"
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Löschen
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      {/* Status-Änderung bestätigen */}
-      <AlertDialog open={!!pendingStatus} onOpenChange={(open) => !open && setPendingStatus(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Wettbewerb {pendingStatus?.label}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {`Wettbewerb „${competition.name}" wird ${pendingStatus?.label}.`}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction onClick={handleStatusChange}>Bestätigen</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        )}
+      </DetailActionBar>
 
       {/* Löschen bestätigen */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>

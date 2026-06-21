@@ -1,11 +1,12 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { Plus, Archive } from "lucide-react"
+import { Plus, Archive, Target } from "lucide-react"
 import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import { getDisciplinesForManagement } from "@/lib/disciplines/queries"
 import { DisciplineActions } from "@/components/app/disciplines/DisciplineActions"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { EmptyState } from "@/components/ui/empty-state"
 
 export default async function DisciplinesPage() {
   const session = await getAuthSession()
@@ -32,12 +33,16 @@ export default async function DisciplinesPage() {
       </div>
 
       {/* Aktive Disziplinen */}
-      <div className="rounded-lg border bg-card">
-        {active.length === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-            Keine Disziplinen vorhanden.
-          </p>
-        ) : (
+      {active.length === 0 ? (
+        <EmptyState
+          title="Keine Disziplinen vorhanden."
+          description="Lege deine erste Disziplin an."
+          icon={Target}
+          actionLabel="Neue Disziplin"
+          actionHref="/disciplines/new"
+        />
+      ) : (
+        <div className="rounded-lg border bg-card">
           <div className="divide-y">
             {active.map((d) => (
               <div key={d.id} className="flex items-center justify-between px-4 py-3">
@@ -56,8 +61,8 @@ export default async function DisciplinesPage() {
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Archivierte Disziplinen */}
       {archived.length > 0 && (

@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,6 +16,8 @@ import {
 } from "@/components/ui/select"
 import type { ActionResult } from "@/lib/types"
 import type { UserSummary } from "@/lib/users/types"
+import { getFieldError, getGeneralError } from "@/lib/forms/fieldErrors"
+import { FieldError } from "@/components/ui/field-error"
 
 interface Props {
   user: UserSummary
@@ -33,14 +36,18 @@ export function UserEditForm({ user, action }: Props) {
 
   useEffect(() => {
     if (state && "success" in state && state.success) {
+      toast.success("Nutzer gespeichert.")
       router.push("/admin/users")
+    } else if (state && "error" in state && typeof state.error === "string") {
+      toast.error(state.error)
     }
   }, [state, router])
 
-  const fieldErrors =
-    state && "error" in state && typeof state.error === "object" ? state.error : null
-  const generalError =
-    state && "error" in state && typeof state.error === "string" ? state.error : null
+  const nameError = getFieldError(state, "name")
+  const emailError = getFieldError(state, "email")
+  const roleError = getFieldError(state, "role")
+  const tempPasswordError = getFieldError(state, "tempPassword")
+  const generalError = getGeneralError(state)
 
   return (
     <form action={formAction} className="space-y-4">
@@ -53,8 +60,10 @@ export function UserEditForm({ user, action }: Props) {
           onChange={(e) => setName(e.target.value)}
           placeholder="Vor- und Nachname"
           disabled={isPending}
+          aria-invalid={nameError ? true : undefined}
+          aria-describedby={nameError ? "name-error" : undefined}
         />
-        {fieldErrors?.name && <p className="text-sm text-destructive">{fieldErrors.name[0]}</p>}
+        <FieldError id="name-error" message={nameError} />
       </div>
 
       <div className="space-y-2">
@@ -66,8 +75,10 @@ export function UserEditForm({ user, action }: Props) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={isPending}
+          aria-invalid={emailError ? true : undefined}
+          aria-describedby={emailError ? "email-error" : undefined}
         />
-        {fieldErrors?.email && <p className="text-sm text-destructive">{fieldErrors.email[0]}</p>}
+        <FieldError id="email-error" message={emailError} />
       </div>
 
       <div className="space-y-2">
@@ -82,7 +93,7 @@ export function UserEditForm({ user, action }: Props) {
             <SelectItem value="ADMIN">Administrator</SelectItem>
           </SelectContent>
         </Select>
-        {fieldErrors?.role && <p className="text-sm text-destructive">{fieldErrors.role[0]}</p>}
+        <FieldError id="role-error" message={roleError} />
       </div>
 
       <div className="space-y-2">
@@ -110,6 +121,8 @@ export function UserEditForm({ user, action }: Props) {
             placeholder="Leer lassen = kein Wechsel"
             disabled={isPending}
             className="pr-10"
+            aria-invalid={tempPasswordError ? true : undefined}
+            aria-describedby={tempPasswordError ? "tempPassword-error" : undefined}
           />
           <button
             type="button"
@@ -124,6 +137,7 @@ export function UserEditForm({ user, action }: Props) {
           Nur ausfüllen wenn das Passwort zurückgesetzt werden soll (mind. 12 Zeichen). Der Nutzer
           wird danach abgemeldet.
         </p>
+        <FieldError id="tempPassword-error" message={tempPasswordError} />
       </div>
 
       {generalError && <p className="text-sm text-destructive">{generalError}</p>}

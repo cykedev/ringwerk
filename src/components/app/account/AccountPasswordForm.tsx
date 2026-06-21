@@ -3,10 +3,13 @@
 import { useActionState, useEffect, useState } from "react"
 import { signOut } from "next-auth/react"
 import { Eye, EyeOff } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { changeOwnPassword } from "@/lib/users/actions"
+import { getFieldError, getGeneralError } from "@/lib/forms/fieldErrors"
+import { FieldError } from "@/components/ui/field-error"
 
 export function AccountPasswordForm() {
   const [state, formAction, isPending] = useActionState(changeOwnPassword, null)
@@ -19,12 +22,17 @@ export function AccountPasswordForm() {
 
   useEffect(() => {
     if (state && "success" in state && state.success) {
+      toast.success("Passwort geändert.")
       signOut({ callbackUrl: "/login" })
+    } else if (state && "error" in state && typeof state.error === "string") {
+      toast.error(state.error)
     }
   }, [state])
 
-  const generalError =
-    state && "error" in state && typeof state.error === "string" ? state.error : null
+  const currentPasswordError = getFieldError(state, "currentPassword")
+  const newPasswordError = getFieldError(state, "newPassword")
+  const confirmPasswordError = getFieldError(state, "confirmPassword")
+  const generalError = getGeneralError(state)
   const isSuccess = state && "success" in state && state.success
 
   if (isSuccess) {
@@ -44,6 +52,8 @@ export function AccountPasswordForm() {
             onChange={(e) => setCurrentPassword(e.target.value)}
             disabled={isPending}
             className="pr-10"
+            aria-invalid={currentPasswordError ? true : undefined}
+            aria-describedby={currentPasswordError ? "currentPassword-error" : undefined}
           />
           <button
             type="button"
@@ -54,6 +64,7 @@ export function AccountPasswordForm() {
             {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
+        <FieldError id="currentPassword-error" message={currentPasswordError} />
       </div>
 
       <div className="space-y-2">
@@ -68,6 +79,8 @@ export function AccountPasswordForm() {
             placeholder="Mind. 12 Zeichen"
             disabled={isPending}
             className="pr-10"
+            aria-invalid={newPasswordError ? true : undefined}
+            aria-describedby={newPasswordError ? "newPassword-error" : undefined}
           />
           <button
             type="button"
@@ -78,6 +91,7 @@ export function AccountPasswordForm() {
             {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
+        <FieldError id="newPassword-error" message={newPasswordError} />
       </div>
 
       <div className="space-y-2">
@@ -91,6 +105,8 @@ export function AccountPasswordForm() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             disabled={isPending}
             className="pr-10"
+            aria-invalid={confirmPasswordError ? true : undefined}
+            aria-describedby={confirmPasswordError ? "confirmPassword-error" : undefined}
           />
           <button
             type="button"
@@ -101,6 +117,7 @@ export function AccountPasswordForm() {
             {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
+        <FieldError id="confirmPassword-error" message={confirmPasswordError} />
       </div>
 
       {generalError && <p className="text-sm text-destructive">{generalError}</p>}

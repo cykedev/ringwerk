@@ -1,11 +1,12 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { Plus } from "lucide-react"
+import { Plus, Users } from "lucide-react"
 import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import { getParticipantsForManagement } from "@/lib/participants/queries"
 import { ParticipantRowActions } from "@/components/app/participants/ParticipantRowActions"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { EmptyState } from "@/components/ui/empty-state"
 import { PdfDownloadButton } from "@/components/app/shared/PdfDownloadButton"
 
 export default async function ParticipantsPage() {
@@ -34,20 +35,27 @@ export default async function ParticipantsPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border bg-card">
-        {active.length === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-            Keine aktiven Teilnehmer vorhanden.
-          </p>
-        ) : (
+      {active.length === 0 ? (
+        <EmptyState
+          title="Keine aktiven Teilnehmer vorhanden."
+          description="Lege deinen ersten Teilnehmer an."
+          icon={Users}
+          actionLabel="Neuer Teilnehmer"
+          actionHref="/participants/new"
+        />
+      ) : (
+        <div className="rounded-lg border bg-card">
           <div className="divide-y">
             {active.map((p) => (
               <div key={p.id} className="flex items-center justify-between px-4 py-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">
+                    <Link
+                      href={`/participants/${p.id}/edit`}
+                      className="text-sm font-medium hover:underline"
+                    >
                       {p.lastName}, {p.firstName}
-                    </span>
+                    </Link>
                     {p._count.competitions > 0 && (
                       <Badge variant="secondary" className="text-xs">
                         {p._count.competitions}{" "}
@@ -69,8 +77,8 @@ export default async function ParticipantsPage() {
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {inactive.length > 0 && (
         <div>

@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,6 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { createUser } from "@/lib/users/actions"
+import { getFieldError, getGeneralError } from "@/lib/forms/fieldErrors"
+import { FieldError } from "@/components/ui/field-error"
 
 export function UserCreateForm() {
   const router = useRouter()
@@ -26,14 +29,18 @@ export function UserCreateForm() {
 
   useEffect(() => {
     if (state && "success" in state && state.success) {
+      toast.success("Nutzer angelegt.")
       router.push("/admin/users")
+    } else if (state && "error" in state && typeof state.error === "string") {
+      toast.error(state.error)
     }
   }, [state, router])
 
-  const fieldErrors =
-    state && "error" in state && typeof state.error === "object" ? state.error : null
-  const generalError =
-    state && "error" in state && typeof state.error === "string" ? state.error : null
+  const nameError = getFieldError(state, "name")
+  const emailError = getFieldError(state, "email")
+  const tempPasswordError = getFieldError(state, "tempPassword")
+  const roleError = getFieldError(state, "role")
+  const generalError = getGeneralError(state)
 
   return (
     <form action={formAction} className="space-y-4">
@@ -46,8 +53,10 @@ export function UserCreateForm() {
           onChange={(e) => setName(e.target.value)}
           placeholder="Vor- und Nachname"
           disabled={isPending}
+          aria-invalid={nameError ? true : undefined}
+          aria-describedby={nameError ? "name-error" : undefined}
         />
-        {fieldErrors?.name && <p className="text-sm text-destructive">{fieldErrors.name[0]}</p>}
+        <FieldError id="name-error" message={nameError} />
       </div>
 
       <div className="space-y-2">
@@ -60,8 +69,10 @@ export function UserCreateForm() {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="nutzer@beispiel.de"
           disabled={isPending}
+          aria-invalid={emailError ? true : undefined}
+          aria-describedby={emailError ? "email-error" : undefined}
         />
-        {fieldErrors?.email && <p className="text-sm text-destructive">{fieldErrors.email[0]}</p>}
+        <FieldError id="email-error" message={emailError} />
       </div>
 
       <div className="space-y-2">
@@ -76,6 +87,8 @@ export function UserCreateForm() {
             placeholder="Mind. 12 Zeichen"
             disabled={isPending}
             className="pr-10"
+            aria-invalid={tempPasswordError ? true : undefined}
+            aria-describedby={tempPasswordError ? "tempPassword-error" : undefined}
           />
           <button
             type="button"
@@ -86,9 +99,7 @@ export function UserCreateForm() {
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
-        {fieldErrors?.tempPassword && (
-          <p className="text-sm text-destructive">{fieldErrors.tempPassword[0]}</p>
-        )}
+        <FieldError id="tempPassword-error" message={tempPasswordError} />
       </div>
 
       <div className="space-y-2">
@@ -103,7 +114,7 @@ export function UserCreateForm() {
             <SelectItem value="ADMIN">Administrator</SelectItem>
           </SelectContent>
         </Select>
-        {fieldErrors?.role && <p className="text-sm text-destructive">{fieldErrors.role[0]}</p>}
+        <FieldError id="role-error" message={roleError} />
       </div>
 
       {generalError && <p className="text-sm text-destructive">{generalError}</p>}

@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Lock } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,6 +20,11 @@ import type { CompetitionDetail } from "@/lib/competitions/types"
 import type { ActionResult } from "@/lib/types"
 import { SCORING_MODE_LABELS } from "@/lib/scoring/labels"
 import { slugify, SLUG_REGEX } from "@/lib/competitions/publicSlug"
+import { getFieldError, getGeneralError } from "@/lib/forms/fieldErrors"
+import { FieldError } from "@/components/ui/field-error"
+import { ConfirmDialog } from "@/components/app/shell/ConfirmDialog"
+import { useUnsavedChangesGuard } from "@/lib/hooks/useUnsavedChangesGuard"
+import { useNavigationConfirm } from "@/lib/hooks/useNavigationConfirm"
 
 interface Props {
   competition?: CompetitionDetail
@@ -71,6 +77,13 @@ export function CompetitionForm({
   const router = useRouter()
   const [state, formAction, isPending] = useActionState(action, null)
   const isEdit = !!competition
+  // true, sobald der Nutzer ein Feld geändert hat (für den Datenverlust-Schutz).
+  const [dirty, setDirty] = useState(false)
+  // true, sobald abgeschickt wurde — verhindert, dass der Erfolgs-Redirect blockiert wird.
+  const [submitted, setSubmitted] = useState(false)
+  function markDirty() {
+    if (!dirty) setDirty(true)
+  }
 
   const [type, setType] = useState<string>(competition?.type ?? "LEAGUE")
   const [scoringMode, setScoringMode] = useState<string>(competition?.scoringMode ?? "RINGTEILER")
@@ -150,14 +163,22 @@ export function CompetitionForm({
 
   useEffect(() => {
     if (state && "success" in state && state.success) {
+      toast.success("Wettbewerb gespeichert.")
       const id = (state.data as { id?: string } | undefined)?.id
       if (id) {
         router.push(`/competitions/${id}/participants`)
       } else {
         router.push("/competitions")
       }
+    } else if (state && "error" in state && typeof state.error === "string") {
+      toast.error(state.error)
     }
   }, [state, router])
+
+  // Datenverlust-Schutz: aktiv, solange Änderungen bestehen und nicht abgeschickt wurde.
+  const isDirty = dirty && !submitted
+  useUnsavedChangesGuard({ enabled: isDirty && !isPending })
+  const nav = useNavigationConfirm({ isDirty: isDirty && !isPending })
 
   // When the user first turns the publish switch on, pre-fill the slug from the name
   // (only if the slug input is currently empty). Subsequent edits are left alone.
@@ -167,10 +188,9 @@ export function CompetitionForm({
     }
   }, [isPublic]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fieldErrors =
-    state && "error" in state && typeof state.error === "object" ? state.error : null
-  const generalError =
-    state && "error" in state && typeof state.error === "string" ? state.error : null
+  const nameError = getFieldError(state, "name")
+  const disciplineIdError = getFieldError(state, "disciplineId")
+  const generalError = getGeneralError(state)
 
   const isTargetMode =
     scoringMode === "TARGET_ABSOLUTE" ||
@@ -178,7 +198,12 @@ export function CompetitionForm({
     scoringMode === "TARGET_OVER"
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form
+      action={formAction}
+      onSubmit={() => setSubmitted(true)}
+      onChange={markDirty}
+      className="space-y-4"
+    >
       {/* Typ (nur bei Erstellung) */}
       {!isEdit && (
         <div className="space-y-2">
@@ -212,8 +237,10 @@ export function CompetitionForm({
                 : "z.B. Winterliga 2026"
           }
           disabled={isPending}
+          aria-invalid={nameError ? true : undefined}
+          aria-describedby={nameError ? "name-error" : undefined}
         />
-        {fieldErrors?.name && <p className="text-sm text-destructive">{fieldErrors.name[0]}</p>}
+        <FieldError id="name-error" message={nameError} />
       </div>
 
       {/* Wertungsmodus */}
@@ -297,9 +324,7 @@ export function CompetitionForm({
             Die Disziplin kann nach der Erstellung nicht mehr geändert werden.
           </p>
         )}
-        {fieldErrors?.disciplineId && (
-          <p className="text-sm text-destructive">{fieldErrors.disciplineId[0]}</p>
-        )}
+        <FieldError id="disciplineId-error" message={disciplineIdError} />
       </div>
 
       {/* ── Saison-Felder ────────────────────────────────────────── */}
@@ -904,10 +929,25 @@ export function CompetitionForm({
         <Button type="submit" disabled={isPending}>
           {isPending ? "Speichern…" : "Speichern"}
         </Button>
-        <Button type="button" variant="ghost" onClick={() => router.back()} disabled={isPending}>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => nav.requestNavigation(() => router.back())}
+          disabled={isPending}
+        >
           Abbrechen
         </Button>
       </div>
+
+      <ConfirmDialog
+        open={nav.isConfirmOpen}
+        onOpenChange={(o) => !o && nav.cancel()}
+        title="Ungespeicherte Änderungen verwerfen?"
+        description="Es gibt nicht gespeicherte Änderungen. Beim Verlassen gehen sie verloren."
+        confirmLabel="Verwerfen"
+        destructive
+        onConfirm={nav.confirm}
+      />
     </form>
   )
 }

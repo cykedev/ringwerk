@@ -8,7 +8,8 @@ import {
   Target,
   Trophy,
   Users,
-  Crosshair,
+  LayoutDashboard,
+  CircleDot,
   Settings,
   LogOut,
   Menu,
@@ -26,13 +27,13 @@ import {
 import { cn } from "@/lib/utils"
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: Target },
+  { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/competitions", label: "Wettbewerbe", icon: Trophy },
 ]
 
 const adminNavItems = [
   { href: "/participants", label: "Teilnehmer", icon: Users },
-  { href: "/disciplines", label: "Disziplinen", icon: Crosshair },
+  { href: "/disciplines", label: "Disziplinen", icon: Target },
 ]
 
 interface Props {
@@ -52,7 +53,7 @@ export function Navigation({ role }: Props) {
         {/* Logo + App-Name */}
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary">
-            <Target className="h-4 w-4 text-foreground" />
+            <CircleDot className="h-4 w-4 text-foreground" />
           </div>
           <span className="font-semibold">Ringwerk</span>
         </div>

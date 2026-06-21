@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,6 +15,8 @@ import {
 } from "@/components/ui/select"
 import type { SerializableDiscipline } from "@/lib/disciplines/types"
 import type { ActionResult } from "@/lib/types"
+import { getFieldError, getGeneralError } from "@/lib/forms/fieldErrors"
+import { FieldError } from "@/components/ui/field-error"
 
 interface Props {
   discipline?: SerializableDiscipline
@@ -31,14 +34,17 @@ export function DisciplineForm({ discipline, action }: Props) {
 
   useEffect(() => {
     if (state && "success" in state && state.success) {
+      toast.success("Disziplin gespeichert.")
       router.push("/disciplines")
+    } else if (state && "error" in state && typeof state.error === "string") {
+      toast.error(state.error)
     }
   }, [state, router])
 
-  const fieldErrors =
-    state && "error" in state && typeof state.error === "object" ? state.error : null
-  const generalError =
-    state && "error" in state && typeof state.error === "string" ? state.error : null
+  const nameError = getFieldError(state, "name")
+  const scoringTypeError = getFieldError(state, "scoringType")
+  const teilerFaktorError = getFieldError(state, "teilerFaktor")
+  const generalError = getGeneralError(state)
 
   return (
     <form action={formAction} className="space-y-4">
@@ -51,8 +57,10 @@ export function DisciplineForm({ discipline, action }: Props) {
           onChange={(e) => setName(e.target.value)}
           placeholder="z.B. Luftpistole"
           disabled={isPending}
+          aria-invalid={nameError ? true : undefined}
+          aria-describedby={nameError ? "name-error" : undefined}
         />
-        {fieldErrors?.name && <p className="text-sm text-destructive">{fieldErrors.name[0]}</p>}
+        <FieldError id="name-error" message={nameError} />
       </div>
 
       <div className="space-y-2">
@@ -71,9 +79,7 @@ export function DisciplineForm({ discipline, action }: Props) {
             <SelectItem value="DECIMAL">Zehntelringe (max. 109/Serie)</SelectItem>
           </SelectContent>
         </Select>
-        {fieldErrors?.scoringType && (
-          <p className="text-sm text-destructive">{fieldErrors.scoringType[0]}</p>
-        )}
+        <FieldError id="scoringType-error" message={scoringTypeError} />
       </div>
 
       <div className="space-y-2">
@@ -89,13 +95,13 @@ export function DisciplineForm({ discipline, action }: Props) {
           onChange={(e) => setTeilerFaktor(e.target.value)}
           placeholder="z.B. 0.333"
           disabled={isPending}
+          aria-invalid={teilerFaktorError ? true : undefined}
+          aria-describedby={teilerFaktorError ? "teilerFaktor-error" : undefined}
         />
         <p className="text-xs text-muted-foreground">
           Korrekturfaktor für gemischte Wertungen. Teiler wird mit diesem Faktor multipliziert.
         </p>
-        {fieldErrors?.teilerFaktor && (
-          <p className="text-sm text-destructive">{fieldErrors.teilerFaktor[0]}</p>
-        )}
+        <FieldError id="teilerFaktor-error" message={teilerFaktorError} />
       </div>
 
       {generalError && <p className="text-sm text-destructive">{generalError}</p>}
