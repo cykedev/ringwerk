@@ -8,6 +8,7 @@ import { CompetitionListCard } from "@/components/app/competitions/CompetitionLi
 import { CompetitionsFilters } from "@/components/app/competitions/CompetitionsFilters"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
+import { PageHeader } from "@/components/app/shell/PageHeader"
 import { getDisplayTimeZone } from "@/lib/dateTime"
 import type { CompetitionListItem } from "@/lib/competitions/types"
 
@@ -67,22 +68,20 @@ export default async function CompetitionsPage({ searchParams }: PageProps) {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Wettbewerbe</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {filtered.length} von {all.length} Wettbewerben
-          </p>
-        </div>
-        {canManage && (
-          <Button asChild size="sm">
-            <Link href="/competitions/new">
-              <Plus className="mr-1 h-4 w-4" />
-              Neuer Wettbewerb
-            </Link>
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        title="Wettbewerbe"
+        description={`${filtered.length} von ${all.length} Wettbewerben`}
+        action={
+          canManage && (
+            <Button asChild size="sm">
+              <Link href="/competitions/new">
+                <Plus className="mr-1 h-4 w-4" />
+                Neuer Wettbewerb
+              </Link>
+            </Button>
+          )
+        }
+      />
 
       <CompetitionsFilters
         statusOptions={STATUS_OPTIONS}

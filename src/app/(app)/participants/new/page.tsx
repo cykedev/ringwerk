@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import { createParticipant } from "@/lib/participants/actions"
 import { ParticipantForm } from "@/components/app/participants/ParticipantForm"
+import { PageHeader } from "@/components/app/shell/PageHeader"
 
 export default async function NewParticipantPage() {
   const session = await getAuthSession()
@@ -9,7 +10,9 @@ export default async function NewParticipantPage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="mb-6 text-2xl font-semibold">Neuer Teilnehmer</h1>
+      <div className="mb-6">
+        <PageHeader title="Neuer Teilnehmer" />
+      </div>
       <ParticipantForm action={createParticipant} />
     </div>
   )

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { UserRowActions } from "@/components/app/users/UserRowActions"
 import { AdminLoginRateLimitTable } from "@/components/app/admin/AdminLoginRateLimitTable"
 import { AdminLoginRateLimitInsightsPanel } from "@/components/app/admin/AdminLoginRateLimitInsights"
+import { PageHeader } from "@/components/app/shell/PageHeader"
 
 export default async function AdminUsersPage() {
   const [users, rateLimitInsights] = await Promise.all([
@@ -20,26 +21,26 @@ export default async function AdminUsersPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Nutzerverwaltung</h1>
-          <p className="mt-1 text-sm text-muted-foreground">App-Zugänge verwalten</p>
-        </div>
-        <div className="flex gap-2 self-start">
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/audit-log">
-              <ScrollText className="mr-1 h-4 w-4" />
-              Protokoll
-            </Link>
-          </Button>
-          <Button asChild size="sm">
-            <Link href="/admin/users/new">
-              <Plus className="mr-1 h-4 w-4" />
-              Neuer Nutzer
-            </Link>
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Nutzerverwaltung"
+        description="App-Zugänge verwalten"
+        action={
+          <div className="flex gap-2 self-start">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/admin/audit-log">
+                <ScrollText className="mr-1 h-4 w-4" />
+                Protokoll
+              </Link>
+            </Button>
+            <Button asChild size="sm">
+              <Link href="/admin/users/new">
+                <Plus className="mr-1 h-4 w-4" />
+                Neuer Nutzer
+              </Link>
+            </Button>
+          </div>
+        }
+      />
 
       <div className="rounded-lg border bg-card">
         {active.length === 0 ? (

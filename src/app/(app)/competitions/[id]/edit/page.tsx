@@ -6,6 +6,7 @@ import { hasPlayoffsStarted } from "@/lib/playoffs/queries"
 import { updateCompetition } from "@/lib/competitions/actions"
 import { CompetitionForm } from "@/components/app/competitions/CompetitionForm"
 import { ForceDeleteCompetitionSection } from "@/components/app/competitions/ForceDeleteCompetitionSection"
+import { PageHeader } from "@/components/app/shell/PageHeader"
 import type { ActionResult } from "@/lib/types"
 
 interface Props {
@@ -34,7 +35,9 @@ export default async function EditCompetitionPage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="mb-6 text-2xl font-semibold">Wettbewerb bearbeiten</h1>
+      <div className="mb-6">
+        <PageHeader title="Wettbewerb bearbeiten" />
+      </div>
       <CompetitionForm
         competition={competition}
         disciplines={disciplines}

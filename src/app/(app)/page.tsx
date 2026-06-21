@@ -23,6 +23,7 @@ import { EventTeamRankingTable } from "@/components/app/series/EventTeamRankingT
 import { SeasonStandingsTable } from "@/components/app/series/SeasonStandingsTable"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { PageHeader } from "@/components/app/shell/PageHeader"
 
 // ─── DashboardPage ───────────────────────────────────────────────────────────
 
@@ -87,10 +88,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 px-4 py-8">
-      <div>
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Aktive Wettbewerbe auf einen Blick</p>
-      </div>
+      <PageHeader title="Dashboard" description="Aktive Wettbewerbe auf einen Blick" />
 
       {active.length === 0 ? (
         <p className="rounded-lg border bg-card px-4 py-8 text-center text-sm text-muted-foreground">

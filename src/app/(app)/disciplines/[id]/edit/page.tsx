@@ -3,6 +3,7 @@ import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import { getDisciplineById } from "@/lib/disciplines/queries"
 import { updateDiscipline } from "@/lib/disciplines/actions"
 import { DisciplineForm } from "@/components/app/disciplines/DisciplineForm"
+import { PageHeader } from "@/components/app/shell/PageHeader"
 import type { ActionResult } from "@/lib/types"
 
 interface Props {
@@ -25,7 +26,9 @@ export default async function EditDisciplinePage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="mb-6 text-2xl font-semibold">Disziplin bearbeiten</h1>
+      <div className="mb-6">
+        <PageHeader title="Disziplin bearbeiten" />
+      </div>
       <DisciplineForm discipline={discipline} action={action} />
     </div>
   )

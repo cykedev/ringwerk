@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import { getUserById } from "@/lib/users/queries"
 import { updateUser } from "@/lib/users/actions"
 import { UserEditForm } from "@/components/app/users/UserEditForm"
+import { PageHeader } from "@/components/app/shell/PageHeader"
 import type { ActionResult } from "@/lib/types"
 
 interface Props {
@@ -20,7 +21,9 @@ export default async function EditUserPage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="mb-6 text-2xl font-semibold">Nutzer bearbeiten</h1>
+      <div className="mb-6">
+        <PageHeader title="Nutzer bearbeiten" />
+      </div>
       <UserEditForm user={user} action={action} />
     </div>
   )

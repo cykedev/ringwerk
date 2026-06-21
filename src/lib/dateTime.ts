@@ -1,7 +1,7 @@
 import "server-only"
 
 // DB speichert immer UTC. Diese Timezone wird ausschliesslich für die UI-Darstellung verwendet.
-const DEFAULT_DISPLAY_TIME_ZONE = "Europe/Zurich"
+const DEFAULT_DISPLAY_TIME_ZONE = "Europe/Berlin"
 
 function isValidIanaTimeZone(value: string): boolean {
   try {

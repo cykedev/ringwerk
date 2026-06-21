@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { EmptyState } from "@/components/ui/empty-state"
 import { PdfDownloadButton } from "@/components/app/shared/PdfDownloadButton"
+import { PageHeader } from "@/components/app/shell/PageHeader"
 
 export default async function ParticipantsPage() {
   const session = await getAuthSession()
@@ -19,21 +20,21 @@ export default async function ParticipantsPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Teilnehmer</h1>
-          <p className="text-sm text-muted-foreground mt-1">Alle Schützen des Vereins</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <PdfDownloadButton href="/api/participants/pdf" label="Teilnehmerliste drucken" />
-          <Button asChild size="sm">
-            <Link href="/participants/new">
-              <Plus className="mr-1 h-4 w-4" />
-              Neuer Teilnehmer
-            </Link>
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Teilnehmer"
+        description="Alle Schützen des Vereins"
+        action={
+          <div className="flex items-center gap-2">
+            <PdfDownloadButton href="/api/participants/pdf" label="Teilnehmerliste drucken" />
+            <Button asChild size="sm">
+              <Link href="/participants/new">
+                <Plus className="mr-1 h-4 w-4" />
+                Neuer Teilnehmer
+              </Link>
+            </Button>
+          </div>
+        }
+      />
 
       {active.length === 0 ? (
         <EmptyState

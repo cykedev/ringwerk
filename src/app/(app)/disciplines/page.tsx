@@ -7,6 +7,7 @@ import { DisciplineActions } from "@/components/app/disciplines/DisciplineAction
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { EmptyState } from "@/components/ui/empty-state"
+import { PageHeader } from "@/components/app/shell/PageHeader"
 
 export default async function DisciplinesPage() {
   const session = await getAuthSession()
@@ -19,18 +20,18 @@ export default async function DisciplinesPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Disziplinen</h1>
-          <p className="text-sm text-muted-foreground mt-1">Wettbewerbsdisziplinen des Vereins</p>
-        </div>
-        <Button asChild size="sm">
-          <Link href="/disciplines/new">
-            <Plus className="mr-1 h-4 w-4" />
-            Neue Disziplin
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="Disziplinen"
+        description="Wettbewerbsdisziplinen des Vereins"
+        action={
+          <Button asChild size="sm">
+            <Link href="/disciplines/new">
+              <Plus className="mr-1 h-4 w-4" />
+              Neue Disziplin
+            </Link>
+          </Button>
+        }
+      />
 
       {/* Aktive Disziplinen */}
       {active.length === 0 ? (

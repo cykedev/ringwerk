@@ -3,6 +3,7 @@ import { getAuthSession, canManage } from "@/lib/auth-helpers"
 import { getParticipantById } from "@/lib/participants/queries"
 import { updateParticipant } from "@/lib/participants/actions"
 import { ParticipantForm } from "@/components/app/participants/ParticipantForm"
+import { PageHeader } from "@/components/app/shell/PageHeader"
 
 interface Props {
   params: Promise<{ id: string }>
@@ -20,7 +21,9 @@ export default async function EditParticipantPage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="mb-6 text-2xl font-semibold">Teilnehmer bearbeiten</h1>
+      <div className="mb-6">
+        <PageHeader title="Teilnehmer bearbeiten" />
+      </div>
       <ParticipantForm participant={participant} action={action} />
     </div>
   )

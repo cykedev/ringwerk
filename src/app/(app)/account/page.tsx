@@ -1,10 +1,12 @@
 import { AccountPasswordForm } from "@/components/app/account/AccountPasswordForm"
+import { PageHeader } from "@/components/app/shell/PageHeader"
 
 export default function AccountPage() {
   return (
     <div className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="mb-1 text-2xl font-semibold">Mein Konto</h1>
-      <p className="mb-6 text-sm text-muted-foreground">Passwort ändern</p>
+      <div className="mb-6">
+        <PageHeader title="Mein Konto" description="Passwort ändern" />
+      </div>
       <AccountPasswordForm />
     </div>
   )

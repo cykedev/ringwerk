@@ -2,6 +2,8 @@
 
 **Sprache:** Alle Kommunikation mit dem User auf Deutsch. Code, Commit-Messages und Agent-Prompts bleiben auf Englisch.
 
+**App-übergreifende Konsistenz mit Treffsicher:** siehe `docs/shared-conventions.md` (byte-identisch in beiden Repos, vom Drift-Gate in `vereinsheim` erzwungen).
+
 ## Hard Rules (non-negotiable, always active)
 
 1. **Feature branches are mandatory.** Every new feature/session starts on a new branch. Propose a name (`feat/<topic>`), wait for user confirmation, then `git checkout -b`.
