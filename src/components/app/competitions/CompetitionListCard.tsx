@@ -124,31 +124,30 @@ export function CompetitionListCard({
 }: Props) {
   return (
     <Card className={cardClassName ?? "transition-colors hover:bg-muted/20"}>
-      <CardContent className="flex items-center justify-between gap-4 py-5">
-        <div className="min-w-0 flex-1 space-y-2.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href={`/competitions/${c.id}`}
-              className="text-base font-semibold hover:underline"
-            >
-              {c.name}
-            </Link>
-            <TypeBadge type={c.type} />
-            <Badge variant="secondary" className="text-xs">
-              {c.discipline ? c.discipline.name : "Gemischt"}
+      <CardContent className="space-y-3 py-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href={`/competitions/${c.id}`} className="text-base font-semibold hover:underline">
+            {c.name}
+          </Link>
+          <TypeBadge type={c.type} />
+          <Badge variant="secondary" className="text-xs">
+            {c.discipline ? c.discipline.name : "Gemischt"}
+          </Badge>
+          {c.isPublic && (
+            <Badge variant="outline" className="text-xs">
+              Öffentlich
             </Badge>
-            {c.isPublic && (
-              <Badge variant="outline" className="text-xs">
-                Öffentlich
-              </Badge>
-            )}
-          </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <CardLinks c={c} canManage={canManage} />
-          </div>
-          {showMeta && <CardMeta c={c} tz={tz} />}
+          )}
         </div>
-        {canManage && <CompetitionActions competition={c} />}
+        <div className="flex flex-wrap items-center gap-4">
+          <CardLinks c={c} canManage={canManage} />
+        </div>
+        {showMeta && <CardMeta c={c} tz={tz} />}
+        {canManage && (
+          <div className="flex justify-end border-t border-border/50 pt-3">
+            <CompetitionActions competition={c} />
+          </div>
+        )}
       </CardContent>
     </Card>
   )
