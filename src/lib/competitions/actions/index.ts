@@ -1,3 +1,4 @@
 export { createCompetition } from "./create"
-export { updateCompetition, setCompetitionStatus } from "./update"
+export { updateCompetition } from "./update"
+export { setCompetitionStatus } from "./setStatus"
 export { deleteCompetition, forceDeleteCompetition } from "./delete"
