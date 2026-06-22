@@ -1,5 +1,3 @@
-"use server"
-
 // Teilnehmer-Einschreibungs-Aktionen sind nach Vorgang aufgeteilt.
 // Diese Datei bleibt der stabile öffentliche Einstiegspunkt für Aufrufer.
 

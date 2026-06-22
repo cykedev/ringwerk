@@ -1,5 +1,3 @@
-"use server"
-
 // Best-of-Aktionen sind in das Unterverzeichnis ./bestOf aufgeteilt.
 // Diese Datei bleibt der stabile öffentliche Einstiegspunkt für Aufrufer.
 

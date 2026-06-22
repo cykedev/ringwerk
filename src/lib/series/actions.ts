@@ -1,5 +1,3 @@
-"use server"
-
 // Serien-Aktionen sind nach Wettbewerbstyp aufgeteilt (Event vs. Saison).
 // Diese Datei bleibt der stabile öffentliche Einstiegspunkt für Aufrufer.
 

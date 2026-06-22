@@ -1,5 +1,3 @@
-"use server"
-
 // Teilnehmer-Aktionen sind nach CRUD und Löschen aufgeteilt.
 // Diese Datei bleibt der stabile öffentliche Einstiegspunkt für Aufrufer.
 
